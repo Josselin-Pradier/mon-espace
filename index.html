@@ -169,6 +169,18 @@ input[type=file]{padding:5px;font-size:12px}
 .step h3{font-size:15px;margin-bottom:8px}
 .step ol{margin:0 0 8px 20px;line-height:1.7;font-size:14px}
 .codeblk{background:#0f172a;color:#e2e8f0;padding:12px 14px;border-radius:8px;font-family:Consolas,monospace;font-size:12px;white-space:pre-wrap;word-break:break-all;margin:8px 0;line-height:1.5}
+/* ---- v4 : bandeau épinglées, dropzone, texte riche, descriptions inline ---- */
+.pinband{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px;margin-bottom:18px}
+.pinband .note-card{border-color:#fde68a;background:#fffbeb}
+.dropzone{border:2px dashed #c7d2fe;background:#f5f7ff;border-radius:12px;padding:16px;text-align:center;color:#64748b;cursor:pointer;margin-bottom:14px;font-size:13px;line-height:1.5}
+.dropzone.drag{border-color:#4f46e5;background:#eef2ff}
+.rtbar{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
+.rtbar .btn{padding:4px 10px;font-size:13px;font-weight:600}
+.rtbar select{width:auto;min-width:70px;padding:4px 6px;font-size:13px}
+.desc-inline{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px;white-space:pre-wrap;margin-bottom:16px;line-height:1.55;min-height:44px}
+.desc-inline:focus{outline:2px solid var(--accent-soft);border-color:var(--accent)}
+.float-banner{display:flex;align-items:center;gap:10px;flex-wrap:wrap;border-radius:10px;padding:11px 14px;margin-bottom:14px;font-size:14px;background:#ecfdf5;border:1px solid #a7f3d0}
+.cal-chip.not{background:#ede9fe;color:#5b21b6}
 /* ---- Responsive & print ---- */
 @media (max-width:760px){
  body{flex-direction:column}
@@ -198,11 +210,13 @@ input[type=file]{padding:5px;font-size:12px}
     <a class="snav" id="sn-taches" data-act="go" data-page="taches">✅ Tâches</a>
     <a class="snav" id="sn-docs" data-act="go" data-page="docs">📄 Documents</a>
     <a class="snav" id="sn-capture" data-act="go" data-page="capture">⚡ Capture</a>
+    <a class="snav" id="sn-cal" data-act="go" data-page="cal">📅 Calendrier</a>
     <a class="snav" id="sn-notes" data-act="go" data-page="notes">📝 Notes</a>
     <a class="snav" id="sn-outlook" data-act="go" data-page="outlook">📧 Outlook</a>
   </nav>
   <div class="side-foot">
     <a class="snav" data-act="go" data-page="install">📱 Installer l’appli</a>
+    <a class="snav" data-act="open-listes">⚙️ Mes listes</a>
     <a class="snav" data-act="open-export">💾 Export &amp; sauvegarde</a>
     <a class="snav" data-act="open-help">❓ Aide &amp; confidentialité</a>
     <div class="side-note">100 % local : vos données restent sur cet appareil. La connexion Outlook est optionnelle et se limite à ce que vous y consultez.</div>
@@ -234,7 +248,7 @@ input[type=file]{padding:5px;font-size:12px}
 var STORE_KEY='gestion-dnt-v1';
 var PREFS_KEY='gestion-dnt-prefs-v1';
 var EMBED_KEY='__ESPACE_EMBEDDED_DATA__';
-var VERSION=3;
+var VERSION=4;
 var OPEN_TAG='<scr'+'ipt>';
 var CLOSE_TAG='<'+'/scr'+'ipt>';
 
@@ -277,10 +291,31 @@ var DOC_ROLES=[
  {k:'reference',l:'Référence',c:'#64748b'}
 ];
 
+// ===== Listes déroulantes personnalisables (v4) =====
+var LISTES_KEY='gestion-dnt-listes-v1';
+var LISTES_MAP={statuts:DOS_STATUTS,taches:TACHE_STATUTS,priorites:PRIORITES,contextes:CONTEXTES,types:DOC_TYPES,roles:DOC_ROLES};
+function slugTxt(s){return String(s||'').toLowerCase().replace(/[àáâãä]/g,'a').replace(/[èéêë]/g,'e').replace(/[ìíîï]/g,'i').replace(/[òóôõö]/g,'o').replace(/[ùúûü]/g,'u').replace(/ç/g,'c').replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');}
+function getListes(){try{var r=localStorage.getItem(LISTES_KEY);return r?JSON.parse(r):{};}catch(e){return {};}}
+function setListes(o){try{localStorage.setItem(LISTES_KEY,JSON.stringify(o||{}));}catch(e){}}
+function applyCustomLists(){
+  var lst=getListes();
+  var name;
+  for(name in LISTES_MAP){
+    if(!Object.prototype.hasOwnProperty.call(LISTES_MAP,name))continue;
+    var arr=LISTES_MAP[name];
+    var keep=[],i;
+    for(i=0;i<arr.length;i++){if(!arr[i]._c)keep.push(arr[i]);}
+    arr.length=0;
+    for(i=0;i<keep.length;i++)arr.push(keep[i]);
+    var cust=(lst&&Array.isArray(lst[name]))?lst[name]:[];
+    for(i=0;i<cust.length;i++){arr.push({k:'c-'+slugTxt(cust[i]),l:String(cust[i]),_c:true});}
+  }
+}
+
 // ===== État =====
 var state={
   dossiers:[],taches:[],notes:[],docs:[],exemple:false,
-  page:'dash',detailId:'',tacheVue:'liste',calY:0,calM:0,
+  page:'dash',detailId:'',tacheVue:'liste',calY:0,calM:0,calVue:'mois',calSel:'',
   searchQ:'',_drag:'',_capImg:'',_noteImg:'',
   ms:{connected:false,nom:'',events:[],mails:[],err:'',busy:false,token:'',exp:0},
   filtres:{dos:{q:'',statut:'',ctx:''},ta:{q:'',statut:'',prio:'',ctx:''},no:{q:'',tag:'',ctx:'',tr:''},dc:{q:'',type:'',role:'',dos:''}}
@@ -297,9 +332,23 @@ function daysUntil(ds){if(!ds)return null;var p=ds.split('-');var d=new Date(+p[
 function fmtDate(ds){if(!ds)return '—';var p=ds.split('-');return p[2]+'/'+p[1]+'/'+p[0];}
 function relEch(ds,done,dl){var n=daysUntil(ds);if(n===null)return '';if(done)return dl||'Fait';if(n<0)return 'Retard '+(-n)+' j';if(n===0)return 'Aujourd’hui';if(n===1)return 'Demain';if(n<=7)return 'Dans '+n+' j';return fmtDate(ds);}
 function echClass(ds,done){if(done)return 'ok';var n=daysUntil(ds);if(n===null)return '';if(n<0)return 'late';if(n<=2)return 's2';if(n<=7)return 's7';return '';}
-function echLabel(ds,done,dl){if(!ds)return '';return '<span class="eco '+echClass(ds,done)+'">'+relEch(ds,done,dl)+'</span>';}
+function echLabel(ds,done,dl,heure){if(!ds)return '';return '<span class="eco '+echClass(ds,done)+'">'+relEch(ds,done,dl)+(heure?' · '+esc(heure):'')+'</span>';}
 function infoOf(list,k){var i;for(i=0;i<list.length;i++){if(list[i].k===k)return list[i];}return list[0];}
 function validK(list,k,def){var i;for(i=0;i<list.length;i++){if(list[i].k===k)return k;}return def;}
+function isRich(s){return /<\/?(b|i|u|strong|em|span|div|p|br|ul|ol|li|font)\b/i.test(String(s||''));}
+function richSan(s){
+  var t=String(s||'');
+  t=t.replace(/<script[\s\S]*?<\/script>/gi,'');
+  t=t.replace(/<\/?(?!\/?(b|i|u|strong|em|br|span|div|p|ul|ol|li|font)\b)[a-z][^>]*>/gi,'');
+  return t;
+}
+function stripTags(s){return String(s||'').replace(/<[^>]*>/g,'');}
+function contenuHtml(c){
+  if(isRich(c))return richSan(c);
+  var t=String(c==null?'':c);
+  if(!t)return '';
+  return esc(t).replace(/\n/g,'<br/>');
+}
 function findDossier(id){var i;for(i=0;i<state.dossiers.length;i++){if(state.dossiers[i].id===id)return state.dossiers[i];}return null;}
 function findTache(id){var i;for(i=0;i<state.taches.length;i++){if(state.taches[i].id===id)return state.taches[i];}return null;}
 function findNote(id){var i;for(i=0;i<state.notes.length;i++){if(state.notes[i].id===id)return state.notes[i];}return null;}
@@ -341,7 +390,7 @@ function normalize(src){
     for(i=0;i<d.taches.length;i++){
       x=d.taches[i];if(!x||!x.id)continue;
       var st=x.statut;if(!st){st=(x.fait?'fait':'a-faire');}
-      out.taches.push({id:String(x.id),titre:String(x.titre||'Sans titre'),statut:validK(TACHE_STATUTS,st,'a-faire'),priorite:validK(PRIORITES,x.priorite,'normale'),contexte:validK(CONTEXTES,x.contexte,'perso'),echeance:String(x.echeance||''),dossierId:String(x.dossierId||''),description:String(x.description||''),cree:String(x.cree||today()),maj:String(x.maj||today())});
+      out.taches.push({id:String(x.id),titre:String(x.titre||'Sans titre'),statut:validK(TACHE_STATUTS,st,'a-faire'),priorite:validK(PRIORITES,x.priorite,'normale'),contexte:validK(CONTEXTES,x.contexte,'perso'),echeance:String(x.echeance||''),heure:String(x.heure||''),dossierId:String(x.dossierId||''),description:String(x.description||''),cree:String(x.cree||today()),maj:String(x.maj||today())});
     }
   }
   if(d.notes){
@@ -350,7 +399,7 @@ function normalize(src){
       var tags=[];
       if(Array.isArray(x.tags)){var j;for(j=0;j<x.tags.length;j++){if(x.tags[j])tags.push(String(x.tags[j]));}}
       else if(typeof x.tags==='string'&&x.tags){var parts=x.tags.split(',');for(var k=0;k<parts.length;k++){if(parts[k].trim())tags.push(parts[k].trim());}}
-      out.notes.push({id:String(x.id),titre:String(x.titre||'Sans titre'),contenu:String(x.contenu||''),tags:tags,contexte:validK(CONTEXTES,x.contexte,'perso'),dossierId:String(x.dossierId||''),tacheId:String(x.tacheId||''),docId:String(x.docId||''),epinglee:!!x.epinglee,echeance:String(x.echeance||''),traitee:!!x.traitee,capture:!!x.capture,image:String(x.image||''),maj:String(x.maj||today())});
+      out.notes.push({id:String(x.id),titre:String(x.titre||'Sans titre'),contenu:String(x.contenu||''),tags:tags,contexte:validK(CONTEXTES,x.contexte,'perso'),dossierId:String(x.dossierId||''),tacheId:String(x.tacheId||''),docId:String(x.docId||''),epinglee:!!x.epinglee,echeance:String(x.echeance||''),heure:String(x.heure||''),traitee:!!x.traitee,capture:!!x.capture,image:String(x.image||''),prio:validK(PRIORITES,x.prio,'normale'),origine:String(x.origine||''),autoFloat:!!x.autoFloat,trieeLe:String(x.trieeLe||''),maj:String(x.maj||today())});
     }
   }
   if(d.docs){
@@ -358,7 +407,7 @@ function normalize(src){
       x=d.docs[i];if(!x||!x.id)continue;
       var dIds=[];
       if(Array.isArray(x.dossiers)){var w2;for(w2=0;w2<x.dossiers.length;w2++){if(x.dossiers[w2])dIds.push(String(x.dossiers[w2]));}}
-      out.docs.push({id:String(x.id),nom:String(x.nom||'Sans nom'),type:validK(DOC_TYPES,x.type,'autre'),role:validK(DOC_ROLES,x.role,'livrable'),localisation:String(x.localisation||''),description:String(x.description||''),dossiers:dIds,cree:String(x.cree||today()),maj:String(x.maj||today())});
+      out.docs.push({id:String(x.id),nom:String(x.nom||'Sans nom'),type:validK(DOC_TYPES,x.type,'autre'),role:validK(DOC_ROLES,x.role,'livrable'),localisation:String(x.localisation||''),description:String(x.description||''),dossiers:dIds,stocke:!!x.stocke,cree:String(x.cree||today()),maj:String(x.maj||today())});
     }
   }
   return out;
@@ -480,6 +529,7 @@ function render(){
   else if(state.page==='docs')h=pageDocs();
   else if(state.page==='doc')h=pageDoc(state.detailId);
   else if(state.page==='capture')h=pageCapture();
+  else if(state.page==='cal')h=pageCal();
   else if(state.page==='outlook')h=pageOutlook();
   else if(state.page==='install')h=pageInstall();
   else if(state.page==='search')h=pageSearch();
@@ -495,8 +545,8 @@ function renderPageBody(){
   else if(state.page==='docs')el.innerHTML=docsBody();
 }
 function updateSidebar(){
-  var map={dash:'sn-dash',dossiers:'sn-dossiers',dossier:'sn-dossiers',taches:'sn-taches',notes:'sn-notes',note:'sn-notes',docs:'sn-docs',doc:'sn-docs',capture:'sn-capture',outlook:'sn-outlook'};
-  var key=map[state.page];var ids=['sn-dash','sn-dossiers','sn-docs','sn-taches','sn-capture','sn-notes','sn-outlook'];var i;
+  var map={dash:'sn-dash',dossiers:'sn-dossiers',dossier:'sn-dossiers',taches:'sn-taches',notes:'sn-notes',note:'sn-notes',docs:'sn-docs',doc:'sn-docs',capture:'sn-capture',cal:'sn-cal',outlook:'sn-outlook'};
+  var key=map[state.page];var ids=['sn-dash','sn-dossiers','sn-docs','sn-taches','sn-capture','sn-cal','sn-notes','sn-outlook'];var i;
   for(i=0;i<ids.length;i++){var el=document.getElementById(ids[i]);if(el){el.className='snav'+(ids[i]===key?' active':'');}}
 }
 function updateTopbar(){
@@ -523,6 +573,12 @@ function pageDash(){
     h+='<div class="banner warn">💾 Dernière sauvegarde : <b>'+lastSavedLabel()+'</b>. Exportez vos données pour éviter toute perte. '
      +'<button class="btn sm" data-act="open-export">Exporter maintenant</button> '
      +'<button class="btn sm ghost" data-act="backup-ok">Je viens de le faire</button></div>';
+  }
+  var pinband=state.notes.filter(function(n){return n.epinglee;});
+  if(pinband.length){
+    h+='<h2 class="sec-title">📌 Notes épinglées</h2><div class="pinband">';
+    var m;for(m=0;m<pinband.length;m++){h+=noteCard(pinband[m]);}
+    h+='</div>';
   }
   var captri=state.notes.filter(function(n){return n.capture&&!n.traitee;});
   var notesRetard=state.notes.filter(function(n){return !n.traitee&&n.echeance&&daysUntil(n.echeance)<0;});
@@ -574,13 +630,6 @@ function pageDash(){
   }else{
     h+='<div class="empty">Aucun dossier actif. <button class="btn sm" data-act="new-dossier">Créer un dossier</button></div>';
   }
-  // Notes épinglées
-  var pin=state.notes.filter(function(n){return n.epinglee;});
-  if(pin.length){
-    h+='<h2 class="sec-title">📌 Notes épinglées</h2><div class="notes-grid">';
-    var m;for(m=0;m<pin.length;m++){h+=noteCard(pin[m]);}
-    h+='</div>';
-  }
   h+='</div>';
   return h;
 }
@@ -596,7 +645,7 @@ function tacheRow(t){
   if(!done)h+=badgePrio(t.priorite);
   h+=badgeCtx(t.contexte);
   if(d)h+='<span class="chip" data-act="open-dossier" data-id="'+d.id+'">📁 '+esc(d.nom)+'</span>';
-  h+=echLabel(t.echeance,done);
+  h+=echLabel(t.echeance,done,'',t.heure||'');
   h+='</div>';
   return h;
 }
@@ -610,7 +659,7 @@ function captureRow(n){
   if(n.image)h+='<span class="chip">🖼 image jointe</span>';
   if(d)h+='<span class="chip" data-act="open-dossier" data-id="'+d.id+'">📁 '+esc(d.nom)+'</span>';
   if(doc)h+='<span class="chip" data-act="open-doc" data-id="'+doc.id+'">📄 '+esc(doc.nom)+'</span>';
-  h+=echLabel(n.echeance,n.traitee,'Traitée')
+  h+=echLabel(n.echeance,n.traitee,'Traitée',n.heure||'')
    +(n.traitee?'':'<button class="btn sm ghost" data-act="edit-note" data-id="'+n.id+'" title="Relier à un projet, une échéance…">Trier</button>')
    +'</div>';
   return h;
@@ -683,7 +732,7 @@ function pageDossier(id){
    +'<button class="btn ghost" data-act="edit-dossier" data-id="'+d.id+'">✎ Modifier</button>'
    +'<button class="btn danger ghost" data-act="del-dossier" data-id="'+d.id+'" title="Supprimer">🗑</button>'
    +'</div></div>';
-  if(d.description)h+='<p class="desc">'+esc(d.description)+'</p>';
+  h+='<div class="desc-inline" data-kind="dossier" data-id="'+d.id+'" contenteditable="true">'+(d.description?esc(d.description).replace(/\n/g,'<br/>'):'<span class="muted">Ajoutez ici contexte, démarches, références… (enregistrement automatique en cliquant ailleurs)</span>')+'</div>';
   h+='<h2 class="sec-title">✅ Tâches ('+ts.length+')</h2>';
   if(ts.length){
     var sorted=ts.slice().sort(function(a,b){var ea=a.echeance||'9999',eb=b.echeance||'9999';return ea<eb?-1:1;});
@@ -698,6 +747,7 @@ function pageDossier(id){
   h+='<h2 class="sec-title">📄 Documents liés ('+ds.length+')</h2>';
   if(ds.length){h+='<div class="doc-grid">';var k2;for(k2=0;k2<ds.length;k2++){h+=docCard(ds[k2]);}h+='</div>';}
   else{h+='<div class="empty">Aucun document lié à ce dossier.</div>';}
+  h+='<div style="margin-top:12px">'+dropzoneHtml(d.id)+'</div>';
   h+='<div style="margin-top:10px"><button class="btn sm" data-act="link-doc" data-id="'+d.id+'">＋ Lier / créer un document</button></div>';
   h+='</div>';
   return h;
@@ -796,7 +846,7 @@ function kcard(t){
    +'<span class="row-title" data-act="open-tache" data-id="'+t.id+'">'+esc(t.titre)+'</span>'
    +'<div class="sub">'+badgePrio(t.priorite)+badgeCtx(t.contexte);
   if(d)h+='<span class="chip" data-act="open-dossier" data-id="'+d.id+'">📁 '+esc(d.nom)+'</span>';
-  h+=echLabel(t.echeance,t.statut==='fait');
+  h+=echLabel(t.echeance,t.statut==='fait','',t.heure||'');
   h+='</div></div>';
   return h;
 }
@@ -854,10 +904,142 @@ function calChips(dstr){
   return h;
 }
 
+// ===== Calendrier global (v4) =====
+function allDated(){
+  var out=[],i;
+  for(i=0;i<state.taches.length;i++){var t=state.taches[i];if(t.echeance)out.push({kind:'tache',id:t.id,date:t.echeance,heure:t.heure||'',titre:t.titre,prio:t.priorite,done:t.statut==='fait'});}
+  for(i=0;i<state.notes.length;i++){var n=state.notes[i];if(n.echeance)out.push({kind:'note',id:n.id,date:n.echeance,heure:n.heure||'',titre:n.titre,prio:n.prio||'',done:n.traitee});}
+  for(i=0;i<state.dossiers.length;i++){var d=state.dossiers[i];if(d.echeance)out.push({kind:'dossier',id:d.id,date:d.echeance,heure:'',titre:d.nom,prio:'',done:(d.statut==='termine'||d.statut==='archive')});}
+  out.sort(function(a,b){return a.date<b.date?-1:(a.date>b.date?1:(a.heure<b.heure?-1:1));});
+  return out;
+}
+function calItemRow(it){
+  var act=it.kind==='tache'?'open-tache':(it.kind==='note'?'open-note':'open-dossier');
+  var ico=it.kind==='tache'?'✅':(it.kind==='note'?'📝':'📁');
+  var h='<div class="row'+(it.done?' done':'')+'">'
+   +'<span class="row-title" data-act="'+act+'" data-id="'+it.id+'">'+ico+' '+esc(it.titre)+'</span>';
+  if(it.heure)h+='<span class="chip">🕒 '+esc(it.heure)+'</span>';
+  if(it.prio&&it.kind!=='dossier')h+=badgePrio(it.prio);
+  if(it.done)h+='<span class="badge" style="background:#d1fae5;color:#065f46">✓</span>';
+  h+='</div>';
+  return h;
+}
+function fmtDateLong(ds){
+  if(!ds)return '';
+  var p=ds.split('-');
+  var d=new Date(+p[0],+p[1]-1,+p[2]);
+  var js=['dimanche','lundi','mardi','mercredi','jeudi','vendredi','samedi'];
+  return js[d.getDay()]+' '+p[2]+' '+MOIS_NOMS[+p[1]-1]+' '+p[0];
+}
+function dayShift(ds,n){
+  if(!ds)return '';
+  var p=ds.split('-');
+  var d=new Date(+p[0],+p[1]-1,+p[2]);
+  d.setDate(d.getDate()+n);
+  return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+}
+function pageCal(){
+  if(!state.calSel)state.calSel=today();
+  var h='<div class="content"><div class="page-head"><h1 class="page-title">📅 Calendrier</h1></div>';
+  h+=calNav();
+  if(state.calVue==='jour')h+=calJour();
+  else if(state.calVue==='semaine')h+=calSemaine();
+  else h+=calMois();
+  h+='<p class="tiny muted" style="margin-top:10px">Toutes vos échéances au même endroit : tâches ✅, notes 📝 et dossiers 📁. Cliquez sur un élément pour l’ouvrir directement.</p>';
+  h+='</div>';
+  return h;
+}
+function calNav(){
+  var v=state.calVue||'mois';
+  return '<div class="filters">'
+   +'<button class="btn ghost sm" data-act="cal-prev" title="Précédent">‹</button>'
+   +'<button class="btn sm" data-act="cal-today">Aujourd’hui</button>'
+   +'<button class="btn ghost sm" data-act="cal-next" title="Suivant">›</button>'
+   +'<input type="date" id="cal-pick" value="'+esc(state.calSel)+'" style="width:auto"/>'
+   +'<div class="viewswitch">'
+   +'<button class="btn'+(v==='jour'?' on':'')+'" data-act="cal-vue" data-vue="jour">Jour</button>'
+   +'<button class="btn'+(v==='semaine'?' on':'')+'" data-act="cal-vue" data-vue="semaine">Semaine</button>'
+   +'<button class="btn'+(v==='mois'?' on':'')+'" data-act="cal-vue" data-vue="mois">Mois</button>'
+   +'</div>'
+   +'</div>';
+}
+function calJour(){
+  var items=allDated().filter(function(it){return it.date===state.calSel;});
+  var h='<h2 class="sec-title">'+fmtDateLong(state.calSel)+'</h2>';
+  if(!items.length){h+='<div class="empty">Rien de prévu ce jour-là 🎉</div>';}
+  else{var i;for(i=0;i<items.length;i++){h+=calItemRow(items[i]);}}
+  return h;
+}
+function calSemaine(){
+  var p=state.calSel.split('-');
+  var d=new Date(+p[0],+p[1]-1,+p[2]);
+  var start=(d.getDay()+6)%7;
+  d.setDate(d.getDate()-start);
+  var h='';var i;
+  for(i=0;i<7;i++){
+    var ds=d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+    var items=allDated().filter(function(it){return it.date===ds;});
+    h+='<h2 class="sec-title">'+fmtDateLong(ds)+'</h2>';
+    if(!items.length){h+='<div class="small muted" style="padding:2px 4px 10px">— rien de prévu</div>';}
+    else{var j;for(j=0;j<items.length;j++){h+=calItemRow(items[j]);}}
+    d.setDate(d.getDate()+1);
+  }
+  return h;
+}
+function calMois(){
+  var y=state.calY,m=state.calM;
+  if(!y){var nd=new Date();y=nd.getFullYear();m=nd.getMonth();state.calY=y;state.calM=m;}
+  var h='<div class="cal-head"><div class="cal-title">'+MOIS_NOMS[m]+' '+y+'</div></div>';
+  h+='<div class="cal-grid">';
+  var dows=['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];var i;
+  for(i=0;i<7;i++){h+='<div class="cal-dow">'+dows[i]+'</div>';}
+  var first=new Date(y,m,1);
+  var start=(first.getDay()+6)%7;
+  var dim=new Date(y,m+1,0).getDate();
+  var prevDim=new Date(y,m,0).getDate();
+  var t2=today();
+  for(i=0;i<42;i++){
+    var dn=i-start+1;
+    if(dn<1){h+='<div class="cal-cell other"><div class="cal-lbl">'+(prevDim+dn)+'</div></div>';}
+    else if(dn>dim){h+='<div class="cal-cell other"><div class="cal-lbl">'+(dn-dim)+'</div></div>';}
+    else{
+      var dstr=y+'-'+pad(m+1)+'-'+pad(dn);
+      var cls='cal-cell'+(dstr===t2?' today':'');
+      h+='<div class="'+cls+'"><div class="cal-lbl">'+dn+'</div>'+calChipsAll(dstr)+'</div>';
+    }
+  }
+  h+='</div>';
+  return h;
+}
+function calChipsAll(dstr){
+  var items=allDated();
+  var h='';var n=0,more=0;var i;
+  for(i=0;i<items.length;i++){
+    if(items[i].date!==dstr)continue;
+    n++;
+    if(n<=3){h+=calChipHtml(items[i]);}
+    else{more++;}
+  }
+  if(more>0)h+='<div class="tiny muted">+'+more+' autre(s)</div>';
+  return h;
+}
+function calChipHtml(it){
+  var act=it.kind==='tache'?'open-tache':(it.kind==='note'?'open-note':'open-dossier');
+  var ico=it.kind==='tache'?'✅':(it.kind==='note'?'📝':'📁');
+  var cls=it.kind==='tache'?'cal-chip pri-'+it.prio:(it.kind==='note'?'cal-chip not':'cal-chip dos');
+  if(it.done)cls+=' fait';
+  var lab=(it.heure?esc(it.heure)+' · ':'')+esc(it.titre);
+  return '<span class="'+cls+'" data-act="'+act+'" data-id="'+it.id+'" title="'+esc(it.titre)+(it.heure?' · '+esc(it.heure):'')+'">'+ico+' '+lab+'</span>';
+}
+
 // ===== Page Documents =====
+function dropzoneHtml(dosId){
+  return '<div class="dropzone" id="dz-docs" data-dos="'+esc(dosId||'')+'">📄 <b>Déposez ici vos fichiers</b> (Word, Excel, PowerPoint, PDF, images…) ou cliquez pour parcourir.<br/><span class="tiny muted">Une copie (≤ 10 Mo par fichier) est enregistrée dans l’appli : ouvrable et téléchargeable depuis la fiche du document. Vos originaux ne bougent pas.</span><input type="file" id="doc-file" multiple data-dos="'+esc(dosId||'')+'" style="display:none"/></div>';
+}
 function pageDocs(){
   var h='<div class="content"><div class="page-head"><h1 class="page-title">📄 Documents</h1><div class="toolbar"><button class="btn primary" data-act="new-doc">+ Référencer un document</button></div></div>';
   h+='<p class="small muted" style="margin-bottom:12px">Vos fichiers Word, Excel, PowerPoint, PDF, liens… rangés et liés à vos dossiers. Un même document peut servir plusieurs projets. Rôle « Source » = vos documents à piocher ; « Base évolutive » = vos fichiers que vous modifiez au fil de l’eau.</p>';
+  h+=dropzoneHtml('');
   h+=filtersDocs();
   h+='<div id="page-body">'+docsBody()+'</div></div>';
   return h;
@@ -896,7 +1078,7 @@ function docCard(x){
   if(/^https?:\/\//i.test(x.localisation)){lienk='<a class="doc-path" href="'+esc(x.localisation)+'" target="_blank" rel="noopener noreferrer">🔗 '+esc(x.localisation)+'</a>';}
   else if(x.localisation){lienk='<span class="doc-path">📍 '+esc(x.localisation)+'</span>';}
   var h='<div class="doc-card" data-act="open-doc" data-id="'+x.id+'">'
-   +'<div class="card-top">'+badgeDocType(x.type)+badgeDocRole(x.role)+'</div>'
+   +'<div class="card-top">'+badgeDocType(x.type)+badgeDocRole(x.role)+(x.stocke?'<span class="badge" style="background:#ecfdf5;color:#065f46">💾 copie</span>':'')+'</div>'
    +'<div class="card-title">'+esc(x.nom)+'</div>'
    +'<div class="card-meta">'+x.dossiers.length+' dossier(s) · '+docNotes(x.id).length+' note(s)</div>'
    +lienk+'</div>';
@@ -910,11 +1092,12 @@ function pageDoc(id){
   h+='<div class="page-head"><div><h1 class="page-title">'+esc(x.nom)+'</h1><div class="badges">'+badgeDocType(x.type)+badgeDocRole(x.role)
    +(x.localisation?( /^https?:\/\//i.test(x.localisation)?'<a class="chip" href="'+esc(x.localisation)+'" target="_blank" rel="noopener noreferrer">🔗 ouvrir le lien</a>':'<span class="chip">📍 '+esc(x.localisation)+'</span>'):'')+'</div></div>'
    +'<div class="toolbar">'
+   +(x.stocke?'<button class="btn" data-act="doc-open" data-id="'+x.id+'" title="Ouvrir la copie enregistrée dans un nouvel onglet">⬇️ Ouvrir la copie</button>':'')
    +'<button class="btn" data-act="new-note" data-doc="'+x.id+'">+ Note sur ce document</button>'
    +'<button class="btn ghost" data-act="edit-doc" data-id="'+x.id+'">✎ Modifier</button>'
    +'<button class="btn danger ghost" data-act="del-doc" data-id="'+x.id+'" title="Supprimer">🗑</button>'
    +'</div></div>';
-  if(x.description)h+='<p class="desc">'+esc(x.description)+'</p>';
+  h+='<div class="desc-inline" data-kind="doc" data-id="'+x.id+'" contenteditable="true">'+(x.description?esc(x.description).replace(/\n/g,'<br/>'):'<span class="muted">Décrivez ce document… (enregistrement automatique en cliquant ailleurs)</span>')+'</div>';
   h+='<h2 class="sec-title">📁 Dossiers utilisant ce document ('+x.dossiers.length+')</h2>';
   if(x.dossiers.length){
     var i;for(i=0;i<x.dossiers.length;i++){var d=findDossier(x.dossiers[i]);
@@ -922,8 +1105,13 @@ function pageDoc(id){
     }
   }else{h+='<div class="empty small">Ce document n’est lié à aucun dossier. <button class="btn sm" data-act="edit-doc" data-id="'+x.id+'">Lier à des dossiers</button></div>';}
   h+='<h2 class="sec-title">📝 Notes sur ce document ('+ns.length+')</h2>';
-  if(ns.length){h+='<div class="notes-grid">';var j;for(j=0;j<ns.length;j++){h+=noteCard(ns[j]);}h+='</div>';}
+  if(ns.length){
+    var flt=ns.filter(function(nn){return nn.autoFloat;});
+    if(flt.length){h+='<div class="float-banner">🪟 '+flt.length+' note(s) mémorisée(s) pour ce document. <button class="btn sm" data-act="float-open-all" data-id="'+x.id+'">Ouvrir en fenêtre(s) flottante(s)</button></div>';}
+    h+='<div class="notes-grid">';var j;for(j=0;j<ns.length;j++){h+=noteCard(ns[j],'<span class="chip" data-act="note-float" data-id="'+ns[j].id+'" title="Ouvrir en fenêtre flottante">🪟</span>');}h+='</div>';
+  }
   else{h+='<div class="empty">Aucune note. <button class="btn sm" data-act="new-note" data-doc="'+x.id+'">Prendre une note</button></div>';}
+  h+='<div style="margin-top:12px">'+dropzoneHtml(x.id)+'</div>';
   h+='</div>';
   return h;
 }
@@ -968,28 +1156,34 @@ function modalLinkDoc(did){
 
 // ===== Page Capture (boîte de réception) =====
 function pageCapture(){
-  var caps=state.notes.filter(function(n){return n.capture;}).sort(function(a,b){
-    if(a.traitee!==b.traitee)return a.traitee?1:-1;
-    var ea=a.echeance||'9999',eb=b.echeance||'9999';
-    return ea<eb?-1:1;
-  });
+  var caps=state.notes.filter(function(n){return n.capture;});
   var atrier=caps.filter(function(n){return !n.traitee;});
-  var h='<div class="content"><div class="page-head"><h1 class="page-title">⚡ Capture</h1><div class="toolbar"><button class="btn primary capbtn" data-act="quick-capture">⚡ Capturer une idée</button></div></div>';
-  h+='<p class="small muted" style="margin-bottom:12px">Vos idées notées à la volée, comme des post-its. Raccourci : touche <span class="kbd">C</span> n’importe où. Une idée capturée peut ensuite être reliée à un dossier, un document, une tâche, une échéance — et marquée « traitée ».</p>';
-  if(!caps.length){
+  var historique=state.notes.filter(function(n){return n.origine==='capture';}).sort(function(a,b){return (a.trieeLe||'')<(b.trieeLe||'')?1:-1;});
+  var h='<div class="content"><div class="page-head"><h1 class="page-title">⚡ Capture</h1><div class="toolbar">'
+   +'<button class="btn primary capbtn" data-act="quick-capture">⚡ Capturer une idée</button>'
+   +'<button class="btn" data-act="quick-capture" data-cam="1" title="Ouvrir l’appareil photo / la capture d’écran sur mobile">📷 Depuis l’appareil</button>'
+   +'</div></div>';
+  h+='<p class="small muted" style="margin-bottom:12px">Vos idées notées à la volée, comme des post-its. Raccourci : touche <span class="kbd">C</span> n’importe où. Une fois triée, une idée <b>devient une vraie note</b> (retrouvez-la dans 📝 Notes) — et l’historique des post-its triés reste visible ici.</p>';
+  if(!caps.length&&!historique.length){
     h+='<div class="empty">Aucune idée capturée pour l’instant.<br/><br/><button class="btn capbtn" data-act="quick-capture">⚡ Capturer une idée</button></div></div>';
     return h;
   }
+  if(!atrier.length){
+    h+='<div class="banner info">🎉 Tout est trié — les nouvelles idées arrivent ici.</div>';
+  }
   h+='<h2 class="sec-title">🧠 À trier ('+atrier.length+')</h2>';
   var i;
-  for(i=0;i<caps.length;i++){
-    var n=caps[i];
-    if(!n.traitee)h+=captureRow(n);
+  if(atrier.length){
+    for(i=0;i<atrier.length;i++){h+=captureRow(atrier[i]);}
+  }else{
+    h+='<div class="empty small">Rien à trier pour l’instant.</div>';
   }
-  var trait=caps.filter(function(n){return n.traitee;});
-  if(trait.length){
-    h+='<h2 class="sec-title">✓ Traitées ('+trait.length+')</h2>';
-    var j;for(j=0;j<Math.min(trait.length,10);j++){h+=captureRow(trait[j]);}
+  h+='<h2 class="sec-title">📚 Historique — post-its devenus notes ('+historique.length+')</h2>';
+  if(historique.length){
+    h+='<div class="notes-grid">';var j;for(j=0;j<Math.min(historique.length,12);j++){h+=noteCard(historique[j]);}h+='</div>';
+    h+='<p class="tiny muted" style="margin-top:8px">Ces post-its triés sont devenus de vraies notes : modifiables dans 📝 Notes, jamais perdues.</p>';
+  }else{
+    h+='<div class="empty small">Aucun post-it trié pour l’instant.</div>';
   }
   h+='</div>';
   return h;
@@ -1002,6 +1196,7 @@ function modalCapture(){
    +'<div><label>Dossier (optionnel)</label><select name="dos">'+dossierOptions('')+'</select></div>'
    +'</div>'
    +'<div class="form-row img-pick"><label>Joindre une image / capture d’écran (optionnel)</label><input type="file" id="cap-img" accept="image/*"/></div>'
+   +'<div class="form-row img-pick"><label>📷 Depuis la caméra de l’appareil (pratique sur téléphone)</label><input type="file" id="cap-cam" accept="image/*" capture="environment"/></div>'
    +'<p class="tiny muted">Vous pouvez aussi coller une image avec Ctrl+V dans cette fenêtre. <span id="cap-img-info" class="tiny muted"></span></p>'
    +'<div class="modal-foot"><button type="button" class="btn ghost" data-act="modal-close">Annuler</button><button type="submit" class="btn primary">⚡ Capturer</button></div>'
    +'</form>';
@@ -1014,6 +1209,8 @@ function modalCapture(){
 // ===== Page Notes =====
 function pageNotes(){
   var h='<div class="content"><div class="page-head"><h1 class="page-title">📝 Notes</h1><div class="toolbar"><button class="btn primary" data-act="new-note">+ Nouvelle note</button></div></div>';
+  var nbCap=state.notes.filter(function(n){return n.capture&&!n.traitee;}).length;
+  if(nbCap){h+='<div class="banner warn">⚡ '+nbCap+' idée(s) à trier — elles restent dans la boîte <a class="chip" data-act="go" data-page="capture">⚡ Capture</a> jusqu’à leur tri, puis deviennent des notes.</div>';}
   h+=filtersNotes();
   h+='<div id="page-body">'+notesBody()+'</div></div>';
   return h;
@@ -1043,6 +1240,7 @@ function notesBody(){
   var f=state.filtres.no;
   var q=f.q.trim().toLowerCase();
   var list=state.notes.filter(function(n){
+    if(n.capture)return false;
     if(f.tr==='todo'&&n.traitee)return false;
     if(f.tr==='done'&&!n.traitee)return false;
     if(f.ctx&&n.contexte!==f.ctx)return false;
@@ -1067,18 +1265,21 @@ function notesBody(){
   h+='</div>';
   return h;
 }
-function noteCard(n){
+function noteCard(n,extra){
   var d=findDossier(n.dossierId);
-  var ex=String(n.contenu||'').replace(/\s+/g,' ');
+  var ex=stripTags(String(n.contenu||'')).replace(/\s+/g,' ');
   if(ex.length>140)ex=ex.slice(0,140)+'…';
   var h='<div class="note-card" data-act="open-note" data-id="'+n.id+'">'
    +(n.epinglee?'<span class="pin">📌</span>':'')
    +'<div class="card-title">'+esc(n.titre)+'</div>'
    +'<div class="note-extrait">'+esc(ex)+'</div>'
-   +'<div class="badges">'+badgeCtx(n.contexte)+(n.capture?'<span class="badge" style="background:#fffbeb;color:#b45309">⚡</span>':'')+(n.image?'<span class="badge" style="background:#f5f3ff;color:#6d28d9">🖼</span>':'')+(n.traitee?'<span class="badge" style="background:#d1fae5;color:#065f46">✓ traitée</span>':'')+echLabel(n.echeance,n.traitee,'Traitée');
+   +'<div class="badges">'+badgeCtx(n.contexte)+(n.capture?'<span class="badge" style="background:#fffbeb;color:#b45309">⚡</span>':'')+(n.image?'<span class="badge" style="background:#f5f3ff;color:#6d28d9">🖼</span>':'')+(n.traitee?'<span class="badge" style="background:#d1fae5;color:#065f46">✓ traitée</span>':'')
+   +((n.prio&&n.prio!=='normale')?badgePrio(n.prio):'')
+   +echLabel(n.echeance,n.traitee,'Traitée',n.heure||'');
   var i;var tg=n.tags||[];
   for(i=0;i<tg.length;i++){h+='<span class="badge gray">#'+esc(tg[i])+'</span>';}
   if(d)h+='<span class="chip">📁 '+esc(d.nom)+'</span>';
+  if(extra)h+=extra;
   h+='</div></div>';
   return h;
 }
@@ -1089,10 +1290,11 @@ function pageNote(id){
   var h='<div class="content note-view">';
   h+='<div class="crumbs"><a class="chip" data-act="go" data-page="notes">← Notes</a></div>';
   h+='<div class="page-head"><div><h1 class="page-title">'+(n.epinglee?'📌 ':'')+esc(n.titre)+'</h1><div class="badges">'+badgeCtx(n.contexte)
-   +(n.traitee?'<span class="badge" style="background:#d1fae5;color:#065f46">✓ traitée</span>':((n.echeance||n.capture)?'<span class="badge" style="background:#fef3c7;color:#92400e">à traiter</span>':''))+echLabel(n.echeance,n.traitee,'Traitée')
+   +(n.traitee?'<span class="badge" style="background:#d1fae5;color:#065f46">✓ traitée</span>':((n.echeance||n.capture)?'<span class="badge" style="background:#fef3c7;color:#92400e">à traiter</span>':''))+echLabel(n.echeance,n.traitee,'Traitée',n.heure||'')
    +(n.maj?'<span class="badge gray">modifiée le '+fmtDate(n.maj)+'</span>':'')+'</div></div>'
    +'<div class="toolbar">'
    +'<button class="btn ghost" data-act="pin-note" data-id="'+n.id+'">'+(n.epinglee?'Détacher 📌':'Épingler 📌')+'</button>'
+   +'<button class="btn ghost" data-act="note-float" data-id="'+n.id+'" title="Ouvrir en fenêtre flottante — reste visible pendant que vous travaillez">🪟 Flottante</button>'
    +'<button class="btn ghost" data-act="note-to-outlook" data-id="'+n.id+'" title="Créer un rappel dans votre calendrier Outlook">📅 Outlook</button>'
    +'<button class="btn ghost" data-act="note-traitee" data-id="'+n.id+'">'+(n.traitee?'↩ À traiter':'✓ Traitée')+'</button>'
    +'<button class="btn ghost" data-act="edit-note" data-id="'+n.id+'">✎ Modifier</button>'
@@ -1111,7 +1313,15 @@ function pageNote(id){
     h+='</div>';
   }
   if(n.image)h+='<img class="note-img" data-act="img-view" src="'+n.image+'" alt="image jointe"/>';
-  h+='<div class="content-pre">'+(n.contenu?esc(n.contenu):'<span class="muted">Note vide.</span>')+'</div>';
+  h+='<div class="rtbar">'
+   +'<button class="btn ghost sm" data-cmd="bold" title="Gras (Ctrl+B)"><b>G</b></button>'
+   +'<button class="btn ghost sm" data-cmd="italic" title="Italique (Ctrl+I)"><i>I</i></button>'
+   +'<button class="btn ghost sm" data-cmd="underline" title="Souligné (Ctrl+U)"><u>S</u></button>'
+   +'<select id="rt-color" title="Couleur du texte"><option value="">🎨 Couleur</option><option value="#dc2626">Rouge</option><option value="#d97706">Orange</option><option value="#059669">Vert</option><option value="#2563eb">Bleu</option><option value="#7c3aed">Violet</option><option value="#111827">Noir</option></select>'
+   +'<select id="rt-size" title="Taille du texte"><option value="">Taille</option><option value="1">Petite</option><option value="3">Normale</option><option value="5">Grande</option><option value="6">Très grande</option></select>'
+   +'<span class="tiny muted">Le contenu se modifie directement — enregistré automatiquement.</span>'
+   +'</div>';
+  h+='<div class="content-pre" id="note-cont" data-id="'+n.id+'" contenteditable="true" style="min-height:130px">'+(String(n.contenu||'').length?contenuHtml(n.contenu):'<span class="muted">Note vide — écrivez ici…</span>')+'</div>';
   h+='</div>';
   return h;
 }
@@ -1210,7 +1420,10 @@ function modalTache(id,presetDos){
    +'<div><label>Contexte</label><select name="ctx">'+optsHtml(CONTEXTES,t?t.contexte:'perso')+'</select></div>'
    +'<div><label>Échéance</label><input type="date" name="ech" value="'+(t?t.echeance:'')+'"/></div>'
    +'</div>'
-   +'<div class="form-row"><label>Dossier lié</label><select name="dos">'+dossierOptions(dos)+'</select></div>'
+   +'<div class="form-row two">'
+   +'<div><label>Heure (optionnel — détail de la deadline)</label><input type="time" name="heur" value="'+(t?esc(t.heure||''):'')+'"/></div>'
+   +'<div><label>Dossier lié</label><select name="dos">'+dossierOptions(dos)+'</select></div>'
+   +'</div>'
    +'<div class="form-row"><label>Description</label><textarea name="desc" rows="3">'+(t?esc(t.description):'')+'</textarea></div>'
    +'<div class="modal-foot"><button type="button" class="btn ghost" data-act="modal-close">Annuler</button><button type="submit" class="btn primary">Enregistrer</button></div>'
    +'</form>';
@@ -1230,8 +1443,16 @@ function modalNote(id,presetDos,presetDoc){
    +'</div>'
    +'<div class="form-row two">'
    +'<div><label>Échéance de traitement</label><input type="date" name="ech" value="'+(n?n.echeance:'')+'"/></div>'
+   +'<div><label>Heure (optionnel)</label><input type="time" name="heur" value="'+(n?esc(n.heure||''):'')+'"/></div>'
+   +'</div>'
+   +'<div class="form-row two">'
+   +'<div><label>Importance</label><select name="prio">'+optsHtml(PRIORITES,n?(n.prio||'normale'):'normale')+'</select></div>'
    +'<div><label>État</label><select name="tr"><option value="non"'+(!n||!n.traitee?' selected':'')+'>À traiter</option><option value="oui"'+(n&&n.traitee?' selected':'')+'>Traitée ✓</option></select></div>'
    +'</div>'
+   +(n&&n.capture?'<div class="form-row"><label>Une fois ce post-it trié :</label>'
+   +'<label style="display:block;margin:4px 0"><input type="radio" name="capdo" value="conv" checked/> 📝 Le transformer en note (rangé dans 📝 Notes, conservé dans l’historique de ⚡ Capture)</label>'
+   +'<label style="display:block;margin:4px 0"><input type="radio" name="capdo" value="keep"/> ⚡ Le garder en post-it dans la boîte de capture</label>'
+   +'</div>':'')
    +'<div class="form-row"><label>Dossier lié</label><select name="dos">'+dossierOptions(dos)+'</select></div>'
    +'<div class="form-row"><label>Tâche liée</label><select name="ta">'+tacheOptions(n?n.tacheId:'')+'</select></div>'
    +'<div class="form-row"><label>Document lié</label><select name="doc">'+docOptions(n?n.docId:(presetDoc||''))+'</select></div>'
@@ -1240,6 +1461,26 @@ function modalNote(id,presetDos,presetDoc){
    +'<input type="file" id="note-img" accept="image/*"/> <span id="note-img-info" class="tiny muted"></span></div>'
    +'<div class="modal-foot"><button type="button" class="btn ghost" data-act="modal-close">Annuler</button><button type="submit" class="btn primary">Enregistrer</button></div>'
    +'</form>';
+  openModal(h);
+}
+function modalListes(){
+  var h='<h3>⚙️ Mes listes</h3>'
+   +'<p class="small muted">Complétez tous les menus déroulants de l’appli avec vos propres valeurs. Elles s’ajoutent aux choix de base et restent enregistrées sur cet appareil.</p>';
+  var names={statuts:'Statuts de dossier',taches:'Statuts de tâche',priorites:'Priorités',contextes:'Contextes',types:'Types de document',roles:'Rôles de document'};
+  var name;
+  for(name in LISTES_MAP){
+    if(!Object.prototype.hasOwnProperty.call(LISTES_MAP,name))continue;
+    var arr=LISTES_MAP[name];
+    var cust=[],i;
+    for(i=0;i<arr.length;i++){if(arr[i]._c)cust.push(arr[i]);}
+    h+='<div class="form-row"><label>'+names[name]+'</label><div>';
+    for(i=0;i<cust.length;i++){
+      h+='<div class="row" style="padding:5px 8px;margin-bottom:4px"><span class="row-title">'+esc(cust[i].l)+'</span><button class="btn sm ghost" data-act="liste-del" data-liste="'+name+'" data-val="'+esc(cust[i].l)+'">retirer</button></div>';
+    }
+    if(!cust.length)h+='<span class="tiny muted">Aucune valeur personnelle pour l’instant.</span>';
+    h+='</div><div style="display:flex;gap:6px;margin-top:6px"><input id="liste-inp-'+name+'" placeholder="Ajouter une valeur…" style="max-width:280px"/><button class="btn sm" data-act="liste-add" data-liste="'+name+'">＋ Ajouter</button></div></div>';
+  }
+  h+='<div class="modal-foot"><button class="btn ghost" data-act="modal-close">Fermer</button></div>';
   openModal(h);
 }
 function modalExport(){
@@ -1272,6 +1513,11 @@ function modalHelp(){
    +'<p style="margin-top:8px"><b>Plusieurs appareils</b> — Le fichier copié sur un cloud (OneDrive, SharePoint…) fonctionne sur chaque appareil, mais les données appartiennent à chaque navigateur. Pour transférer : exportez le JSON (💾 Export &amp; sauvegarde) sur un appareil, puis importez-le sur l’autre.</p>'
    +'<p style="margin-top:8px"><b>Appli installable (mobile &amp; PC)</b> — La page « 📱 Installer l’appli » du menu explique comment mettre ce fichier en ligne gratuitement et l’installer avec une icône sur votre téléphone (PWA). Vos données restent locales dans chaque navigateur.</p>'
    +'<p style="margin-top:8px"><b>Connexion Outlook (optionnelle)</b> — Page « 📧 Outlook » : après une configuration unique (guide pas à pas), l’appli affiche vos prochains rendez-vous et vos mails non lus en direct, transforme un mail en note à traiter et pousse une échéance dans votre calendrier. La connexion se déconnecte d’un clic ; elle ne recopie aucune donnée ailleurs.</p>'
+   +'<p style="margin-top:8px"><b>Calendrier global</b> — Page « 📅 Calendrier » : toutes vos échéances (tâches, notes, dossiers) en vues jour / semaine / mois, avec les heures optionnelles. Cliquez sur un élément pour l’ouvrir directement.</p>'
+   +'<p style="margin-top:8px"><b>Fenêtre flottante</b> — Depuis une note : bouton 🪟. Elle s’ouvre dans une petite fenêtre séparée (importance, échéance, heure) et reste visible pendant que vous travaillez. Sur une note liée à un document, cochez « Mémoriser » : elle se rouvrira d’un clic depuis la fiche du document.</p>'
+   +'<p style="margin-top:8px"><b>Copies de documents</b> — Déposez vos fichiers (≤ 10 Mo) sur la zone pointillée (page Documents ou fiche d’un dossier) : une copie est enregistrée dans le navigateur, ouvrable et téléchargeable depuis la fiche. Vos originaux ne bougent pas.</p>'
+   +'<p style="margin-top:8px"><b>Mes listes</b> — Menu ⚙️ Mes listes : ajoutez vos propres valeurs à tous les menus déroulants (contextes, priorités, types, rôles…). Elles restent enregistrées sur cet appareil.</p>'
+   +'<p style="margin-top:8px"><b>Post-its → notes</b> — Un post-it de la boîte ⚡ Capture, une fois trié (bouton Trier), devient une vraie note rangée dans 📝 Notes : échéance, importance et heure. L’historique des post-its triés reste visible dans ⚡ Capture.</p>'
    +'<p style="margin-top:8px"><b>Astuce</b> — Tâches : glissez-déposez dans le Kanban. La recherche en haut cherche partout : dossiers, tâches, notes, documents.</p>'
    +'</div>'
    +'<div class="modal-foot" style="margin-top:12px"><button class="btn ghost" data-act="modal-close">Fermer</button></div>';
@@ -1464,7 +1710,10 @@ function msNoteToOutlook(id){
   if(!n)return;
   if(!n.echeance){toast('Ajoutez d’abord une échéance à cette note.');return;}
   if(!state.ms.connected){toast('Connectez d’abord Outlook (page 📧 Outlook).');return;}
-  var body={subject:'📋 '+n.titre,body:{contentType:'text',content:String(n.contenu||'')},start:{dateTime:n.echeance+'T09:00:00',timeZone:'Europe/Paris'},end:{dateTime:n.echeance+'T10:00:00',timeZone:'Europe/Paris'},isReminderOn:true,reminderMinutesBeforeStart:60};
+  var dep=n.heure||'09:00';
+  var arrH=+dep.split(':')[0]+1;if(arrH>23)arrH=23;
+  var fin=(arrH<10?'0':'')+arrH+':'+(dep.split(':')[1]||'00');
+  var body={subject:'📋 '+n.titre,body:{contentType:'text',content:String(n.contenu||'')},start:{dateTime:n.echeance+'T'+dep+':00',timeZone:'Europe/Paris'},end:{dateTime:n.echeance+'T'+fin+':00',timeZone:'Europe/Paris'},isReminderOn:true,reminderMinutesBeforeStart:60};
   msGraph('/me/events','POST',body).then(function(r){
     if(r.ok){toast('Rappel créé dans votre calendrier Outlook 📅');}
     else{toast('Création refusée par Outlook — vérifiez la connexion.');}
@@ -1508,7 +1757,7 @@ function pageOutlook(){
 
 // ===== PWA (installation en tant qu'application) =====
 var SW_SRC=[
-'var C="espace-cache-v1";',
+'var C="espace-cache-v2";',
 'self.addEventListener("install",function(e){self.skipWaiting();});',
 'self.addEventListener("activate",function(e){e.waitUntil(self.clients.claim());});',
 'self.addEventListener("fetch",function(e){',
@@ -1642,7 +1891,7 @@ function exportCsvNotes(){
     var n=state.notes[i];
     var d=findDossier(n.dossierId);
     var t=findTache(n.tacheId);
-    rows.push([n.id,n.titre,(n.tags||[]).join(' | '),n.contexte,d?d.nom:'',t?t.titre:'',n.maj,n.contenu]);
+    rows.push([n.id,n.titre,(n.tags||[]).join(' | '),n.contexte,d?d.nom:'',t?t.titre:'',n.maj,stripTags(n.contenu)]);
   }
   downloadText('espace-notes-'+stamp()+'.csv',toCSV(rows),'text/csv');
   markSaved();toast('Export CSV Notes téléchargé');
@@ -1721,6 +1970,7 @@ function saveTacheForm(f){
   t.priorite=el.prio.value;
   t.contexte=el.ctx.value;
   t.echeance=el.ech.value;
+  t.heure=el.heur.value;
   t.dossierId=el.dos.value;
   t.description=el.desc.value;
   t.maj=today();
@@ -1742,7 +1992,12 @@ function saveNoteForm(f){
   n.contexte=el.ctx.value;
   n.epinglee=(el.pin.value==='oui');
   n.echeance=el.ech.value;
+  n.heure=el.heur.value;
+  n.prio=el.prio.value;
   n.traitee=(el.tr.value==='oui');
+  if(n.capture&&el.capdo){
+    if(el.capdo.value==='conv'){n.capture=false;n.origine='capture';n.trieeLe=today();}
+  }
   n.dossierId=el.dos.value;
   n.tacheId=el.ta.value;
   n.docId=el.doc.value;
@@ -1801,12 +2056,116 @@ function readImage(file,dest){
   rd.readAsDataURL(file);
 }
 
+// ===== Fichiers importés (copies en IndexedDB, ≤ 10 Mo) =====
+var IDB=null;
+function idbOpen(){
+  if(IDB)return Promise.resolve(IDB);
+  return new Promise(function(res,rej){
+    try{
+      var rq=indexedDB.open('espace-files',1);
+      rq.onupgradeneeded=function(){try{rq.result.createObjectStore('files');}catch(e){}};
+      rq.onsuccess=function(){IDB=rq.result;res(IDB);};
+      rq.onerror=function(){rej(rq.error||new Error('IndexedDB indisponible'));};
+    }catch(e){rej(e);}
+  });
+}
+function idbPut(k,blob){return idbOpen().then(function(db){return new Promise(function(res,rej){var tx=db.transaction('files','readwrite');tx.objectStore('files').put(blob,k);tx.oncomplete=function(){res(true);};tx.onerror=function(){rej(tx.error||new Error('idb'));};});});}
+function idbGet(k){return idbOpen().then(function(db){return new Promise(function(res,rej){var tx=db.transaction('files','readonly');var rq2=tx.objectStore('files').get(k);rq2.onsuccess=function(){res(rq2.result||null);};rq2.onerror=function(){rej(rq2.error||new Error('idb'));};});});}
+function idbDel(k){return idbOpen().then(function(db){return new Promise(function(res,rej){var tx=db.transaction('files','readwrite');tx.objectStore('files').delete(k);tx.oncomplete=function(){res(true);};tx.onerror=function(){rej(tx.error||new Error('idb'));};});});}
+function guessDocType(nom){
+  var e=String(nom||'').split('.').pop().toLowerCase();
+  if(e==='doc'||e==='docx'||e==='odt')return 'word';
+  if(e==='xls'||e==='xlsx'||e==='ods'||e==='csv')return 'excel';
+  if(e==='ppt'||e==='pptx'||e==='odp')return 'ppt';
+  if(e==='pdf')return 'pdf';
+  if(e==='png'||e==='jpg'||e==='jpeg'||e==='gif'||e==='webp'||e==='svg')return 'image';
+  return 'autre';
+}
+function importFiles(files,dosId){
+  var list=[];var i;
+  for(i=0;i<(files||[]).length;i++){if(files[i])list.push(files[i]);}
+  if(!list.length)return;
+  var done=0;
+  var next=function(){
+    done++;
+    if(done>=list.length){save();toast(list.length+' document(s) importé(s) — copie enregistrée 📄');render();}
+  };
+  for(i=0;i<list.length;i++){importOneFile(list[i],dosId,next);}
+}
+function importOneFile(f,dosId,next){
+  var big=((f&&f.size)?f.size:0)>10*1024*1024;
+  var x={id:uid(),nom:String((f&&f.name)||'Fichier'),type:guessDocType(f&&f.name),role:'livrable',localisation:'',description:'',dossiers:dosId?[dosId]:[],cree:today(),maj:today()};
+  state.docs.push(x);
+  if(big){toast('« '+x.nom+' » dépasse 10 Mo — seule la fiche est créée (sans copie).');next();return;}
+  idbPut(x.id,f).then(function(){x.stocke=true;save();if(state.page==='doc'&&state.detailId===x.id)render();})['catch'](function(){});
+  next();
+}
+// ===== Fenêtre flottante « note compagnon » =====
+function openFloatNote(nid){
+  var n=findNote(nid);if(!n)return;
+  var w=null;
+  try{w=window.open('','espace-float-'+n.id,'width=340,height=470,resizable=yes,scrollbars=yes');}catch(e){}
+  if(!w||!w.document){toast('La fenêtre flottante a été bloquée — autorisez les fenêtres surgissantes.');return;}
+  var doc=null;
+  if(n.docId)doc=findDoc(n.docId);
+  var css='body{font-family:Segoe UI,system-ui,sans-serif;background:#f6f7fb;color:#1e293b;margin:0;padding:14px;font-size:14px}'
+   +'.ft-titre{font-weight:700;font-size:15px;margin-bottom:2px}'
+   +'.ft-doc{font-size:12px;color:#64748b;margin-bottom:10px}'
+   +'.ft-cont{background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:12px;min-height:110px;line-height:1.6;white-space:pre-wrap;margin-bottom:10px}'
+   +'.ft-lbl{font-size:11px;font-weight:700;color:#475569;margin:8px 0 3px}'
+   +'select,input{font-family:inherit;font-size:13px;padding:6px 8px;border:1px solid #e2e8f0;border-radius:8px;width:100%;box-sizing:border-box}'
+   +'.ft-memo{display:flex;gap:6px;align-items:center;font-size:12px;color:#475569;margin:10px 0}'
+   +'button{background:#4f46e5;color:#fff;border:none;border-radius:8px;padding:9px 14px;font-size:14px;cursor:pointer;width:100%}';
+  var h='<!doctype html><html><head><meta charset="UTF-8"/><title>'+esc(n.titre)+'</title><style>'+css+'</style></head><body>'
+   +'<div class="ft-titre">'+(n.epinglee?'📌 ':'')+'📝 '+esc(n.titre)+'</div>'
+   +(doc?'<div class="ft-doc">📄 '+esc(doc.nom)+'</div>':'')
+   +'<div class="ft-cont">'+(String(n.contenu||'')?contenuHtml(n.contenu):'<span style="color:#94a3b8">Note vide — pensez-y pendant que vous travaillez…</span>')+'</div>'
+   +'<div class="ft-lbl">Importance</div><select id="ft-prio">'+optsHtml(PRIORITES,n.prio||'normale')+'</select>'
+   +'<div class="ft-lbl">Échéance</div><input type="date" id="ft-ech" value="'+esc(n.echeance||'')+'"/>'
+   +'<div class="ft-lbl">Heure</div><input type="time" id="ft-heur" value="'+esc(n.heure||'')+'"/>'
+   +(n.docId?'<label class="ft-memo"><input type="checkbox" id="ft-memo"'+(n.autoFloat?' checked':'')+' style="width:auto"/> Mémoriser pour ce document (rouvert automatiquement depuis sa fiche)</label>':'')
+   +'<button id="ft-save">💾 Enregistrer et fermer</button>'
+   +'</body></html>';
+  try{
+    w.document.open();
+    w.document.write(h);
+    w.document.close();
+    var btn=null;
+    try{btn=w.document.getElementById('ft-save');}catch(e2){}
+    if(btn){
+      btn.onclick=function(){
+        var gp=null,ge=null,gh=null,gm=null;
+        try{gp=w.document.getElementById('ft-prio');ge=w.document.getElementById('ft-ech');gh=w.document.getElementById('ft-heur');gm=w.document.getElementById('ft-memo');}catch(e3){}
+        try{
+          if(gp)n.prio=gp.value;
+          if(ge)n.echeance=ge.value;
+          if(gh)n.heure=gh.value;
+          if(gm)n.autoFloat=!!gm.checked;
+          n.maj=today();
+          save();
+        }catch(e4){}
+        try{w.close();}catch(e5){}
+        render();
+      };
+    }
+  }catch(e6){}
+}
+
 // ===== Écouteurs globaux =====
 document.addEventListener('click',function(ev){
   if(ev.target&&ev.target.classList&&ev.target.classList.contains('modal-back')){closeModal();return;}
   if(ev.target.closest&&ev.target.closest('a[href]'))return;
+  var cmd=ev.target.closest?ev.target.closest('[data-cmd]'):null;
+  if(cmd){
+    try{document.execCommand(cmd.getAttribute('data-cmd'),false,null);}catch(e){}
+    return;
+  }
   var el=ev.target.closest('[data-act]');
-  if(!el)return;
+  if(!el){
+    var dz0=ev.target.closest?ev.target.closest('#dz-docs'):null;
+    if(dz0){var df0=document.getElementById('doc-file');if(df0&&df0.click)df0.click();}
+    return;
+  }
   ev.preventDefault();
   var a=el.getAttribute('data-act');
   var id=el.getAttribute('data-id');
@@ -1855,17 +2214,57 @@ document.addEventListener('click',function(ev){
   else if(a==='pin-note'){var n2=findNote(id);if(n2){n2.epinglee=!n2.epinglee;save();render();}}
   else if(a==='open-export'){modalExport();}
   else if(a==='open-help'){modalHelp();}
+  else if(a==='open-listes'){modalListes();}
+  else if(a==='liste-add'){
+    var lname=el.getAttribute('data-liste');
+    var inpx=document.getElementById('liste-inp-'+lname);
+    var val=inpx?String(inpx.value||'').trim():'';
+    if(!val){toast('Saisissez d’abord la valeur à ajouter.');}
+    else{
+      var lst=getListes();
+      if(!Array.isArray(lst[lname]))lst[lname]=[];
+      if(lst[lname].indexOf(val)<0){lst[lname].push(val);setListes(lst);applyCustomLists();toast('Valeur ajoutée ✓');}
+      modalListes();
+    }
+  }
+  else if(a==='liste-del'){
+    var lname2=el.getAttribute('data-liste');var val2=el.getAttribute('data-val');
+    var lst2=getListes();
+    var ix2=Array.isArray(lst2[lname2])?lst2[lname2].indexOf(val2):-1;
+    if(ix2>=0){lst2[lname2].splice(ix2,1);setListes(lst2);applyCustomLists();}
+    modalListes();
+  }
   else if(a==='modal-close'){closeModal();}
   else if(a==='tache-vue'){state.tacheVue=el.getAttribute('data-vue');render();}
+  else if(a==='cal-vue'){state.calVue=el.getAttribute('data-vue')||'mois';render();}
   else if(a==='cal-prev'){
-    state.calM--;if(state.calM<0){state.calM=11;state.calY--;}
-    renderPageBody();
+    if(state.page==='cal'){
+      if(state.calVue==='mois'){state.calM--;if(state.calM<0){state.calM=11;state.calY--;}}
+      else{state.calSel=dayShift(state.calSel,state.calVue==='jour'?-1:-7);}
+      render();
+    }else{
+      state.calM--;if(state.calM<0){state.calM=11;state.calY--;}
+      renderPageBody();
+    }
   }
   else if(a==='cal-next'){
-    state.calM++;if(state.calM>11){state.calM=0;state.calY++;}
-    renderPageBody();
+    if(state.page==='cal'){
+      if(state.calVue==='mois'){state.calM++;if(state.calM>11){state.calM=0;state.calY++;}}
+      else{state.calSel=dayShift(state.calSel,state.calVue==='jour'?1:7);}
+      render();
+    }else{
+      state.calM++;if(state.calM>11){state.calM=0;state.calY++;}
+      renderPageBody();
+    }
   }
-  else if(a==='cal-today'){var nd=new Date();state.calY=nd.getFullYear();state.calM=nd.getMonth();renderPageBody();}
+  else if(a==='cal-today'){
+    if(state.page==='cal'){
+      var ndt=new Date();state.calSel=today();state.calY=ndt.getFullYear();state.calM=ndt.getMonth();
+      render();
+    }else{
+      var nd2=new Date();state.calY=nd2.getFullYear();state.calM=nd2.getMonth();renderPageBody();
+    }
+  }
   else if(a==='clear-exemple'){
     if(confirm('Effacer toutes les données d’exemple ?')){
       state.dossiers=[];state.taches=[];state.notes=[];state.docs=[];state.exemple=false;
@@ -1900,12 +2299,29 @@ document.addEventListener('click',function(ev){
   else if(a==='del-doc'){
     var x3=findDoc(id);
     if(x3&&confirm('Supprimer le document « '+x3.nom+' » ?\nSes notes seront conservées mais détachées.')){
+      if(x3.stocke){idbDel(x3.id)['catch'](function(){});}
       var i3;
       for(i3=0;i3<state.notes.length;i3++){if(state.notes[i3].docId===id)state.notes[i3].docId='';}
       state.docs=state.docs.filter(function(y){return y.id!==id;});
       if(state.page==='doc'&&state.detailId===id){navGo('docs','');}
       save();toast('Document supprimé');render();
     }
+  }
+  else if(a==='doc-open'){
+    var x4=findDoc(id);
+    if(x4&&x4.stocke){
+      idbGet(id).then(function(blob){
+        if(!blob){toast('Copie introuvable — réimportez le fichier.');return;}
+        var u=URL.createObjectURL(blob);
+        var w2=null;
+        try{w2=window.open(u,'_blank');}catch(e7){}
+        if(!w2)toast('Ouverture bloquée — autorisez les fenêtres surgissantes.');
+      })['catch'](function(){toast('Impossible d’ouvrir la copie.');});
+    }
+  }
+  else if(a==='note-float'){openFloatNote(id);}
+  else if(a==='float-open-all'){
+    var j3;for(j3=0;j3<state.notes.length;j3++){if(state.notes[j3].docId===id)openFloatNote(state.notes[j3].id);}
   }
   else if(a==='quick-capture'){modalCapture();}
   else if(a==='note-traitee'){
@@ -1963,11 +2379,36 @@ document.addEventListener('change',function(ev){
   if(!el||!el.getAttribute)return;
   if(el.id==='imp-json'){if(el.files&&el.files[0])importJson(el.files[0]);return;}
   if(el.id==='cap-img'){if(el.files&&el.files[0])readImage(el.files[0],'cap');return;}
+  if(el.id==='cap-cam'){if(el.files&&el.files[0])readImage(el.files[0],'cap');return;}
   if(el.id==='note-img'){if(el.files&&el.files[0])readImage(el.files[0],'note');return;}
+  if(el.id==='doc-file'){if(el.files)importFiles(el.files,el.getAttribute('data-dos')||'');return;}
+  if(el.id==='cal-pick'){state.calSel=el.value||today();render();return;}
+  if(el.id==='rt-color'){try{document.execCommand('foreColor',false,el.value||'');}catch(e){}el.value='';return;}
+  if(el.id==='rt-size'){try{document.execCommand('fontSize',false,el.value||'3');}catch(e){}el.value='';return;}
   var k=el.getAttribute('data-chg');
   if(!k)return;
   setFilter(k,el.value);
   renderPageBody();
+});
+document.addEventListener('focusout',function(ev){
+  var el=ev.target;
+  if(!el||!el.getAttribute||!el.id)return;
+  if(el.id==='note-cont'){
+    var html=String(el.innerHTML||'');
+    if(html.indexOf('Note vide — écrivez ici')>=0)html='';
+    var nn=findNote(el.getAttribute('data-id'));
+    if(nn){nn.contenu=richSan(html);nn.maj=today();save();}
+    return;
+  }
+  if(el.id==='desc-inline'||el.getAttribute('data-kind')){
+    var txt=String(el.innerText||el.textContent||'');
+    if(txt.indexOf('enregistrement automatique')>=0)txt='';
+    txt=txt.replace(/\u00a0/g,' ').trim();
+    var kind=el.getAttribute('data-kind');var did=el.getAttribute('data-id');
+    if(kind==='doc'){var xd=findDoc(did);if(xd){xd.description=txt;xd.maj=today();save();}}
+    else if(kind==='dossier'){var dd=findDossier(did);if(dd){dd.description=txt;dd.maj=today();save();}}
+    return;
+  }
 });
 document.addEventListener('keydown',function(ev){
   if(ev.key==='Escape'){closeModal();return;}
@@ -2023,6 +2464,8 @@ document.addEventListener('dragover',function(ev){
   if(c){ev.preventDefault();}
 });
 document.addEventListener('drop',function(ev){
+  var dz=ev.target.closest?ev.target.closest('#dz-docs'):null;
+  if(dz){ev.preventDefault();dz.className='dropzone';importFiles(ev.dataTransfer.files,dz.getAttribute('data-dos')||'');return;}
   var c=ev.target.closest?ev.target.closest('.kcol'):null;
   if(!c)return;
   ev.preventDefault();
@@ -2036,6 +2479,7 @@ document.addEventListener('drop',function(ev){
 
 // ===== Démarrage =====
 function init(){
+  applyCustomLists();
   pwaInit();
   msHandleRedirect();
   var st=load();
