@@ -1,0 +1,2054 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="theme-color" content="#4f46e5"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+<meta name="apple-mobile-web-app-title" content="Mon Espace"/>
+<title>Mon Espace — Dossiers, Notes & Tâches</title>
+<style>
+:root{--bg:#f6f7fb;--card:#ffffff;--ink:#1e293b;--muted:#64748b;--line:#e2e8f0;--accent:#4f46e5;--accent-soft:#eef2ff;--danger:#dc2626;--ok:#059669;--warn:#d97706}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--ink);display:flex;min-height:100vh;font-size:15px}
+button{font-family:inherit;font-size:inherit;cursor:pointer}
+input,select,textarea{font-family:inherit;font-size:14px;padding:7px 9px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink);width:100%}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--accent-soft);border-color:var(--accent)}
+textarea{resize:vertical}
+/* ---- Sidebar ---- */
+.sidebar{width:228px;flex:0 0 228px;background:#111827;color:#cbd5e1;padding:18px 12px;display:flex;flex-direction:column;gap:4px}
+.brand{font-weight:700;font-size:17px;color:#fff;padding:6px 10px 16px;letter-spacing:.3px}
+.snav{display:block;padding:9px 10px;border-radius:8px;color:#cbd5e1;text-decoration:none;cursor:pointer;user-select:none}
+.snav:hover{background:#1f2937;color:#fff}
+.snav.active{background:var(--accent);color:#fff}
+.side-foot{margin-top:auto;display:flex;flex-direction:column;gap:4px}
+.side-note{font-size:11px;color:#6b7280;padding:10px 10px 0;line-height:1.5}
+/* ---- Layout ---- */
+.wrap{flex:1;display:flex;flex-direction:column;min-width:0}
+.topbar{display:flex;align-items:center;gap:10px;padding:12px 20px;background:var(--card);border-bottom:1px solid var(--line)}
+.navbtns{display:flex;gap:6px}
+#gsearch{max-width:420px;margin-left:auto}
+main{flex:1;padding:22px 24px;overflow-y:auto}
+.content{max-width:1060px;margin:0 auto}
+/* ---- Typo & head ---- */
+.page-title{font-size:22px;font-weight:700}
+.page-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.hero{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+.tiny{font-size:11px}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.crumbs{margin-bottom:10px}
+.desc{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px;white-space:pre-wrap;margin-bottom:16px;line-height:1.55}
+h2.sec-title{font-size:15px;margin:22px 0 10px;color:#334155}
+/* ---- Buttons ---- */
+.btn{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:7px 13px;color:var(--ink)}
+.btn:hover{border-color:#94a3b8}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.primary:hover{background:#4338ca}
+.btn.ghost{background:transparent}
+.btn.danger{color:var(--danger);border-color:#fecaca}
+.btn.sm{padding:4px 9px;font-size:13px}
+.btn:disabled{opacity:.4;cursor:default}
+.viewswitch{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:#fff}
+.viewswitch .btn{border:none;border-radius:0}
+.viewswitch .btn.on{background:var(--accent);color:#fff}
+/* ---- Bannières & KPI ---- */
+.banner{display:flex;align-items:center;gap:10px;flex-wrap:wrap;border-radius:10px;padding:11px 14px;margin-bottom:14px;font-size:14px}
+.banner.info{background:#eef2ff;border:1px solid #c7d2fe}
+.banner.warn{background:#fffbeb;border:1px solid #fde68a}
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.kpi .num{font-size:24px;font-weight:700}
+.kpi .lbl{font-size:12px;color:var(--muted);margin-top:2px}
+.kpi.red .num{color:var(--danger)}
+.kpi.blue .num{color:var(--accent)}
+.kpi.amber .num{color:var(--warn)}
+.kpi.green .num{color:var(--ok)}
+/* ---- Cartes ---- */
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;cursor:pointer;transition:box-shadow .15s}
+.card:hover{box-shadow:0 4px 14px rgba(30,41,59,.09)}
+.card-top{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.card-title{font-weight:600;margin-bottom:6px}
+.card-meta{font-size:12px;color:var(--muted);margin-bottom:8px}
+.badges{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.badge{display:inline-block;font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px}
+.badge.gray{background:#f1f5f9;color:var(--muted)}
+.chip{display:inline-flex;align-items:center;gap:4px;font-size:12px;color:#475569;background:#f1f5f9;border-radius:20px;padding:3px 10px;cursor:pointer}
+.chip:hover{background:#e2e8f0}
+.eco{font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px;background:#f1f5f9;color:var(--muted)}
+.eco.late{background:#fee2e2;color:var(--danger)}
+.eco.soon{background:#fef3c7;color:#92400e}
+.eco.ok{background:#d1fae5;color:#065f46}
+/* ---- Lignes (tâches) ---- */
+.row{display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--card);border:1px solid var(--line);border-radius:10px;margin-bottom:7px;flex-wrap:wrap}
+.row-title{font-weight:500;cursor:pointer}
+.row-title:hover{color:var(--accent)}
+.row.done .row-title{text-decoration:line-through;color:var(--muted)}
+.chk{width:22px;height:22px;flex:0 0 22px;border-radius:6px;border:1.5px solid #94a3b8;background:#fff;color:var(--ok);font-size:14px;line-height:1;padding:0}
+.chk:hover{border-color:var(--accent)}
+.empty{background:var(--card);border:1px dashed var(--line);border-radius:12px;padding:26px;text-align:center;color:var(--muted);font-size:14px}
+/* ---- Filtres ---- */
+.filters{display:flex;gap:10px;flex-wrap:wrap;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:16px}
+.filters input,.filters select{width:auto;min-width:150px}
+.filters .grow{flex:1;min-width:180px}
+.tag{display:inline-block;background:var(--accent-soft);color:var(--accent);border:none;border-radius:20px;padding:4px 11px;font-size:12px;font-weight:600}
+.tag:hover{background:#e0e7ff}
+.tag.on{background:var(--accent);color:#fff}
+.tags-row{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+/* ---- Kanban ---- */
+.kboard{display:flex;gap:12px;align-items:flex-start}
+.kcol{flex:1;background:#eef0f6;border-radius:12px;padding:10px;min-height:120px}
+.kcol h3{font-size:13px;color:#475569;margin:2px 4px 10px;display:flex;justify-content:space-between}
+.kcard{background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:8px;cursor:grab}
+.kcard:active{cursor:grabbing}
+.kcard .row-title{display:block;margin-bottom:6px}
+.kcard .sub{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+/* ---- Calendrier ---- */
+.cal-head{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.cal-title{font-weight:700;font-size:16px;flex:1;text-align:center}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+.cal-dow{font-size:11px;color:var(--muted);text-align:center;padding:4px 0;font-weight:600}
+.cal-cell{background:var(--card);border:1px solid var(--line);border-radius:8px;min-height:74px;padding:5px}
+.cal-cell.other{background:transparent;border-color:transparent}
+.cal-cell.today{border:1.5px solid var(--accent);background:var(--accent-soft)}
+.cal-lbl{font-size:11px;color:var(--muted);font-weight:600;margin-bottom:3px}
+.cal-cell.today .cal-lbl{color:var(--accent)}
+.cal-chip{display:block;font-size:10.5px;padding:2px 6px;border-radius:5px;margin-bottom:2px;cursor:pointer;background:#e0e7ff;color:#3730a3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cal-chip.dos{background:#d1fae5;color:#065f46}
+.cal-chip.pri-haute{background:#fef3c7;color:#92400e}
+.cal-chip.pri-urgente{background:#fee2e2;color:#991b1b}
+.cal-chip.fait{opacity:.45;text-decoration:line-through}
+/* ---- Notes ---- */
+.notes-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+.note-card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;cursor:pointer}
+.note-card:hover{box-shadow:0 4px 14px rgba(30,41,59,.09)}
+.note-card .pin{float:right}
+.note-extrait{font-size:13px;color:var(--muted);margin:6px 0 10px;line-height:1.5}
+.note-view .content-pre{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 20px;line-height:1.7;white-space:pre-wrap}
+/* ---- Modales ---- */
+.modal-back{position:fixed;inset:0;background:rgba(15,23,42,.45);display:flex;align-items:flex-start;justify-content:center;padding:40px 12px;z-index:50;overflow-y:auto}
+.modal{background:#fff;border-radius:14px;padding:22px;width:100%;max-width:520px;height:fit-content}
+.modal h3{margin-bottom:14px;font-size:17px}
+.form-row{margin-bottom:12px}
+.form-row label{display:block;font-size:12px;font-weight:600;color:#475569;margin-bottom:5px}
+.form-row.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.modal-foot{display:flex;justify-content:flex-end;gap:8px;margin-top:6px}
+.exp-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0}
+.exp-grid .btn{padding:10px;text-align:left;line-height:1.4}
+/* ---- Toast ---- */
+#toast-root{position:fixed;bottom:22px;right:22px;z-index:60}
+.toast{background:#111827;color:#fff;padding:11px 18px;border-radius:10px;font-size:14px;box-shadow:0 8px 22px rgba(0,0,0,.25)}
+/* ---- Documents & capture (v2) ---- */
+.doc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
+.doc-card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;cursor:pointer}
+.doc-card:hover{box-shadow:0 4px 14px rgba(30,41,59,.09)}
+.doc-path{font-size:11px;color:#475569;background:#f8fafc;border:1px solid var(--line);border-radius:6px;padding:2px 6px;display:inline-block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:6px;text-decoration:none}
+.capbtn{background:#f59e0b;border-color:#f59e0b;color:#fff;font-weight:600}
+.capbtn:hover{background:#d97706;border-color:#d97706}
+.eco.s2{background:#ffedd5;color:#c2410c}
+.eco.s7{background:#fef9c3;color:#854d0e}
+input[type=checkbox]{width:auto}
+input[type=file]{padding:5px;font-size:12px}
+.kbd{font-size:11px;background:#f1f5f9;border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;padding:1px 6px;color:var(--muted)}
+.note-img{max-width:240px;max-height:150px;border-radius:8px;border:1px solid var(--line);margin:10px 0;display:block;cursor:zoom-in}
+.img-pick label{font-size:12px;font-weight:600;color:#475569;margin-bottom:5px}
+/* ---- Outlook & guide ---- */
+.ms-dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:middle}
+.ms-dot.on{background:#059669}
+.ms-dot.off{background:#94a3b8}
+.ms-row{display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--card);border:1px solid var(--line);border-radius:10px;margin-bottom:7px;flex-wrap:wrap}
+.ms-row .who{font-size:12px;color:var(--muted)}
+.ms-row .when{font-size:12px;color:var(--accent);font-weight:600}
+.ms-row .preview{font-size:12px;color:var(--muted);flex-basis:100%;margin-top:-2px}
+.step{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:12px}
+.step h3{font-size:15px;margin-bottom:8px}
+.step ol{margin:0 0 8px 20px;line-height:1.7;font-size:14px}
+.codeblk{background:#0f172a;color:#e2e8f0;padding:12px 14px;border-radius:8px;font-family:Consolas,monospace;font-size:12px;white-space:pre-wrap;word-break:break-all;margin:8px 0;line-height:1.5}
+/* ---- Responsive & print ---- */
+@media (max-width:760px){
+ body{flex-direction:column}
+ .sidebar{width:100%;flex:none;flex-direction:row;flex-wrap:wrap;align-items:center;padding:8px}
+ .brand{padding:4px 8px}
+ .snav{display:inline-block;padding:6px 10px}
+ .side-foot{margin:0;flex-direction:row;flex-wrap:wrap}
+ .side-note{display:none}
+ .kpi-grid{grid-template-columns:1fr 1fr}
+ .kboard{flex-direction:column}
+ .kcol{width:100%}
+}
+@media print{
+ .sidebar,.topbar,.btn,.filters,.viewswitch{display:none !important}
+ body{background:#fff}
+ main{padding:0}
+ .card,.row{box-shadow:none}
+}
+</style>
+</head>
+<body>
+<aside class="sidebar" id="sidebar">
+  <div class="brand">✨ Mon Espace</div>
+  <nav>
+    <a class="snav" id="sn-dash" data-act="go" data-page="dash">🏠 Accueil</a>
+    <a class="snav" id="sn-dossiers" data-act="go" data-page="dossiers">📁 Dossiers</a>
+    <a class="snav" id="sn-taches" data-act="go" data-page="taches">✅ Tâches</a>
+    <a class="snav" id="sn-docs" data-act="go" data-page="docs">📄 Documents</a>
+    <a class="snav" id="sn-capture" data-act="go" data-page="capture">⚡ Capture</a>
+    <a class="snav" id="sn-notes" data-act="go" data-page="notes">📝 Notes</a>
+    <a class="snav" id="sn-outlook" data-act="go" data-page="outlook">📧 Outlook</a>
+  </nav>
+  <div class="side-foot">
+    <a class="snav" data-act="go" data-page="install">📱 Installer l’appli</a>
+    <a class="snav" data-act="open-export">💾 Export &amp; sauvegarde</a>
+    <a class="snav" data-act="open-help">❓ Aide &amp; confidentialité</a>
+    <div class="side-note">100 % local : vos données restent sur cet appareil. La connexion Outlook est optionnelle et se limite à ce que vous y consultez.</div>
+  </div>
+</aside>
+<div class="wrap">
+  <header class="topbar">
+    <div class="navbtns">
+      <button class="btn ghost" id="btn-back" data-act="nav-back" title="Reculer">←</button>
+      <button class="btn ghost" id="btn-fwd" data-act="nav-fwd" title="Avancer">→</button>
+    </div>
+    <button class="btn capbtn" data-act="quick-capture" title="Capturer une idée (raccourci : touche C)">⚡ Capturer</button>
+    <input id="gsearch" type="search" placeholder="Rechercher partout… (dossiers, tâches, notes, documents)" autocomplete="off"/>
+  </header>
+  <main id="main"><div class="content muted">Chargement…</div></main>
+</div>
+<div id="modal-root"></div>
+<div id="toast-root"></div>
+<noscript>Cette application nécessite JavaScript.</noscript>
+<script>
+/* =====================================================
+   Mon Espace — Dossiers, Notes & Tâches
+   Fichier unique, vanilla JS, données 100% locales.
+   Priorité de chargement : localStorage > données
+   embarquées (export HTML) > données d'exemple.
+   ===================================================== */
+
+// ===== Clés & constantes =====
+var STORE_KEY='gestion-dnt-v1';
+var PREFS_KEY='gestion-dnt-prefs-v1';
+var EMBED_KEY='__ESPACE_EMBEDDED_DATA__';
+var VERSION=3;
+var OPEN_TAG='<scr'+'ipt>';
+var CLOSE_TAG='<'+'/scr'+'ipt>';
+
+var DOS_STATUTS=[
+ {k:'ouvert',l:'Ouvert',c:'#2563eb'},
+ {k:'en-cours',l:'En cours',c:'#7c3aed'},
+ {k:'attente',l:'En attente',c:'#d97706'},
+ {k:'termine',l:'Terminé',c:'#059669'},
+ {k:'archive',l:'Archivé',c:'#64748b'}
+];
+var TACHE_STATUTS=[
+ {k:'a-faire',l:'À faire',c:'#64748b'},
+ {k:'en-cours',l:'En cours',c:'#2563eb'},
+ {k:'fait',l:'Fait',c:'#059669'}
+];
+var PRIORITES=[
+ {k:'basse',l:'Basse',c:'#94a3b8'},
+ {k:'normale',l:'Normale',c:'#0284c7'},
+ {k:'haute',l:'Haute',c:'#d97706'},
+ {k:'urgente',l:'Urgente',c:'#dc2626'}
+];
+var CONTEXTES=[
+ {k:'perso',l:'Perso',c:'#059669'},
+ {k:'pro',l:'Pro',c:'#2563eb'}
+];
+var DOC_TYPES=[
+ {k:'word',l:'Word',c:'#2b579a'},
+ {k:'excel',l:'Excel',c:'#217346'},
+ {k:'ppt',l:'PowerPoint',c:'#d24726'},
+ {k:'pdf',l:'PDF',c:'#dc2626'},
+ {k:'lien',l:'Lien / web',c:'#0891b2'},
+ {k:'image',l:'Image',c:'#7c3aed'},
+ {k:'autre',l:'Autre',c:'#64748b'}
+];
+var DOC_ROLES=[
+ {k:'livrable',l:'Livrable projet',c:'#2563eb'},
+ {k:'base',l:'Base évolutive',c:'#7c3aed'},
+ {k:'modele',l:'Modèle / gabarit',c:'#0891b2'},
+ {k:'source',l:'Source (à piocher)',c:'#d97706'},
+ {k:'reference',l:'Référence',c:'#64748b'}
+];
+
+// ===== État =====
+var state={
+  dossiers:[],taches:[],notes:[],docs:[],exemple:false,
+  page:'dash',detailId:'',tacheVue:'liste',calY:0,calM:0,
+  searchQ:'',_drag:'',_capImg:'',_noteImg:'',
+  ms:{connected:false,nom:'',events:[],mails:[],err:'',busy:false,token:'',exp:0},
+  filtres:{dos:{q:'',statut:'',ctx:''},ta:{q:'',statut:'',prio:'',ctx:''},no:{q:'',tag:'',ctx:'',tr:''},dc:{q:'',type:'',role:'',dos:''}}
+};
+var nav={stack:[],index:-1};
+
+// ===== Helpers génériques =====
+function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function uid(){return 'x'+Date.now().toString(36)+Math.random().toString(36).slice(2,8);}
+function pad(n){return (n<10?'0':'')+n;}
+function today(){var d=new Date();return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());}
+function plusJours(n){var d=new Date();d.setDate(d.getDate()+n);return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());}
+function daysUntil(ds){if(!ds)return null;var p=ds.split('-');var d=new Date(+p[0],+p[1]-1,+p[2]);var t=new Date();var mid=new Date(t.getFullYear(),t.getMonth(),t.getDate());return Math.round((d-mid)/86400000);}
+function fmtDate(ds){if(!ds)return '—';var p=ds.split('-');return p[2]+'/'+p[1]+'/'+p[0];}
+function relEch(ds,done,dl){var n=daysUntil(ds);if(n===null)return '';if(done)return dl||'Fait';if(n<0)return 'Retard '+(-n)+' j';if(n===0)return 'Aujourd’hui';if(n===1)return 'Demain';if(n<=7)return 'Dans '+n+' j';return fmtDate(ds);}
+function echClass(ds,done){if(done)return 'ok';var n=daysUntil(ds);if(n===null)return '';if(n<0)return 'late';if(n<=2)return 's2';if(n<=7)return 's7';return '';}
+function echLabel(ds,done,dl){if(!ds)return '';return '<span class="eco '+echClass(ds,done)+'">'+relEch(ds,done,dl)+'</span>';}
+function infoOf(list,k){var i;for(i=0;i<list.length;i++){if(list[i].k===k)return list[i];}return list[0];}
+function validK(list,k,def){var i;for(i=0;i<list.length;i++){if(list[i].k===k)return k;}return def;}
+function findDossier(id){var i;for(i=0;i<state.dossiers.length;i++){if(state.dossiers[i].id===id)return state.dossiers[i];}return null;}
+function findTache(id){var i;for(i=0;i<state.taches.length;i++){if(state.taches[i].id===id)return state.taches[i];}return null;}
+function findNote(id){var i;for(i=0;i<state.notes.length;i++){if(state.notes[i].id===id)return state.notes[i];}return null;}
+function findDoc(id){var i;for(i=0;i<state.docs.length;i++){if(state.docs[i].id===id)return state.docs[i];}return null;}
+function docsOfDossier(did){return state.docs.filter(function(x){return x.dossiers.indexOf(did)>=0;});}
+function docNotes(id){return state.notes.filter(function(n){return n.docId===id;});}
+function stamp(){return today().replace(/-/g,'');}
+function jourLong(){try{return new Date().toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});}catch(e){return fmtDate(today());}}
+
+// ===== Persistance =====
+function save(){
+  try{
+    localStorage.setItem(STORE_KEY,JSON.stringify({version:VERSION,exemple:state.exemple,dossiers:state.dossiers,taches:state.taches,notes:state.notes,docs:state.docs}));
+  }catch(e){}
+}
+function getPrefs(){try{var r=localStorage.getItem(PREFS_KEY);return r?JSON.parse(r):{};}catch(e){return {};}}
+function setPrefs(p){try{localStorage.setItem(PREFS_KEY,JSON.stringify(p));}catch(e){}}
+function markSaved(){var p=getPrefs();p.lastExport=new Date().toISOString();setPrefs(p);}
+function lastSavedLabel(){var p=getPrefs();if(!p.lastExport)return 'jamais';var d=new Date(p.lastExport);return pad(d.getDate())+'/'+pad(d.getMonth()+1)+'/'+d.getFullYear();}
+function needBackup(){
+  if(state.dossiers.length+state.taches.length+state.notes.length===0)return false;
+  var p=getPrefs();
+  if(!p.lastExport)return true;
+  return (new Date()-new Date(p.lastExport))>7*86400000;
+}
+
+// ===== Migration / normalisation (évolution sans casse) =====
+function normalize(src){
+  var d=(src&&typeof src==='object')?src:{};
+  var out={version:VERSION,exemple:!!d.exemple,dossiers:[],taches:[],notes:[],docs:[]};
+  var i,x;
+  if(d.dossiers){
+    for(i=0;i<d.dossiers.length;i++){
+      x=d.dossiers[i];if(!x||!x.id)continue;
+      out.dossiers.push({id:String(x.id),nom:String(x.nom||'Sans titre'),statut:validK(DOS_STATUTS,x.statut,'ouvert'),contexte:validK(CONTEXTES,x.contexte,'perso'),categorie:String(x.categorie||''),echeance:String(x.echeance||''),description:String(x.description||''),cree:String(x.cree||today()),maj:String(x.maj||today())});
+    }
+  }
+  if(d.taches){
+    for(i=0;i<d.taches.length;i++){
+      x=d.taches[i];if(!x||!x.id)continue;
+      var st=x.statut;if(!st){st=(x.fait?'fait':'a-faire');}
+      out.taches.push({id:String(x.id),titre:String(x.titre||'Sans titre'),statut:validK(TACHE_STATUTS,st,'a-faire'),priorite:validK(PRIORITES,x.priorite,'normale'),contexte:validK(CONTEXTES,x.contexte,'perso'),echeance:String(x.echeance||''),dossierId:String(x.dossierId||''),description:String(x.description||''),cree:String(x.cree||today()),maj:String(x.maj||today())});
+    }
+  }
+  if(d.notes){
+    for(i=0;i<d.notes.length;i++){
+      x=d.notes[i];if(!x||!x.id)continue;
+      var tags=[];
+      if(Array.isArray(x.tags)){var j;for(j=0;j<x.tags.length;j++){if(x.tags[j])tags.push(String(x.tags[j]));}}
+      else if(typeof x.tags==='string'&&x.tags){var parts=x.tags.split(',');for(var k=0;k<parts.length;k++){if(parts[k].trim())tags.push(parts[k].trim());}}
+      out.notes.push({id:String(x.id),titre:String(x.titre||'Sans titre'),contenu:String(x.contenu||''),tags:tags,contexte:validK(CONTEXTES,x.contexte,'perso'),dossierId:String(x.dossierId||''),tacheId:String(x.tacheId||''),docId:String(x.docId||''),epinglee:!!x.epinglee,echeance:String(x.echeance||''),traitee:!!x.traitee,capture:!!x.capture,image:String(x.image||''),maj:String(x.maj||today())});
+    }
+  }
+  if(d.docs){
+    for(i=0;i<d.docs.length;i++){
+      x=d.docs[i];if(!x||!x.id)continue;
+      var dIds=[];
+      if(Array.isArray(x.dossiers)){var w2;for(w2=0;w2<x.dossiers.length;w2++){if(x.dossiers[w2])dIds.push(String(x.dossiers[w2]));}}
+      out.docs.push({id:String(x.id),nom:String(x.nom||'Sans nom'),type:validK(DOC_TYPES,x.type,'autre'),role:validK(DOC_ROLES,x.role,'livrable'),localisation:String(x.localisation||''),description:String(x.description||''),dossiers:dIds,cree:String(x.cree||today()),maj:String(x.maj||today())});
+    }
+  }
+  return out;
+}
+
+// ===== Données d'exemple (première ouverture) =====
+function seedData(){
+  var d1=uid(),d2=uid();
+  var t1=uid(),t2=uid(),t3=uid(),t4=uid();
+  var n1=uid(),n2=uid();
+  return {version:VERSION,exemple:true,
+    dossiers:[
+      {id:d1,nom:'Renouvellement du passeport',statut:'en-cours',contexte:'perso',categorie:'Administratif',echeance:plusJours(10),description:'Démarche de renouvellement auprès de l’ANTS. Prévoir un délai de plusieurs semaines.',cree:today(),maj:today()},
+      {id:d2,nom:'Préparation du salon biodiversité',statut:'ouvert',contexte:'pro',categorie:'Événement',echeance:plusJours(21),description:'Stand association : réservation, brochure, planning des bénévoles.',cree:today(),maj:today()}
+    ],
+    taches:[
+      {id:t1,titre:'Prendre rendez-vous ANTS',statut:'a-faire',priorite:'haute',contexte:'perso',echeance:plusJours(2),dossierId:d1,description:'',cree:today(),maj:today()},
+      {id:t2,titre:'Vérifier les photos d’identité',statut:'fait',priorite:'normale',contexte:'perso',echeance:plusJours(-3),dossierId:d1,description:'',cree:today(),maj:today()},
+      {id:t3,titre:'Réserver le stand',statut:'a-faire',priorite:'urgente',contexte:'pro',echeance:plusJours(-1),dossierId:d2,description:'Envoyer le formulaire avant fin de semaine.',cree:today(),maj:today()},
+      {id:t4,titre:'Préparer la brochure',statut:'en-cours',priorite:'normale',contexte:'pro',echeance:plusJours(14),dossierId:d2,description:'',cree:today(),maj:today()}
+    ],
+    notes:[
+      {id:n1,titre:'Checklist documents passeport',contenu:'- Photo d’identité conforme\n- Justificatif de domicile < 3 mois\n- Ancien passeport\n- Timbre fiscal (voir montant sur ANTS)',tags:['administratif','checklist'],contexte:'perso',dossierId:d1,tacheId:'',epinglee:false,maj:today()},
+      {id:n2,titre:'Idées pour le stand',contenu:'- Quiz oiseaux pour les enfants\n- Maquette de nichoir\n- Pétition à signer sur tablette',tags:['événement','idées'],contexte:'pro',dossierId:d2,tacheId:'',docId:'',epinglee:true,echeance:'',traitee:false,capture:false,image:'',maj:today()},
+      {id:uid(),titre:'Demander le dépliant 2025 à Marie',contenu:'Capturé à la volée — à trier : relier au dossier salon ?',tags:[],contexte:'pro',dossierId:'',tacheId:'',docId:'',epinglee:false,echeance:plusJours(3),traitee:false,capture:true,image:'',maj:today()}
+    ],
+    docs:[
+      {id:uid(),nom:'Base chiffres biodiversité.xlsx',type:'excel',role:'base',localisation:'Bureau\\Bases\\chiffres-biodiversite.xlsx',description:'Base évolutive : mise à jour au fil de l’eau, je pioche dedans pour chaque présentation.',dossiers:[d2],cree:today(),maj:today()},
+      {id:uid(),nom:'Rapport LPO 2025.pdf',type:'pdf',role:'source',localisation:'SharePoint\\Documents partagés\\Rapports\\rapport-lpo-2025.pdf',description:'Document source : chiffres et synthèses à piocher à l’occasion.',dossiers:[],cree:today(),maj:today()}
+    ]
+  };
+}
+
+function load(){
+  var raw=null;
+  try{raw=localStorage.getItem(STORE_KEY);}catch(e){}
+  if(raw){try{return normalize(JSON.parse(raw));}catch(e){}}
+  try{if(typeof window[EMBED_KEY]!=='undefined'&&window[EMBED_KEY]){return normalize(window[EMBED_KEY]);}}catch(e){}
+  return normalize(seedData());
+}
+
+// ===== Navigation (pile Reculer/Avancer) =====
+function navGo(page,detailId){
+  state.page=page;state.detailId=detailId||'';
+  var top=nav.stack[nav.index];
+  if(!top||top.page!==state.page||top.detailId!==state.detailId){
+    nav.stack=nav.stack.slice(0,nav.index+1);
+    nav.stack.push({page:state.page,detailId:state.detailId});
+    nav.index++;
+  }
+}
+function navBack(){if(nav.index>0){nav.index--;state.page=nav.stack[nav.index].page;state.detailId=nav.stack[nav.index].detailId;}}
+function navFwd(){if(nav.index<nav.stack.length-1){nav.index++;state.page=nav.stack[nav.index].page;state.detailId=nav.stack[nav.index].detailId;}}
+
+// ===== Badges =====
+function badgeDossier(k){var s=infoOf(DOS_STATUTS,k);return '<span class="badge" style="background:'+s.c+'1a;color:'+s.c+'">'+s.l+'</span>';}
+function badgeTache(k){var s=infoOf(TACHE_STATUTS,k);return '<span class="badge" style="background:'+s.c+'1a;color:'+s.c+'">'+s.l+'</span>';}
+function badgePrio(k){var s=infoOf(PRIORITES,k);return '<span class="badge" style="background:'+s.c+'1a;color:'+s.c+'">'+s.l+'</span>';}
+function badgeCtx(k){var s=infoOf(CONTEXTES,k);return '<span class="badge" style="background:'+s.c+'1a;color:'+s.c+'">'+s.l+'</span>';}
+function badgeDocType(k){var s=infoOf(DOC_TYPES,k);return '<span class="badge" style="background:'+s.c+'1a;color:'+s.c+'">'+s.l+'</span>';}
+function badgeDocRole(k){var s=infoOf(DOC_ROLES,k);return '<span class="badge" style="background:'+s.c+'1a;color:'+s.c+'">'+s.l+'</span>';}
+function optsHtml(list,sel){var h='';var i;for(i=0;i<list.length;i++){h+='<option value="'+list[i].k+'"'+(list[i].k===sel?' selected':'')+'>'+list[i].l+'</option>';}return h;}
+
+// ===== Sélections =====
+function dossierOptions(sel){
+  var h='<option value="">— Aucun dossier —</option>';var i;
+  for(i=0;i<state.dossiers.length;i++){var d=state.dossiers[i];h+='<option value="'+d.id+'"'+(d.id===sel?' selected':'')+'>'+esc(d.nom)+'</option>';}
+  return h;
+}
+function tacheOptions(sel){
+  var h='<option value="">— Aucune tâche —</option>';var i;
+  var list=state.taches.slice().sort(function(a,b){return a.titre.toLowerCase()<b.titre.toLowerCase()?-1:1;});
+  for(i=0;i<list.length;i++){var t=list[i];h+='<option value="'+t.id+'"'+(t.id===sel?' selected':'')+'>'+esc(t.titre)+'</option>';}
+  return h;
+}
+function docOptions(sel){
+  var h='<option value="">— Aucun document —</option>';var i;
+  var list=state.docs.slice().sort(function(a,b){return a.nom.toLowerCase()<b.nom.toLowerCase()?-1:1;});
+  for(i=0;i<list.length;i++){h+='<option value="'+list[i].id+'"'+(list[i].id===sel?' selected':'')+'>'+esc(list[i].nom)+'</option>';}
+  return h;
+}
+function dossierFilterOptions(sel){
+  var h='';var i;
+  for(i=0;i<state.dossiers.length;i++){var d=state.dossiers[i];h+='<option value="'+d.id+'"'+(d.id===sel?' selected':'')+'>'+esc(d.nom)+'</option>';}
+  return h;
+}
+
+// ===== Requêtes =====
+function tachesOuvertes(){return state.taches.filter(function(t){return t.statut!=='fait';});}
+function retards(){
+  var t=tachesOuvertes().filter(function(t){return t.echeance&&daysUntil(t.echeance)<0;});
+  t.sort(function(a,b){return a.echeance<b.echeance?-1:1;});
+  return t;
+}
+function semaine(){return tachesOuvertes().filter(function(t){var n=daysUntil(t.echeance);return n!==null&&n>=0&&n<=7;}).sort(function(a,b){return a.echeance<b.echeance?-1:1;});}
+function dossiersActifs(){return state.dossiers.filter(function(d){return d.statut!=='termine'&&d.statut!=='archive';});}
+function dossierTaches(id){return state.taches.filter(function(t){return t.dossierId===id;});}
+function dossierNotes(id){
+  var tids={},i;var ts=dossierTaches(id);
+  for(i=0;i<ts.length;i++){tids[ts[i].id]=1;}
+  return state.notes.filter(function(n){return n.dossierId===id||(n.tacheId&&tids[n.tacheId]);});
+}
+function allTags(){
+  var m={},i,j;
+  for(i=0;i<state.notes.length;i++){var tg=state.notes[i].tags||[];for(j=0;j<tg.length;j++){m[tg[j]]=(m[tg[j]]||0)+1;}}
+  return m;
+}
+
+// ===== Rendu =====
+function render(){
+  var main=document.getElementById('main');if(!main)return;
+  var h='';
+  if(state.page==='dash')h=pageDash();
+  else if(state.page==='dossiers')h=pageDossiers();
+  else if(state.page==='dossier')h=pageDossier(state.detailId);
+  else if(state.page==='taches')h=pageTaches();
+  else if(state.page==='notes')h=pageNotes();
+  else if(state.page==='note')h=pageNote(state.detailId);
+  else if(state.page==='docs')h=pageDocs();
+  else if(state.page==='doc')h=pageDoc(state.detailId);
+  else if(state.page==='capture')h=pageCapture();
+  else if(state.page==='outlook')h=pageOutlook();
+  else if(state.page==='install')h=pageInstall();
+  else if(state.page==='search')h=pageSearch();
+  else h=page404();
+  main.innerHTML=h;
+  updateSidebar();updateTopbar();
+}
+function renderPageBody(){
+  var el=document.getElementById('page-body');if(!el)return;
+  if(state.page==='dossiers')el.innerHTML=dossiersBody();
+  else if(state.page==='taches')el.innerHTML=tachesBody();
+  else if(state.page==='notes')el.innerHTML=notesBody();
+  else if(state.page==='docs')el.innerHTML=docsBody();
+}
+function updateSidebar(){
+  var map={dash:'sn-dash',dossiers:'sn-dossiers',dossier:'sn-dossiers',taches:'sn-taches',notes:'sn-notes',note:'sn-notes',docs:'sn-docs',doc:'sn-docs',capture:'sn-capture',outlook:'sn-outlook'};
+  var key=map[state.page];var ids=['sn-dash','sn-dossiers','sn-docs','sn-taches','sn-capture','sn-notes','sn-outlook'];var i;
+  for(i=0;i<ids.length;i++){var el=document.getElementById(ids[i]);if(el){el.className='snav'+(ids[i]===key?' active':'');}}
+}
+function updateTopbar(){
+  var b=document.getElementById('btn-back'),f=document.getElementById('btn-fwd');
+  if(b)b.disabled=(nav.index<=0);
+  if(f)f.disabled=(nav.index>=nav.stack.length-1);
+}
+function page404(){
+  return '<div class="content"><div class="empty">Élément introuvable (peut-être supprimé).<br/><br/><button class="btn" data-act="go" data-page="dash">Retour à l’accueil</button></div></div>';
+}
+
+// ===== Page Accueil =====
+function pageDash(){
+  var ouverts=tachesOuvertes(),rd=retards(),se=semaine(),act=dossiersActifs();
+  var h='<div class="content">';
+  h+='<div class="hero"><div><h1 class="page-title">Bonjour 👋</h1><div class="muted">'+jourLong()+'</div></div><div class="toolbar">'
+   +'<button class="btn primary" data-act="new-tache">+ Tâche</button>'
+   +'<button class="btn" data-act="new-dossier">+ Dossier</button>'
+   +'<button class="btn" data-act="new-note">+ Note</button></div></div>';
+  if(state.exemple){
+    h+='<div class="banner info">🧪 Ceci est un jeu de données d’exemple pour découvrir l’outil — modifiez-le ou effacez-le. <button class="btn sm" data-act="clear-exemple">Effacer les exemples</button></div>';
+  }
+  if(needBackup()){
+    h+='<div class="banner warn">💾 Dernière sauvegarde : <b>'+lastSavedLabel()+'</b>. Exportez vos données pour éviter toute perte. '
+     +'<button class="btn sm" data-act="open-export">Exporter maintenant</button> '
+     +'<button class="btn sm ghost" data-act="backup-ok">Je viens de le faire</button></div>';
+  }
+  var captri=state.notes.filter(function(n){return n.capture&&!n.traitee;});
+  var notesRetard=state.notes.filter(function(n){return !n.traitee&&n.echeance&&daysUntil(n.echeance)<0;});
+  h+='<div class="kpi-grid">'
+   +'<div class="kpi blue"><div class="num">'+ouverts.length+'</div><div class="lbl">Tâches à faire</div></div>'
+   +'<div class="kpi red"><div class="num">'+rd.length+'</div><div class="lbl">Tâches en retard</div></div>'
+   +'<div class="kpi amber"><div class="num">'+captri.length+'</div><div class="lbl">Idées à trier (capture)</div></div>'
+   +'<div class="kpi green"><div class="num">'+act.length+'</div><div class="lbl">Dossiers actifs</div></div>'
+   +'</div>';
+  if(notesRetard.length){
+    h+='<div class="banner warn">📌 '+notesRetard.length+' note(s) dont l’échéance de traitement est dépassée. <button class="btn sm" data-act="go" data-page="notes">Voir les notes</button></div>';
+  }
+  // Retards
+  var dosRd=dossiersActifs().filter(function(d){return d.echeance&&daysUntil(d.echeance)<0;});
+  if(rd.length||dosRd.length){
+    h+='<h2 class="sec-title">🚨 En retard</h2>';
+    var i;for(i=0;i<rd.length;i++){h+=tacheRow(rd[i]);}
+    for(i=0;i<dosRd.length;i++){var d=dosRd[i];
+      h+='<div class="row"><span class="row-title" data-act="open-dossier" data-id="'+d.id+'">📁 '+esc(d.nom)+'</span>'+badgeDossier(d.statut)+echLabel(d.echeance,false)+'</div>';
+    }
+  }
+  // Semaine
+  if(se.length){
+    h+='<h2 class="sec-title">📅 Aujourd’hui &amp; cette semaine</h2>';
+    var j;for(j=0;j<Math.min(se.length,8);j++){h+=tacheRow(se[j]);}
+    if(se.length>8){h+='<div class="small muted" style="padding:4px 4px 0">+'+(se.length-8)+' autres — <a class="chip" data-act="go" data-page="taches">voir toutes les tâches</a></div>';}
+  }
+  // Rendez-vous Outlook (si connecté)
+  if(state.ms.connected&&state.ms.events.length){
+    h+='<h2 class="sec-title">📅 Prochains rendez-vous Outlook</h2>';
+    var ev;for(ev=0;ev<Math.min(state.ms.events.length,3);ev++){h+=msEventRow(state.ms.events[ev],false);}
+    if(state.ms.events.length>3)h+='<div class="small muted" style="padding:4px 4px 0">+'+(state.ms.events.length-3)+' autres — <a class="chip" data-act="go" data-page="outlook">ouvrir Outlook</a></div>';
+  }
+  // Captures récentes
+  var caps=state.notes.filter(function(n){return n.capture&&!n.traitee;}).sort(function(a,b){return a.maj>b.maj?-1:1;});
+  if(caps.length){
+    h+='<h2 class="sec-title">⚡ Idées à trier ('+caps.length+')</h2>';
+    var q;for(q=0;q<Math.min(caps.length,5);q++){h+=captureRow(caps[q]);}
+    if(caps.length>5)h+='<div class="small muted" style="padding:4px 4px 0">+'+(caps.length-5)+' autres — <a class="chip" data-act="go" data-page="capture">ouvrir la boîte de capture</a></div>';
+  }
+  // Dossiers actifs
+  h+='<h2 class="sec-title">📁 Dossiers actifs</h2>';
+  if(act.length){
+    var sorted=act.slice().sort(function(a,b){return a.maj>b.maj?-1:1;});
+    h+='<div class="cards">';
+    var k;for(k=0;k<Math.min(sorted.length,6);k++){h+=dossierCard(sorted[k]);}
+    h+='</div>';
+    if(sorted.length>6){h+='<div class="small muted" style="padding:8px 4px 0">+'+(sorted.length-6)+' autres — <a class="chip" data-act="go" data-page="dossiers">tous les dossiers</a></div>';}
+  }else{
+    h+='<div class="empty">Aucun dossier actif. <button class="btn sm" data-act="new-dossier">Créer un dossier</button></div>';
+  }
+  // Notes épinglées
+  var pin=state.notes.filter(function(n){return n.epinglee;});
+  if(pin.length){
+    h+='<h2 class="sec-title">📌 Notes épinglées</h2><div class="notes-grid">';
+    var m;for(m=0;m<pin.length;m++){h+=noteCard(pin[m]);}
+    h+='</div>';
+  }
+  h+='</div>';
+  return h;
+}
+
+// ===== Ligne de tâche =====
+function tacheRow(t){
+  var d=findDossier(t.dossierId);
+  var done=(t.statut==='fait');
+  var h='<div class="row tache-row'+(done?' done':'')+'">'
+   +'<button class="chk" title="Marquer fait / à faire" data-act="tache-toggle" data-id="'+t.id+'">'+(done?'✓':'')+'</button>'
+   +'<span class="row-title" data-act="open-tache" data-id="'+t.id+'">'+esc(t.titre)+'</span>';
+  if(!done&&t.statut!=='a-faire')h+=badgeTache(t.statut);
+  if(!done)h+=badgePrio(t.priorite);
+  h+=badgeCtx(t.contexte);
+  if(d)h+='<span class="chip" data-act="open-dossier" data-id="'+d.id+'">📁 '+esc(d.nom)+'</span>';
+  h+=echLabel(t.echeance,done);
+  h+='</div>';
+  return h;
+}
+
+// ===== Ligne de capture (boîte de réception) =====
+function captureRow(n){
+  var d=findDossier(n.dossierId);var doc=findDoc(n.docId);
+  var h='<div class="row inbox-row">'
+   +'<button class="chk" title="Marquer traitée / à traiter" data-act="note-traitee" data-id="'+n.id+'">'+(n.traitee?'✓':'')+'</button>'
+   +'<span class="row-title" data-act="open-note" data-id="'+n.id+'">'+esc(n.titre)+'</span>';
+  if(n.image)h+='<span class="chip">🖼 image jointe</span>';
+  if(d)h+='<span class="chip" data-act="open-dossier" data-id="'+d.id+'">📁 '+esc(d.nom)+'</span>';
+  if(doc)h+='<span class="chip" data-act="open-doc" data-id="'+doc.id+'">📄 '+esc(doc.nom)+'</span>';
+  h+=echLabel(n.echeance,n.traitee,'Traitée')
+   +(n.traitee?'':'<button class="btn sm ghost" data-act="edit-note" data-id="'+n.id+'" title="Relier à un projet, une échéance…">Trier</button>')
+   +'</div>';
+  return h;
+}
+
+// ===== Page Dossiers =====
+function pageDossiers(){
+  var f=state.filtres.dos;
+  var h='<div class="content"><div class="page-head"><h1 class="page-title">📁 Dossiers</h1><div class="toolbar"><button class="btn primary" data-act="new-dossier">+ Nouveau dossier</button></div></div>';
+  h+=filtersDossiers();
+  h+='<div id="page-body">'+dossiersBody()+'</div></div>';
+  return h;
+}
+function filtersDossiers(){
+  var f=state.filtres.dos;
+  return '<div class="filters">'
+   +'<input class="grow" data-inp="dos.q" placeholder="Rechercher un dossier…" value="'+esc(f.q)+'"/>'
+   +'<select data-chg="dos.statut"><option value="">Tous statuts</option>'+optsHtml(DOS_STATUTS,f.statut)+'</select>'
+   +'<select data-chg="dos.ctx"><option value="">Perso + Pro</option>'+optsHtml(CONTEXTES,f.ctx)+'</select>'
+   +'</div>';
+}
+function dossiersBody(){
+  var f=state.filtres.dos;
+  var q=f.q.trim().toLowerCase();
+  var list=state.dossiers.filter(function(d){
+    if(f.statut&&d.statut!==f.statut)return false;
+    if(f.ctx&&d.contexte!==f.ctx)return false;
+    if(q){
+      var hay=(d.nom+' '+d.categorie+' '+d.description).toLowerCase();
+      if(hay.indexOf(q)<0)return false;
+    }
+    return true;
+  });
+  var ordre={ouvert:0,'en-cours':1,attente:2,termine:3,archive:4};
+  list.sort(function(a,b){var d=ordre[a.statut]-ordre[b.statut];return d!==0?d:(a.maj>b.maj?-1:1);});
+  if(!list.length)return '<div class="empty">Aucun dossier ne correspond. <button class="btn sm" data-act="new-dossier">Créer un dossier</button></div>';
+  var h='<div class="cards">';var i;
+  for(i=0;i<list.length;i++){h+=dossierCard(list[i]);}
+  h+='</div>';
+  return h;
+}
+function dossierCard(d){
+  var ts=dossierTaches(d.id),faites=0,i;
+  for(i=0;i<ts.length;i++){if(ts[i].statut==='fait')faites++;}
+  var ns=dossierNotes(d.id).length;
+  var done=(d.statut==='termine'||d.statut==='archive');
+  var meta=[];
+  if(d.categorie)meta.push(esc(d.categorie));
+  meta.push(faites+'/'+ts.length+' tâches');
+  meta.push(ns+' note(s)');
+  return '<div class="card" data-act="open-dossier" data-id="'+d.id+'">'
+   +'<div class="card-top">'+badgeDossier(d.statut)+badgeCtx(d.contexte)+'</div>'
+   +'<div class="card-title">'+esc(d.nom)+'</div>'
+   +'<div class="card-meta">'+meta.join(' · ')+'</div>'
+   +(d.echeance?echLabel(d.echeance,done):'')
+   +'</div>';
+}
+
+// ===== Fiche dossier =====
+function pageDossier(id){
+  var d=findDossier(id);if(!d)return page404();
+  var ts=dossierTaches(id),ns=dossierNotes(id);
+  var h='<div class="content">';
+  h+='<div class="crumbs"><a class="chip" data-act="go" data-page="dossiers">← Dossiers</a></div>';
+  h+='<div class="page-head"><div><h1 class="page-title">'+esc(d.nom)+'</h1><div class="badges">'+badgeDossier(d.statut)+badgeCtx(d.contexte)
+   +(d.categorie?'<span class="badge gray">'+esc(d.categorie)+'</span>':'')+(d.echeance?echLabel(d.echeance,d.statut==='termine'):'')+'</div></div>'
+   +'<div class="toolbar">'
+   +'<button class="btn" data-act="new-tache" data-dos="'+d.id+'">+ Tâche</button>'
+   +'<button class="btn" data-act="new-note" data-dos="'+d.id+'">+ Note</button>'
+   +'<button class="btn ghost" data-act="edit-dossier" data-id="'+d.id+'">✎ Modifier</button>'
+   +'<button class="btn danger ghost" data-act="del-dossier" data-id="'+d.id+'" title="Supprimer">🗑</button>'
+   +'</div></div>';
+  if(d.description)h+='<p class="desc">'+esc(d.description)+'</p>';
+  h+='<h2 class="sec-title">✅ Tâches ('+ts.length+')</h2>';
+  if(ts.length){
+    var sorted=ts.slice().sort(function(a,b){var ea=a.echeance||'9999',eb=b.echeance||'9999';return ea<eb?-1:1;});
+    var i;for(i=0;i<sorted.length;i++){h+=tacheRow(sorted[i]);}
+  }else{
+    h+='<div class="empty">Aucune tâche dans ce dossier. <button class="btn sm" data-act="new-tache" data-dos="'+d.id+'">Ajouter une tâche</button></div>';
+  }
+  h+='<h2 class="sec-title">📝 Notes ('+ns.length+')</h2>';
+  if(ns.length){h+='<div class="notes-grid">';var j;for(j=0;j<ns.length;j++){h+=noteCard(ns[j]);}h+='</div>';}
+  else{h+='<div class="empty">Aucune note. <button class="btn sm" data-act="new-note" data-dos="'+d.id+'">Ajouter une note</button></div>';}
+  var ds=docsOfDossier(id);
+  h+='<h2 class="sec-title">📄 Documents liés ('+ds.length+')</h2>';
+  if(ds.length){h+='<div class="doc-grid">';var k2;for(k2=0;k2<ds.length;k2++){h+=docCard(ds[k2]);}h+='</div>';}
+  else{h+='<div class="empty">Aucun document lié à ce dossier.</div>';}
+  h+='<div style="margin-top:10px"><button class="btn sm" data-act="link-doc" data-id="'+d.id+'">＋ Lier / créer un document</button></div>';
+  h+='</div>';
+  return h;
+}
+
+// ===== Page Tâches =====
+function pageTaches(){
+  var h='<div class="content"><div class="page-head"><h1 class="page-title">✅ Tâches</h1><div class="toolbar">'
+   +'<div class="viewswitch">'
+   +'<button class="btn sm'+(state.tacheVue==='liste'?' on':'')+'" data-act="tache-vue" data-vue="liste">Liste</button>'
+   +'<button class="btn sm'+(state.tacheVue==='kanban'?' on':'')+'" data-act="tache-vue" data-vue="kanban">Kanban</button>'
+   +'<button class="btn sm'+(state.tacheVue==='cal'?' on':'')+'" data-act="tache-vue" data-vue="cal">Calendrier</button>'
+   +'</div>'
+   +'<button class="btn primary" data-act="new-tache">+ Tâche</button>'
+   +'</div></div>';
+  h+=filtersTaches();
+  h+='<div id="page-body">'+tachesBody()+'</div></div>';
+  return h;
+}
+function filtersTaches(){
+  var f=state.filtres.ta;
+  return '<div class="filters">'
+   +'<input class="grow" data-inp="ta.q" placeholder="Rechercher une tâche…" value="'+esc(f.q)+'"/>'
+   +'<select data-chg="ta.statut"><option value="">Tous statuts</option>'+optsHtml(TACHE_STATUTS,f.statut)+'</select>'
+   +'<select data-chg="ta.prio"><option value="">Toutes priorités</option>'+optsHtml(PRIORITES,f.prio)+'</select>'
+   +'<select data-chg="ta.ctx"><option value="">Perso + Pro</option>'+optsHtml(CONTEXTES,f.ctx)+'</select>'
+   +'</div>';
+}
+function filterTaches(){
+  var f=state.filtres.ta;
+  var q=f.q.trim().toLowerCase();
+  return state.taches.filter(function(t){
+    if(f.statut&&t.statut!==f.statut)return false;
+    if(f.prio&&t.priorite!==f.prio)return false;
+    if(f.ctx&&t.contexte!==f.ctx)return false;
+    if(q){
+      var d=findDossier(t.dossierId);
+      var hay=(t.titre+' '+t.description+' '+(d?d.nom:'')).toLowerCase();
+      if(hay.indexOf(q)<0)return false;
+    }
+    return true;
+  });
+}
+function tachesBody(){
+  if(state.tacheVue==='kanban')return tachesKanban();
+  if(state.tacheVue==='cal')return tachesCal();
+  return tachesListe();
+}
+function tachesListe(){
+  var list=filterTaches();
+  if(!list.length)return '<div class="empty">Aucune tâche ne correspond. <button class="btn sm" data-act="new-tache">Créer une tâche</button></div>';
+  var rd=[],se=[],plus=[],sans=[],faites=[];
+  var i;
+  for(i=0;i<list.length;i++){
+    var t=list[i];
+    if(t.statut==='fait'){faites.push(t);continue;}
+    var n=daysUntil(t.echeance);
+    if(n===null)sans.push(t);
+    else if(n<0)rd.push(t);
+    else if(n<=7)se.push(t);
+    else plus.push(t);
+  }
+  var cmp=function(a,b){var ea=a.echeance||'9999',eb=b.echeance||'9999';return ea<eb?-1:1;};
+  rd.sort(cmp);se.sort(cmp);plus.sort(cmp);
+  faites.sort(function(a,b){return a.maj>b.maj?-1:1;});
+  var h='';
+  if(rd.length){h+='<h2 class="sec-title">🚨 En retard ('+rd.length+')</h2>';var a;for(a=0;a<rd.length;a++){h+=tacheRow(rd[a]);}}
+  if(se.length){h+='<h2 class="sec-title">📅 Aujourd’hui &amp; 7 jours ('+se.length+')</h2>';var b;for(b=0;b<se.length;b++){h+=tacheRow(se[b]);}}
+  if(plus.length){h+='<h2 class="sec-title">⏳ Plus tard ('+plus.length+')</h2>';var c;for(c=0;c<plus.length;c++){h+=tacheRow(plus[c]);}}
+  if(sans.length){h+='<h2 class="sec-title">📋 Sans échéance ('+sans.length+')</h2>';var d;for(d=0;d<sans.length;d++){h+=tacheRow(sans[d]);}}
+  if(faites.length){
+    h+='<h2 class="sec-title">✓ Terminées ('+faites.length+')</h2>';
+    var e;for(e=0;e<Math.min(faites.length,10);e++){h+=tacheRow(faites[e]);}
+  }
+  return h;
+}
+function tachesKanban(){
+  var list=filterTaches();
+  var h='<div class="kboard">';
+  var i,j;
+  for(i=0;i<TACHE_STATUTS.length;i++){
+    var st=TACHE_STATUTS[i];
+    var col=list.filter(function(t){return t.statut===st.k;});
+    col.sort(function(a,b){var ea=a.echeance||'9999',eb=b.echeance||'9999';return ea<eb?-1:1;});
+    h+='<div class="kcol" data-statut="'+st.k+'"><h3><span>'+st.l+'</span><span>'+col.length+'</span></h3>';
+    for(j=0;j<col.length;j++){h+=kcard(col[j]);}
+    h+='</div>';
+  }
+  h+='</div>';
+  h+='<p class="tiny muted" style="margin-top:10px">Astuce : glissez-déposez une carte d’une colonne à l’autre pour changer son statut.</p>';
+  return h;
+}
+function kcard(t){
+  var d=findDossier(t.dossierId);
+  var h='<div class="kcard" draggable="true" data-id="'+t.id+'">'
+   +'<span class="row-title" data-act="open-tache" data-id="'+t.id+'">'+esc(t.titre)+'</span>'
+   +'<div class="sub">'+badgePrio(t.priorite)+badgeCtx(t.contexte);
+  if(d)h+='<span class="chip" data-act="open-dossier" data-id="'+d.id+'">📁 '+esc(d.nom)+'</span>';
+  h+=echLabel(t.echeance,t.statut==='fait');
+  h+='</div></div>';
+  return h;
+}
+var MOIS_NOMS=['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+function tachesCal(){
+  var y=state.calY,m=state.calM;
+  if(!y){var nd=new Date();y=nd.getFullYear();m=nd.getMonth();state.calY=y;state.calM=m;}
+  var h='<div class="cal-head">'
+   +'<button class="btn ghost sm" data-act="cal-prev" title="Mois précédent">‹</button>'
+   +'<div class="cal-title">'+MOIS_NOMS[m]+' '+y+'</div>'
+   +'<button class="btn ghost sm" data-act="cal-next" title="Mois suivant">›</button>'
+   +'<button class="btn sm" data-act="cal-today">Aujourd’hui</button></div>';
+  h+='<div class="cal-grid">';
+  var dows=['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];var i;
+  for(i=0;i<7;i++){h+='<div class="cal-dow">'+dows[i]+'</div>';}
+  var first=new Date(y,m,1);
+  var start=(first.getDay()+6)%7;
+  var dim=new Date(y,m+1,0).getDate();
+  var prevDim=new Date(y,m,0).getDate();
+  var t2=today();
+  for(i=0;i<42;i++){
+    var dn=i-start+1;
+    if(dn<1){
+      h+='<div class="cal-cell other"><div class="cal-lbl">'+(prevDim+dn)+'</div></div>';
+    }else if(dn>dim){
+      h+='<div class="cal-cell other"><div class="cal-lbl">'+(dn-dim)+'</div></div>';
+    }else{
+      var dstr=y+'-'+pad(m+1)+'-'+pad(dn);
+      var cls='cal-cell'+(dstr===t2?' today':'');
+      h+='<div class="'+cls+'"><div class="cal-lbl">'+dn+'</div>'+calChips(dstr)+'</div>';
+    }
+  }
+  h+='</div>';
+  h+='<p class="tiny muted" style="margin-top:10px">Cliquez sur un élément pour l’ouvrir. Les échéances de dossiers apparaissent en vert, les priorités hautes/urgentes en jaune/rouge.</p>';
+  return h;
+}
+function calChips(dstr){
+  var h='';var n=0,more=0;var i;
+  for(i=0;i<state.taches.length;i++){
+    var t=state.taches[i];
+    if(t.echeance!==dstr)continue;
+    n++;
+    if(n<=3){
+      h+='<span class="cal-chip pri-'+t.priorite+(t.statut==='fait'?' fait':'')+'" data-act="open-tache" data-id="'+t.id+'" title="'+esc(t.titre)+'">'+esc(t.titre)+'</span>';
+    }else{more++;}
+  }
+  for(i=0;i<state.dossiers.length;i++){
+    var d=state.dossiers[i];
+    if(d.echeance!==dstr||d.statut==='termine'||d.statut==='archive')continue;
+    n++;
+    if(n<=3){h+='<span class="cal-chip dos" data-act="open-dossier" data-id="'+d.id+'" title="'+esc(d.nom)+'">📁 '+esc(d.nom)+'</span>';}
+    else{more++;}
+  }
+  if(more>0)h+='<div class="tiny muted">+'+more+' autre(s)</div>';
+  return h;
+}
+
+// ===== Page Documents =====
+function pageDocs(){
+  var h='<div class="content"><div class="page-head"><h1 class="page-title">📄 Documents</h1><div class="toolbar"><button class="btn primary" data-act="new-doc">+ Référencer un document</button></div></div>';
+  h+='<p class="small muted" style="margin-bottom:12px">Vos fichiers Word, Excel, PowerPoint, PDF, liens… rangés et liés à vos dossiers. Un même document peut servir plusieurs projets. Rôle « Source » = vos documents à piocher ; « Base évolutive » = vos fichiers que vous modifiez au fil de l’eau.</p>';
+  h+=filtersDocs();
+  h+='<div id="page-body">'+docsBody()+'</div></div>';
+  return h;
+}
+function filtersDocs(){
+  var f=state.filtres.dc;
+  return '<div class="filters">'
+   +'<input class="grow" data-inp="dc.q" placeholder="Rechercher un document…" value="'+esc(f.q)+'"/>'
+   +'<select data-chg="dc.type"><option value="">Tous types</option>'+optsHtml(DOC_TYPES,f.type)+'</select>'
+   +'<select data-chg="dc.role"><option value="">Tous rôles</option>'+optsHtml(DOC_ROLES,f.role)+'</select>'
+   +'<select data-chg="dc.dos"><option value="">Tous dossiers</option>'+dossierFilterOptions(f.dos)+'</select>'
+   +'</div>';
+}
+function docsBody(){
+  var f=state.filtres.dc;
+  var q=f.q.trim().toLowerCase();
+  var list=state.docs.filter(function(x){
+    if(f.type&&x.type!==f.type)return false;
+    if(f.role&&x.role!==f.role)return false;
+    if(f.dos&&x.dossiers.indexOf(f.dos)<0)return false;
+    if(q){
+      var hay=(x.nom+' '+x.localisation+' '+x.description).toLowerCase();
+      if(hay.indexOf(q)<0)return false;
+    }
+    return true;
+  });
+  list.sort(function(a,b){return a.nom.toLowerCase()<b.nom.toLowerCase()?-1:1;});
+  if(!list.length)return '<div class="empty">Aucun document. <button class="btn sm" data-act="new-doc">Référencer un document</button></div>';
+  var h='<div class="doc-grid">';var i;
+  for(i=0;i<list.length;i++){h+=docCard(list[i]);}
+  h+='</div>';
+  return h;
+}
+function docCard(x){
+  var lienk='';
+  if(/^https?:\/\//i.test(x.localisation)){lienk='<a class="doc-path" href="'+esc(x.localisation)+'" target="_blank" rel="noopener noreferrer">🔗 '+esc(x.localisation)+'</a>';}
+  else if(x.localisation){lienk='<span class="doc-path">📍 '+esc(x.localisation)+'</span>';}
+  var h='<div class="doc-card" data-act="open-doc" data-id="'+x.id+'">'
+   +'<div class="card-top">'+badgeDocType(x.type)+badgeDocRole(x.role)+'</div>'
+   +'<div class="card-title">'+esc(x.nom)+'</div>'
+   +'<div class="card-meta">'+x.dossiers.length+' dossier(s) · '+docNotes(x.id).length+' note(s)</div>'
+   +lienk+'</div>';
+  return h;
+}
+function pageDoc(id){
+  var x=findDoc(id);if(!x)return page404();
+  var ns=docNotes(id);
+  var h='<div class="content">';
+  h+='<div class="crumbs"><a class="chip" data-act="go" data-page="docs">← Documents</a></div>';
+  h+='<div class="page-head"><div><h1 class="page-title">'+esc(x.nom)+'</h1><div class="badges">'+badgeDocType(x.type)+badgeDocRole(x.role)
+   +(x.localisation?( /^https?:\/\//i.test(x.localisation)?'<a class="chip" href="'+esc(x.localisation)+'" target="_blank" rel="noopener noreferrer">🔗 ouvrir le lien</a>':'<span class="chip">📍 '+esc(x.localisation)+'</span>'):'')+'</div></div>'
+   +'<div class="toolbar">'
+   +'<button class="btn" data-act="new-note" data-doc="'+x.id+'">+ Note sur ce document</button>'
+   +'<button class="btn ghost" data-act="edit-doc" data-id="'+x.id+'">✎ Modifier</button>'
+   +'<button class="btn danger ghost" data-act="del-doc" data-id="'+x.id+'" title="Supprimer">🗑</button>'
+   +'</div></div>';
+  if(x.description)h+='<p class="desc">'+esc(x.description)+'</p>';
+  h+='<h2 class="sec-title">📁 Dossiers utilisant ce document ('+x.dossiers.length+')</h2>';
+  if(x.dossiers.length){
+    var i;for(i=0;i<x.dossiers.length;i++){var d=findDossier(x.dossiers[i]);
+      if(d)h+='<div class="row"><span class="row-title" data-act="open-dossier" data-id="'+d.id+'">'+esc(d.nom)+'</span>'+badgeDossier(d.statut)+badgeCtx(d.contexte)+'</div>';
+    }
+  }else{h+='<div class="empty small">Ce document n’est lié à aucun dossier. <button class="btn sm" data-act="edit-doc" data-id="'+x.id+'">Lier à des dossiers</button></div>';}
+  h+='<h2 class="sec-title">📝 Notes sur ce document ('+ns.length+')</h2>';
+  if(ns.length){h+='<div class="notes-grid">';var j;for(j=0;j<ns.length;j++){h+=noteCard(ns[j]);}h+='</div>';}
+  else{h+='<div class="empty">Aucune note. <button class="btn sm" data-act="new-note" data-doc="'+x.id+'">Prendre une note</button></div>';}
+  h+='</div>';
+  return h;
+}
+function modalDoc(id,presetDos){
+  var x=id?findDoc(id):null;
+  var checks='';var i;
+  var dos=state.dossiers.slice().sort(function(a,b){return a.nom.toLowerCase()<b.nom.toLowerCase()?-1:1;});
+  for(i=0;i<dos.length;i++){
+    var sel=x?(x.dossiers.indexOf(dos[i].id)>=0):(presetDos===dos[i].id);
+    checks+='<label style="display:block;margin:3px 0"><input type="checkbox" name="dos" value="'+dos[i].id+'"'+(sel?' checked':'')+'/> '+esc(dos[i].nom)+'</label>';
+  }
+  var h='<h3>'+(x?'Modifier le document':'Référencer un document')+'</h3><form id="f-doc">'
+   +'<input type="hidden" name="id" value="'+(x?x.id:'')+'"/>'
+   +'<div class="form-row"><label>Nom *</label><input name="n" required maxlength="160" value="'+(x?esc(x.nom):'')+'" placeholder="Ex. : Base chiffres 2026.xlsx"/></div>'
+   +'<div class="form-row two">'
+   +'<div><label>Type</label><select name="ty">'+optsHtml(DOC_TYPES,x?x.type:'word')+'</select></div>'
+   +'<div><label>Rôle</label><select name="ro">'+optsHtml(DOC_ROLES,x?x.role:'livrable')+'</select></div>'
+   +'</div>'
+   +'<div class="form-row"><label>Localisation (chemin ou URL — pour retrouver le fichier)</label><input name="loc" maxlength="400" value="'+(x?esc(x.localisation):'')+'" placeholder="Ex. : Bureau\\Projets\\rapport.docx ou https://…"/></div>'
+   +'<div class="form-row"><label>Dossiers utilisant ce document</label>'+(checks||'<span class="small muted">Aucun dossier existant — créez-en un d’abord.</span>')+'</div>'
+   +'<div class="form-row"><label>Description</label><textarea name="desc" rows="3">'+(x?esc(x.description):'')+'</textarea></div>'
+   +'<div class="modal-foot"><button type="button" class="btn ghost" data-act="modal-close">Annuler</button><button type="submit" class="btn primary">Enregistrer</button></div>'
+   +'</form>';
+  openModal(h);
+}
+function modalLinkDoc(did){
+  var h='<h3>📄 Documents pour ce dossier</h3><div style="max-height:300px;overflow-y:auto">';
+  var i;
+  if(state.docs.length){
+    for(i=0;i<state.docs.length;i++){
+      var x=state.docs[i];
+      var on=x.dossiers.indexOf(did)>=0;
+      h+='<div class="row"><span class="row-title" data-act="open-doc" data-id="'+x.id+'">'+esc(x.nom)+'</span>'+badgeDocType(x.type)+badgeDocRole(x.role)
+       +'<button class="btn sm '+(on?'':'primary')+'" data-act="doc-tgl-dos" data-id="'+x.id+'" data-dos="'+did+'">'+(on?'✓ Lié':'Lier')+'</button></div>';
+    }
+  }else{
+    h+='<div class="empty small">Aucun document référencé.</div>';
+  }
+  h+='</div><div class="modal-foot"><button class="btn ghost" data-act="modal-close">Fermer</button><button class="btn primary" data-act="new-doc" data-dos="'+did+'">+ Nouveau document</button></div>';
+  openModal(h);
+}
+
+// ===== Page Capture (boîte de réception) =====
+function pageCapture(){
+  var caps=state.notes.filter(function(n){return n.capture;}).sort(function(a,b){
+    if(a.traitee!==b.traitee)return a.traitee?1:-1;
+    var ea=a.echeance||'9999',eb=b.echeance||'9999';
+    return ea<eb?-1:1;
+  });
+  var atrier=caps.filter(function(n){return !n.traitee;});
+  var h='<div class="content"><div class="page-head"><h1 class="page-title">⚡ Capture</h1><div class="toolbar"><button class="btn primary capbtn" data-act="quick-capture">⚡ Capturer une idée</button></div></div>';
+  h+='<p class="small muted" style="margin-bottom:12px">Vos idées notées à la volée, comme des post-its. Raccourci : touche <span class="kbd">C</span> n’importe où. Une idée capturée peut ensuite être reliée à un dossier, un document, une tâche, une échéance — et marquée « traitée ».</p>';
+  if(!caps.length){
+    h+='<div class="empty">Aucune idée capturée pour l’instant.<br/><br/><button class="btn capbtn" data-act="quick-capture">⚡ Capturer une idée</button></div></div>';
+    return h;
+  }
+  h+='<h2 class="sec-title">🧠 À trier ('+atrier.length+')</h2>';
+  var i;
+  for(i=0;i<caps.length;i++){
+    var n=caps[i];
+    if(!n.traitee)h+=captureRow(n);
+  }
+  var trait=caps.filter(function(n){return n.traitee;});
+  if(trait.length){
+    h+='<h2 class="sec-title">✓ Traitées ('+trait.length+')</h2>';
+    var j;for(j=0;j<Math.min(trait.length,10);j++){h+=captureRow(trait[j]);}
+  }
+  h+='</div>';
+  return h;
+}
+function modalCapture(){
+  var h='<h3>⚡ Capturer une idée</h3><form id="f-capture">'
+   +'<div class="form-row"><label>L’idée *</label><textarea name="tit" rows="3" required placeholder="Notez vite, vous trierez plus tard… (Ctrl+Entrée pour enregistrer)"></textarea></div>'
+   +'<div class="form-row two">'
+   +'<div><label>Échéance (optionnel)</label><input type="date" name="ech"/></div>'
+   +'<div><label>Dossier (optionnel)</label><select name="dos">'+dossierOptions('')+'</select></div>'
+   +'</div>'
+   +'<div class="form-row img-pick"><label>Joindre une image / capture d’écran (optionnel)</label><input type="file" id="cap-img" accept="image/*"/></div>'
+   +'<p class="tiny muted">Vous pouvez aussi coller une image avec Ctrl+V dans cette fenêtre. <span id="cap-img-info" class="tiny muted"></span></p>'
+   +'<div class="modal-foot"><button type="button" class="btn ghost" data-act="modal-close">Annuler</button><button type="submit" class="btn primary">⚡ Capturer</button></div>'
+   +'</form>';
+  openModal(h);
+  var ta=null;
+  try{ta=document.querySelector('#f-capture textarea');}catch(e){}
+  if(ta&&ta.focus)ta.focus();
+}
+
+// ===== Page Notes =====
+function pageNotes(){
+  var h='<div class="content"><div class="page-head"><h1 class="page-title">📝 Notes</h1><div class="toolbar"><button class="btn primary" data-act="new-note">+ Nouvelle note</button></div></div>';
+  h+=filtersNotes();
+  h+='<div id="page-body">'+notesBody()+'</div></div>';
+  return h;
+}
+function filtersNotes(){
+  var f=state.filtres.no;
+  var tags=allTags();var keys=[];var k;
+  for(k in tags){if(tags.hasOwnProperty(k))keys.push(k);}
+  keys.sort();
+  var h='<div class="filters">'
+   +'<input class="grow" data-inp="no.q" placeholder="Rechercher dans les notes…" value="'+esc(f.q)+'"/>'
+   +'<select data-chg="no.tr"><option value="">Toutes</option><option value="todo"'+(f.tr==='todo'?' selected':'')+'>À traiter</option><option value="done"'+(f.tr==='done'?' selected':'')+'>Traitées</option></select>'
+   +'<select data-chg="no.ctx"><option value="">Perso + Pro</option>'+optsHtml(CONTEXTES,f.ctx)+'</select>'
+   +'</div>';
+  if(keys.length||f.tag){
+    h+='<div class="filters" style="padding:8px 12px"><span class="small muted">Tags :</span><div class="tags-row">';
+    var i;
+    for(i=0;i<keys.length;i++){
+      h+='<button class="tag'+(f.tag===keys[i]?' on':'')+'" data-act="tag-filter" data-tag="'+esc(keys[i])+'">#'+esc(keys[i])+' ('+tags[keys[i]]+')</button>';
+    }
+    if(f.tag)h+='<button class="btn sm ghost" data-act="tag-clear">✕ retirer le filtre</button>';
+    h+='</div></div>';
+  }
+  return h;
+}
+function notesBody(){
+  var f=state.filtres.no;
+  var q=f.q.trim().toLowerCase();
+  var list=state.notes.filter(function(n){
+    if(f.tr==='todo'&&n.traitee)return false;
+    if(f.tr==='done'&&!n.traitee)return false;
+    if(f.ctx&&n.contexte!==f.ctx)return false;
+    if(f.tag){
+      var has=false;var i;
+      for(i=0;i<(n.tags||[]).length;i++){if(n.tags[i]===f.tag){has=true;break;}}
+      if(!has)return false;
+    }
+    if(q){
+      var hay=(n.titre+' '+n.contenu+' '+(n.tags||[]).join(' ')).toLowerCase();
+      if(hay.indexOf(q)<0)return false;
+    }
+    return true;
+  });
+  list.sort(function(a,b){
+    if(a.epinglee!==b.epinglee)return a.epinglee?-1:1;
+    return a.maj>b.maj?-1:1;
+  });
+  if(!list.length)return '<div class="empty">Aucune note ne correspond. <button class="btn sm" data-act="new-note">Créer une note</button></div>';
+  var h='<div class="notes-grid">';var i;
+  for(i=0;i<list.length;i++){h+=noteCard(list[i]);}
+  h+='</div>';
+  return h;
+}
+function noteCard(n){
+  var d=findDossier(n.dossierId);
+  var ex=String(n.contenu||'').replace(/\s+/g,' ');
+  if(ex.length>140)ex=ex.slice(0,140)+'…';
+  var h='<div class="note-card" data-act="open-note" data-id="'+n.id+'">'
+   +(n.epinglee?'<span class="pin">📌</span>':'')
+   +'<div class="card-title">'+esc(n.titre)+'</div>'
+   +'<div class="note-extrait">'+esc(ex)+'</div>'
+   +'<div class="badges">'+badgeCtx(n.contexte)+(n.capture?'<span class="badge" style="background:#fffbeb;color:#b45309">⚡</span>':'')+(n.image?'<span class="badge" style="background:#f5f3ff;color:#6d28d9">🖼</span>':'')+(n.traitee?'<span class="badge" style="background:#d1fae5;color:#065f46">✓ traitée</span>':'')+echLabel(n.echeance,n.traitee,'Traitée');
+  var i;var tg=n.tags||[];
+  for(i=0;i<tg.length;i++){h+='<span class="badge gray">#'+esc(tg[i])+'</span>';}
+  if(d)h+='<span class="chip">📁 '+esc(d.nom)+'</span>';
+  h+='</div></div>';
+  return h;
+}
+function pageNote(id){
+  var n=findNote(id);if(!n)return page404();
+  var d=findDossier(n.dossierId);
+  var t=findTache(n.tacheId);
+  var h='<div class="content note-view">';
+  h+='<div class="crumbs"><a class="chip" data-act="go" data-page="notes">← Notes</a></div>';
+  h+='<div class="page-head"><div><h1 class="page-title">'+(n.epinglee?'📌 ':'')+esc(n.titre)+'</h1><div class="badges">'+badgeCtx(n.contexte)
+   +(n.traitee?'<span class="badge" style="background:#d1fae5;color:#065f46">✓ traitée</span>':((n.echeance||n.capture)?'<span class="badge" style="background:#fef3c7;color:#92400e">à traiter</span>':''))+echLabel(n.echeance,n.traitee,'Traitée')
+   +(n.maj?'<span class="badge gray">modifiée le '+fmtDate(n.maj)+'</span>':'')+'</div></div>'
+   +'<div class="toolbar">'
+   +'<button class="btn ghost" data-act="pin-note" data-id="'+n.id+'">'+(n.epinglee?'Détacher 📌':'Épingler 📌')+'</button>'
+   +'<button class="btn ghost" data-act="note-to-outlook" data-id="'+n.id+'" title="Créer un rappel dans votre calendrier Outlook">📅 Outlook</button>'
+   +'<button class="btn ghost" data-act="note-traitee" data-id="'+n.id+'">'+(n.traitee?'↩ À traiter':'✓ Traitée')+'</button>'
+   +'<button class="btn ghost" data-act="edit-note" data-id="'+n.id+'">✎ Modifier</button>'
+   +'<button class="btn danger ghost" data-act="del-note" data-id="'+n.id+'" title="Supprimer">🗑</button>'
+   +'</div></div>';
+  var i;var tg=n.tags||[];
+  if(tg.length){
+    h+='<div class="tags-row" style="margin-bottom:12px">';
+    for(i=0;i<tg.length;i++){h+='<span class="tag">#'+esc(tg[i])+'</span>';}
+    h+='</div>';
+  }
+  if(d||t){
+    h+='<div class="badges" style="margin-bottom:12px">';
+    if(d)h+='<span class="chip" data-act="open-dossier" data-id="'+d.id+'">📁 '+esc(d.nom)+'</span>';
+    if(t)h+='<span class="chip" data-act="open-tache" data-id="'+t.id+'">✅ '+esc(t.titre)+'</span>';
+    h+='</div>';
+  }
+  if(n.image)h+='<img class="note-img" data-act="img-view" src="'+n.image+'" alt="image jointe"/>';
+  h+='<div class="content-pre">'+(n.contenu?esc(n.contenu):'<span class="muted">Note vide.</span>')+'</div>';
+  h+='</div>';
+  return h;
+}
+
+// ===== Recherche globale =====
+function pageSearch(){
+  var q=state.searchQ.trim().toLowerCase();
+  var h='<div class="content">';
+  h+='<h1 class="page-title">🔎 Recherche : « '+esc(state.searchQ)+' »</h1>';
+  if(q.length<2){
+    h+='<div class="empty">Tapez au moins 2 caractères dans la barre de recherche en haut.</div></div>';
+    return h;
+  }
+  var rd=[],rt=[],rn=[],rc=[],i;
+  for(i=0;i<state.dossiers.length;i++){
+    var d=state.dossiers[i];
+    if((d.nom+' '+d.categorie+' '+d.description).toLowerCase().indexOf(q)>=0)rd.push(d);
+  }
+  for(i=0;i<state.docs.length;i++){
+    var x=state.docs[i];
+    if((x.nom+' '+x.localisation+' '+x.description).toLowerCase().indexOf(q)>=0)rc.push(x);
+  }
+  for(i=0;i<state.taches.length;i++){
+    var t=state.taches[i];
+    var dd=findDossier(t.dossierId);
+    if((t.titre+' '+t.description+' '+(dd?dd.nom:'')).toLowerCase().indexOf(q)>=0)rt.push(t);
+  }
+  for(i=0;i<state.notes.length;i++){
+    var n=state.notes[i];
+    if((n.titre+' '+n.contenu+' '+(n.tags||[]).join(' ')).toLowerCase().indexOf(q)>=0)rn.push(n);
+  }
+  if(!rd.length&&!rc.length&&!rt.length&&!rn.length){
+    h+='<div class="empty">Aucun résultat.</div></div>';
+    return h;
+  }
+  if(rd.length){
+    h+='<h2 class="sec-title">📁 Dossiers ('+rd.length+')</h2><div class="cards">';
+    for(i=0;i<Math.min(rd.length,12);i++)h+=dossierCard(rd[i]);
+    h+='</div>';
+  }
+  if(rc.length){
+    h+='<h2 class="sec-title">📄 Documents ('+rc.length+')</h2><div class="doc-grid">';
+    for(i=0;i<Math.min(rc.length,12);i++)h+=docCard(rc[i]);
+    h+='</div>';
+  }
+  if(rt.length){
+    h+='<h2 class="sec-title">✅ Tâches ('+rt.length+')</h2>';
+    for(i=0;i<Math.min(rt.length,15);i++)h+=tacheRow(rt[i]);
+  }
+  if(rn.length){
+    h+='<h2 class="sec-title">📝 Notes ('+rn.length+')</h2><div class="notes-grid">';
+    for(i=0;i<Math.min(rn.length,12);i++)h+=noteCard(rn[i]);
+    h+='</div>';
+  }
+  h+='</div>';
+  return h;
+}
+
+// ===== Modales =====
+function openModal(html){
+  var r=document.getElementById('modal-root');if(!r)return;
+  r.innerHTML='<div class="modal-back"><div class="modal">'+html+'</div></div>';
+}
+function closeModal(){
+  var r=document.getElementById('modal-root');if(r)r.innerHTML='';
+}
+function modalDossier(id){
+  var d=id?findDossier(id):null;
+  var h='<h3>'+(d?'Modifier le dossier':'Nouveau dossier')+'</h3><form id="f-dossier">'
+   +'<input type="hidden" name="id" value="'+(d?d.id:'')+'"/>'
+   +'<div class="form-row"><label>Nom *</label><input name="n" required maxlength="120" value="'+(d?esc(d.nom):'')+'" placeholder="Ex. : Renouvellement passeport"/></div>'
+   +'<div class="form-row two">'
+   +'<div><label>Statut</label><select name="st">'+optsHtml(DOS_STATUTS,d?d.statut:'ouvert')+'</select></div>'
+   +'<div><label>Contexte</label><select name="ctx">'+optsHtml(CONTEXTES,d?d.contexte:'perso')+'</select></div>'
+   +'</div>'
+   +'<div class="form-row two">'
+   +'<div><label>Catégorie</label><input name="cat" maxlength="60" value="'+(d?esc(d.categorie):'')+'" placeholder="Administratif, Projet…"/></div>'
+   +'<div><label>Échéance</label><input type="date" name="ech" value="'+(d?d.echeance:'')+'"/></div>'
+   +'</div>'
+   +'<div class="form-row"><label>Description / notes</label><textarea name="desc" rows="4" placeholder="Contexte, démarches, références…">'+(d?esc(d.description):'')+'</textarea></div>'
+   +'<div class="modal-foot"><button type="button" class="btn ghost" data-act="modal-close">Annuler</button><button type="submit" class="btn primary">Enregistrer</button></div>'
+   +'</form>';
+  openModal(h);
+}
+function modalTache(id,presetDos){
+  var t=id?findTache(id):null;
+  var dos=(t?t.dossierId:(presetDos||''));
+  var h='<h3>'+(t?'Modifier la tâche':'Nouvelle tâche')+'</h3><form id="f-tache">'
+   +'<input type="hidden" name="id" value="'+(t?t.id:'')+'"/>'
+   +'<div class="form-row"><label>Titre *</label><input name="tit" required maxlength="160" value="'+(t?esc(t.titre):'')+'" placeholder="Que faut-il faire ?"/></div>'
+   +'<div class="form-row two">'
+   +'<div><label>Statut</label><select name="st">'+optsHtml(TACHE_STATUTS,t?t.statut:'a-faire')+'</select></div>'
+   +'<div><label>Priorité</label><select name="prio">'+optsHtml(PRIORITES,t?t.priorite:'normale')+'</select></div>'
+   +'</div>'
+   +'<div class="form-row two">'
+   +'<div><label>Contexte</label><select name="ctx">'+optsHtml(CONTEXTES,t?t.contexte:'perso')+'</select></div>'
+   +'<div><label>Échéance</label><input type="date" name="ech" value="'+(t?t.echeance:'')+'"/></div>'
+   +'</div>'
+   +'<div class="form-row"><label>Dossier lié</label><select name="dos">'+dossierOptions(dos)+'</select></div>'
+   +'<div class="form-row"><label>Description</label><textarea name="desc" rows="3">'+(t?esc(t.description):'')+'</textarea></div>'
+   +'<div class="modal-foot"><button type="button" class="btn ghost" data-act="modal-close">Annuler</button><button type="submit" class="btn primary">Enregistrer</button></div>'
+   +'</form>';
+  openModal(h);
+}
+function modalNote(id,presetDos,presetDoc){
+  var n=id?findNote(id):null;
+  var dos=(n?n.dossierId:(presetDos||''));
+  var h='<h3>'+(n?'Modifier la note':'Nouvelle note')+'</h3><form id="f-note">'
+   +'<input type="hidden" name="id" value="'+(n?n.id:'')+'"/>'
+   +'<div class="form-row"><label>Titre *</label><input name="tit" required maxlength="160" value="'+(n?esc(n.titre):'')+'"/></div>'
+   +'<div class="form-row"><label>Contenu</label><textarea name="cont" rows="6" placeholder="Écrivez librement…">'+(n?esc(n.contenu):'')+'</textarea></div>'
+   +'<div class="form-row"><label>Tags (séparés par des virgules)</label><input name="tags" maxlength="200" value="'+(n?esc((n.tags||[]).join(', ')):'')+'" placeholder="ex. : checklist, urgent"/></div>'
+   +'<div class="form-row two">'
+   +'<div><label>Contexte</label><select name="ctx">'+optsHtml(CONTEXTES,n?n.contexte:'perso')+'</select></div>'
+   +'<div><label>Épinglée ?</label><select name="pin"><option value="non"'+(!n||!n.epinglee?' selected':'')+'>Non</option><option value="oui"'+(n&&n.epinglee?' selected':'')+'>Oui 📌</option></select></div>'
+   +'</div>'
+   +'<div class="form-row two">'
+   +'<div><label>Échéance de traitement</label><input type="date" name="ech" value="'+(n?n.echeance:'')+'"/></div>'
+   +'<div><label>État</label><select name="tr"><option value="non"'+(!n||!n.traitee?' selected':'')+'>À traiter</option><option value="oui"'+(n&&n.traitee?' selected':'')+'>Traitée ✓</option></select></div>'
+   +'</div>'
+   +'<div class="form-row"><label>Dossier lié</label><select name="dos">'+dossierOptions(dos)+'</select></div>'
+   +'<div class="form-row"><label>Tâche liée</label><select name="ta">'+tacheOptions(n?n.tacheId:'')+'</select></div>'
+   +'<div class="form-row"><label>Document lié</label><select name="doc">'+docOptions(n?n.docId:(presetDoc||''))+'</select></div>'
+   +'<div class="form-row img-pick"><label>Image jointe (optionnel)</label>'
+   +(n&&n.image?'<div class="small muted" style="margin-bottom:4px">🖼 une image est déjà jointe — en importer une autre la remplacera (<button type="button" class="btn sm ghost" data-act="note-delimg" data-id="'+n.id+'">retirer</button>)</div>':'')
+   +'<input type="file" id="note-img" accept="image/*"/> <span id="note-img-info" class="tiny muted"></span></div>'
+   +'<div class="modal-foot"><button type="button" class="btn ghost" data-act="modal-close">Annuler</button><button type="submit" class="btn primary">Enregistrer</button></div>'
+   +'</form>';
+  openModal(h);
+}
+function modalExport(){
+  var total=state.dossiers.length+state.taches.length+state.notes.length+state.docs.length;
+  var h='<h3>💾 Export &amp; sauvegarde</h3>'
+   +'<p class="small muted">Vos données ('+total+' éléments) vivent uniquement dans ce navigateur. Exportez régulièrement pour éviter toute perte.</p>'
+   +'<p class="small">Dernière sauvegarde enregistrée : <b>'+lastSavedLabel()+'</b></p>'
+   +'<div class="exp-grid">'
+   +'<button class="btn" data-act="export-json">📦 JSON complet<br/><span class="tiny muted">réimportable — recommandé</span></button>'
+   +'<button class="btn" data-act="export-html">🌐 HTML autonome<br/><span class="tiny muted">application + données en un fichier</span></button>'
+   +'<button class="btn" data-act="export-csv-dos">📊 CSV Dossiers<br/><span class="tiny muted">ouvre dans Excel</span></button>'
+   +'<button class="btn" data-act="export-csv-ta">📊 CSV Tâches<br/><span class="tiny muted">ouvre dans Excel</span></button>'
+   +'<button class="btn" data-act="export-csv-no">📊 CSV Notes<br/><span class="tiny muted">ouvre dans Excel</span></button>'
+   +'<button class="btn" data-act="export-csv-doc">📊 CSV Documents<br/><span class="tiny muted">ouvre dans Excel</span></button>'
+   +'</div>'
+   +'<div class="form-row"><label>Importer une sauvegarde JSON (remplace tout)</label><input type="file" id="imp-json" accept=".json,application/json"/></div>'
+   +'<p class="tiny muted">⚠️ L’import remplace l’ensemble des données actuelles.</p>'
+   +'<div class="modal-foot"><button class="btn ghost" data-act="modal-close">Fermer</button></div>';
+  openModal(h);
+}
+function modalHelp(){
+  var h='<h3>❓ Aide &amp; confidentialité</h3>'
+   +'<div class="small" style="line-height:1.7">'
+   +'<p><b>Comment ça marche ?</b> Tout est contenu dans ce fichier HTML : l’application ET vos données (stockées dans le navigateur). Aucun compte requis, aucun envoi réseau — sauf si vous activez volontairement la connexion Outlook (page 📧), qui lit l’agenda et les mails non lus de votre compte Microsoft, et rien d’autre.</p>'
+   +'<p style="margin-top:8px"><b>Confidentialité &amp; RGPD</b> — Vos données restent sur votre appareil. Rien n’est transmis à un serveur. Vous gardez le contrôle total : accès (via les exports), rectification (édition), effacement (suppression ou bouton « Effacer les exemples », ou vider l’historique du navigateur). Ne saisissez que les données strictement nécessaires.</p>'
+   +'<p style="margin-top:8px"><b>Sauvegardes</b> — Dans « Export &amp; sauvegarde » : le JSON complet est réimportable ; le HTML autonome contient l’app + vos données (gardez-en une copie). Une alerte vous rappelle de sauvegarder au moins une fois par semaine.</p>'
+   +'<p style="margin-top:8px"><b>Installation</b> — Téléchargez ce fichier, puis ouvrez-le directement dans votre navigateur (double-clic ou glisser dans une fenêtre). Épinglez-le ou mettez un raccourci sur le bureau. L’aperçu intégré à la conversation ne conserve pas les données : c’est dans votre navigateur que tout s’enregistre.</p>'
+   +'<p style="margin-top:8px"><b>Capture rapide</b> — Touche <span class="kbd">C</span> ou bouton ⚡ : notez une idée en 2 secondes, joignez une image (fichier ou Ctrl+V). Elle arrive dans la boîte « ⚡ Capture » avec un état traitée / à traiter et une échéance en couleur (rouge = retard, orange = 2 jours, jaune = 7 jours). Touche <span class="kbd">/</span> : recherche globale.</p>'
+   +'<p style="margin-top:8px"><b>Documents</b> — Référencez vos fichiers (Word, Excel, PowerPoint, PDF, liens…) avec un rôle : livrable, base évolutive, modèle ou « source » à piocher. Un même document peut servir plusieurs dossiers. Les fichiers restent où ils sont : c’est l’outil qui retient où les retrouver.</p>'
+   +'<p style="margin-top:8px"><b>Plusieurs appareils</b> — Le fichier copié sur un cloud (OneDrive, SharePoint…) fonctionne sur chaque appareil, mais les données appartiennent à chaque navigateur. Pour transférer : exportez le JSON (💾 Export &amp; sauvegarde) sur un appareil, puis importez-le sur l’autre.</p>'
+   +'<p style="margin-top:8px"><b>Appli installable (mobile &amp; PC)</b> — La page « 📱 Installer l’appli » du menu explique comment mettre ce fichier en ligne gratuitement et l’installer avec une icône sur votre téléphone (PWA). Vos données restent locales dans chaque navigateur.</p>'
+   +'<p style="margin-top:8px"><b>Connexion Outlook (optionnelle)</b> — Page « 📧 Outlook » : après une configuration unique (guide pas à pas), l’appli affiche vos prochains rendez-vous et vos mails non lus en direct, transforme un mail en note à traiter et pousse une échéance dans votre calendrier. La connexion se déconnecte d’un clic ; elle ne recopie aucune donnée ailleurs.</p>'
+   +'<p style="margin-top:8px"><b>Astuce</b> — Tâches : glissez-déposez dans le Kanban. La recherche en haut cherche partout : dossiers, tâches, notes, documents.</p>'
+   +'</div>'
+   +'<div class="modal-foot" style="margin-top:12px"><button class="btn ghost" data-act="modal-close">Fermer</button></div>';
+  openModal(h);
+}
+
+// ===== Connexion Microsoft Outlook (Microsoft Graph — optionnelle) =====
+var MS_TENANT='https://login.microsoftonline.com/common';
+var MS_SCOPES='User.Read Mail.Read Calendars.ReadWrite offline_access';
+var MS_VRF_KEY='espace-ms-vrf';
+var MS_RT_KEY='espace-ms-rt';
+function msHttps(){try{return (typeof location!=='undefined'&&location.protocol==='https:');}catch(e){return false;}}
+function msClientId(){var p=getPrefs();return String(p.msClientId||'');}
+function msSaveClientId(v){var p=getPrefs();p.msClientId=String(v||'').trim();setPrefs(p);}
+function msRedirectUri(){try{return location.origin+(location.pathname||'/');}catch(e){return '';}}
+function msSessionRt(){try{return sessionStorage.getItem(MS_RT_KEY)||'';}catch(e){return '';}}
+function msSetRt(v){try{if(v){sessionStorage.setItem(MS_RT_KEY,v);}else{sessionStorage.removeItem(MS_RT_KEY);}}catch(e){}}
+function msReset(){state.ms={connected:false,nom:'',events:[],mails:[],err:'',busy:false,token:'',exp:0};}
+function msB64url(buf){
+  var bytes=new Uint8Array(buf);var s='';var i;
+  for(i=0;i<bytes.length;i++){s+=String.fromCharCode(bytes[i]);}
+  var b;try{b=btoa(s);}catch(e){b=s;}
+  return b.replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+}
+function msRandomVrf(){
+  var a=new Uint8Array(48);var i;
+  try{crypto.getRandomValues(a);}catch(e){for(i=0;i<a.length;i++){a[i]=Math.floor(Math.random()*256);}}
+  return msB64url(a);
+}
+function msPkceChallenge(vrf){
+  return new Promise(function(resolve,reject){
+    try{
+      var enc=new TextEncoder();
+      crypto.subtle.digest('SHA-256',enc.encode(vrf)).then(function(d){resolve(msB64url(d));},reject);
+    }catch(e){reject(e);}
+  });
+}
+function msQsParam(k){
+  try{
+    var u=new URL(location.href);
+    return u.searchParams.get(k)||'';
+  }catch(e){
+    var m=String(location.search||'').match(new RegExp('[?&]'+k+'=([^&]+)'));
+    return m?decodeURIComponent(m[1]):'';
+  }
+}
+function msLogin(){
+  if(!msHttps()){toast('Ouvrez l’appli depuis son adresse https pour vous connecter (voir 📱 Installer l’appli).');return;}
+  var cid=msClientId();
+  if(!cid){toast('Collez d’abord l’ID d’application Microsoft.');return;}
+  var vrf=msRandomVrf();
+  try{sessionStorage.setItem(MS_VRF_KEY,vrf);}catch(e){}
+  msPkceChallenge(vrf).then(function(ch){
+    var url=MS_TENANT+'/oauth2/v2.0/authorize?client_id='+encodeURIComponent(cid)
+     +'&response_type=code&redirect_uri='+encodeURIComponent(msRedirectUri())
+     +'&scope='+encodeURIComponent(MS_SCOPES)
+     +'&code_challenge='+encodeURIComponent(ch)+'&code_challenge_method=S256';
+    window.location.href=url;
+  }).catch(function(){toast('Chiffrement indisponible — connexion impossible ici.');});
+}
+function msTokenReq(params){
+  return fetch(MS_TENANT+'/oauth2/v2.0/token',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:params});
+}
+function msHandleRedirect(){
+  try{
+    if(!msHttps())return;
+    var code=msQsParam('code');
+    if(!code)return;
+    try{history.replaceState(null,'',location.pathname||'/');}catch(e2){}
+    var vrf='';
+    try{vrf=sessionStorage.getItem(MS_VRF_KEY)||'';sessionStorage.removeItem(MS_VRF_KEY);}catch(e3){}
+    var cid=msClientId();
+    if(!cid||!vrf){state.ms.err='Connexion interrompue — ID d’application ou vérification manquante.';return;}
+    var body='client_id='+encodeURIComponent(cid)+'&grant_type=authorization_code&code='+encodeURIComponent(code)
+     +'&redirect_uri='+encodeURIComponent(msRedirectUri())+'&code_verifier='+encodeURIComponent(vrf)
+     +'&scope='+encodeURIComponent(MS_SCOPES);
+    state.ms.busy=true;
+    msTokenReq(body).then(function(r){return r.json();}).then(function(d){
+      state.ms.busy=false;
+      if(d.refresh_token)msSetRt(d.refresh_token);
+      if(d.access_token){msApplyToken(d.access_token,Number(d.expires_in)||3600);msLoadAll();}
+      else{state.ms.err=String(d.error_description||d.error||'Erreur de connexion Microsoft.');}
+      if(state.page==='outlook')render();
+    }).catch(function(){state.ms.busy=false;state.ms.err='Impossible de joindre Microsoft — vérifiez votre connexion internet.';if(state.page==='outlook')render();});
+  }catch(e){}
+}
+function msApplyToken(tok,expiresIn){
+  state.ms.token=tok;
+  state.ms.exp=Date.now()+((expiresIn&&expiresIn>0)?(expiresIn-120):3480)*1000;
+}
+function msRefresh(){
+  var rt=msSessionRt();
+  if(!rt)return Promise.reject(new Error('session'));
+  var cid=msClientId();
+  if(!cid)return Promise.reject(new Error('config'));
+  var body='client_id='+encodeURIComponent(cid)+'&grant_type=refresh_token&refresh_token='+encodeURIComponent(rt)+'&scope='+encodeURIComponent(MS_SCOPES);
+  return msTokenReq(body).then(function(r){return r.json();}).then(function(d){
+    if(d.refresh_token)msSetRt(d.refresh_token);
+    if(d.access_token){msApplyToken(d.access_token,Number(d.expires_in)||3600);return d.access_token;}
+    msSetRt('');
+    throw new Error('expired');
+  });
+}
+function msEnsureToken(){
+  if(state.ms.token&&Date.now()<state.ms.exp-60000)return Promise.resolve(state.ms.token);
+  return msRefresh();
+}
+function msGraphOnce(tok,path,method,body){
+  var opt={method:method||'GET',headers:{'Authorization':'Bearer '+tok}};
+  if(body){opt.headers['Content-Type']='application/json';opt.body=JSON.stringify(body);}
+  return fetch('https://graph.microsoft.com/v1.0'+path,opt);
+}
+function msGraph(path,method,body){
+  return msEnsureToken().then(function(tok){
+    return msGraphOnce(tok,path,method,body).then(function(r){
+      if(r.status===401){return msRefresh().then(function(tok2){return msGraphOnce(tok2,path,method,body);});}
+      return r;
+    });
+  });
+}
+function msFmtWhen(iso){
+  try{
+    if(!iso)return '';
+    var d=new Date(iso);
+    var h=pad(d.getHours())+':'+pad(d.getMinutes());
+    return d.toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short'})+' · '+h;
+  }catch(e){return String(iso||'');}
+}
+function msLoadAll(){
+  if(typeof fetch!=='function'){state.ms.busy=false;return Promise.resolve();}
+  state.ms.busy=true;state.ms.err='';
+  var nowIso=today()+'T00:00:00';
+  var endIso=plusJours(45)+'T00:00:00';
+  var evPath='/me/calendarview?startdatetime='+encodeURIComponent(nowIso)+'&enddatetime='+encodeURIComponent(endIso)+'&$top=15&$orderby=start/dateTime&$select=subject,start,end,location';
+  var mgPath='/me/messages?$top=10&$orderby=receivedDateTime desc&$filter='+encodeURIComponent('isRead eq false')+'&$select=subject,bodyPreview,from,receivedDateTime';
+  return Promise.all([
+    msGraph('/me?$select=displayName').then(function(r){return r.json();}),
+    msGraph(evPath).then(function(r){return r.json();}),
+    msGraph(mgPath).then(function(r){return r.json();})
+  ]).then(function(res){
+    state.ms.nom=(res[0]&&res[0].displayName)?String(res[0].displayName):'';
+    state.ms.events=(res[1]&&Array.isArray(res[1].value))?res[1].value:[];
+    state.ms.mails=(res[2]&&Array.isArray(res[2].value))?res[2].value:[];
+    state.ms.connected=true;state.ms.busy=false;
+    if(state.page==='outlook'||state.page==='dash')render();
+  }).catch(function(){
+    state.ms.busy=false;
+    state.ms.err='Impossible de lire Outlook — vérifiez la connexion ou reconnectez-vous.';
+    if(state.page==='outlook')render();
+  });
+}
+function msBoot(){
+  if(!msHttps()||!msSessionRt())return;
+  state.ms.busy=true;
+  msRefresh().then(function(){return msLoadAll();}).catch(function(){
+    state.ms.busy=false;msSetRt('');
+    state.ms.err='Session Outlook expirée — reconnectez-vous.';
+    if(state.page==='outlook')render();
+  });
+}
+function msEventRow(ev){
+  var st=(ev&&ev.start&&ev.start.dateTime)?ev.start.dateTime:'';
+  var loc=(ev&&ev.location&&ev.location.displayName)?ev.location.displayName:'';
+  return '<div class="ms-row"><span class="when">'+esc(msFmtWhen(st))+'</span><span class="row-title">'+esc(ev&&ev.subject?ev.subject:'(sans titre)')+'</span>'+(loc?'<span class="who">📍 '+esc(loc)+'</span>':'')+'</div>';
+}
+function msMailRow(m){
+  var who='';
+  try{who=(m.from&&m.from.emailAddress&&m.from.emailAddress.name)?m.from.emailAddress.name:(m.from&&m.from.emailAddress?m.from.emailAddress.address:'');}catch(e){}
+  return '<div class="ms-row">'
+   +'<span class="when">'+esc(msFmtWhen(m.receivedDateTime))+'</span>'
+   +'<span class="row-title">'+esc(m.subject||'(sans objet)')+'</span>'
+   +(who?'<span class="who">de '+esc(who)+'</span>':'')
+   +'<button class="btn sm primary" data-act="mail-to-note" data-id="'+esc(m.id)+'" title="Transformer ce mail en note à trier">→ note</button>'
+   +'<div class="preview">'+esc(String(m.bodyPreview||'').slice(0,160))+'</div>'
+   +'</div>';
+}
+function msMailToNote(mid){
+  var i,m=null;
+  for(i=0;i<state.ms.mails.length;i++){if(state.ms.mails[i].id===mid)m=state.ms.mails[i];}
+  if(!m){toast('Mail introuvable — actualisez la page Outlook.');return;}
+  var who='';
+  try{who=(m.from&&m.from.emailAddress&&m.from.emailAddress.name)?m.from.emailAddress.name:'';}catch(e){}
+  var note={id:uid(),titre:String(m.subject||'Mail à traiter'),contenu:'✉️ Mail de '+who+' :\n\n'+String(m.bodyPreview||''),tags:['mail'],contexte:'pro',dossierId:'',tacheId:'',docId:'',epinglee:false,echeance:'',traitee:false,capture:true,image:'',maj:today()};
+  state.notes.push(note);
+  save();
+  toast('Mail transformé en note — à trier dans ⚡ Capture');
+}
+function msNoteToOutlook(id){
+  var n=findNote(id);
+  if(!n)return;
+  if(!n.echeance){toast('Ajoutez d’abord une échéance à cette note.');return;}
+  if(!state.ms.connected){toast('Connectez d’abord Outlook (page 📧 Outlook).');return;}
+  var body={subject:'📋 '+n.titre,body:{contentType:'text',content:String(n.contenu||'')},start:{dateTime:n.echeance+'T09:00:00',timeZone:'Europe/Paris'},end:{dateTime:n.echeance+'T10:00:00',timeZone:'Europe/Paris'},isReminderOn:true,reminderMinutesBeforeStart:60};
+  msGraph('/me/events','POST',body).then(function(r){
+    if(r.ok){toast('Rappel créé dans votre calendrier Outlook 📅');}
+    else{toast('Création refusée par Outlook — vérifiez la connexion.');}
+  }).catch(function(){toast('Création impossible — vérifiez votre connexion internet.');});
+}
+
+// ===== Page Outlook =====
+function pageOutlook(){
+  var h='<div class="content">';
+  h+='<div class="page-head"><h1 class="page-title">📧 Outlook — Aujourd’hui</h1><div class="toolbar">'
+   +'<button class="btn" data-act="ms-refresh">🔄 Actualiser</button>'
+   +(state.ms.connected?'<button class="btn ghost" data-act="ms-logout">Se déconnecter</button>':'')
+   +'</div></div>';
+  if(!msHttps()){
+    h+='<div class="banner warn">🔌 La connexion Outlook s’active quand l’appli est ouverte depuis son adresse https (page <a class="chip" data-act="go" data-page="install">📱 Installer l’appli</a>). En ouverture locale du fichier, tout le reste fonctionne normalement.</div>';
+  }
+  if(!msClientId()){
+    h+='<div class="step"><h3>🔑 Étape unique — ID d’application Microsoft</h3>'
+     +'<p class="small muted" style="margin-bottom:8px">Créez-le en 10 minutes en suivant la page <a class="chip" data-act="go" data-page="install">📱 Installer l’appli</a> (étape 3). Il est enregistré uniquement sur cet appareil, dans vos préférences locales.</p>'
+     +'<div style="display:flex;gap:8px;flex-wrap:wrap"><input id="ms-client" placeholder="ex. : 0a1b2c3d-… (GUID)" value="'+esc(msClientId())+'" style="max-width:340px"/><button class="btn primary" data-act="ms-saveclient">Enregistrer</button></div></div>';
+  }
+  if(state.ms.err)h+='<div class="banner warn">'+esc(state.ms.err)+'</div>';
+  if(state.ms.busy)h+='<div class="banner info">⏳ Connexion à Outlook…</div>';
+  if(state.ms.connected){
+    h+='<div class="banner info"><span class="ms-dot on"></span>Connecté'+(state.ms.nom?' : <b>'+esc(state.ms.nom)+'</b>':'')+'. Agenda et mails non lus lus en direct — rien n’est recopié ailleurs.</div>';
+    h+='<h2 class="sec-title">📅 Prochains rendez-vous (45 jours)</h2>';
+    if(!state.ms.events.length)h+='<div class="empty">Aucun rendez-vous à venir.</div>';
+    else{var e1;for(e1=0;e1<state.ms.events.length;e1++){h+=msEventRow(state.ms.events[e1]);}}
+    h+='<h2 class="sec-title">✉️ Mails non lus (10 derniers)</h2>';
+    if(!state.ms.mails.length)h+='<div class="empty">Aucun mail non lu — bravo 🎉</div>';
+    else{var m1;for(m1=0;m1<state.ms.mails.length;m1++){h+=msMailRow(state.ms.mails[m1]);}}
+    h+='<p class="tiny muted" style="margin-top:10px">« → note » transforme un mail en idée à trier dans ⚡ Capture. Sur une note avec échéance : bouton 📅 Outlook → le rappel part dans votre calendrier.</p>';
+  }else if(!state.ms.busy){
+    h+='<div class="step"><h3>Connecter votre compte Microsoft</h3>'
+     +'<p class="small" style="margin-bottom:10px">Une fois connecté, cette page affiche vos <b>prochains rendez-vous</b> et vos <b>mails non lus</b> en direct. Vous pouvez transformer un mail en note à traiter, et envoyer une échéance dans votre calendrier. Déconnexion en un clic ; les autorisations se révoquent sur account.microsoft.com.</p>'
+     +'<button class="btn primary" data-act="ms-login">Se connecter avec Microsoft</button></div>';
+  }
+  h+='</div>';
+  return h;
+}
+
+// ===== PWA (installation en tant qu'application) =====
+var SW_SRC=[
+'var C="espace-cache-v1";',
+'self.addEventListener("install",function(e){self.skipWaiting();});',
+'self.addEventListener("activate",function(e){e.waitUntil(self.clients.claim());});',
+'self.addEventListener("fetch",function(e){',
+'  if(e.request.method!=="GET")return;',
+'  e.respondWith(',
+'    caches.open(C).then(function(c){',
+'      return c.match(e.request).then(function(r){',
+'        var f=fetch(e.request).then(function(resp){',
+'          if(resp&&resp.ok&&new URL(e.request.url).protocol.indexOf("http")===0)c.put(e.request,resp.clone());',
+'          return resp;',
+'        }).catch(function(){return r||Response.error();});',
+'        return r||f;',
+'      });',
+'    })',
+'  );',
+'});'
+].join('\n');
+function pwaIconDataUrl(){
+  try{
+    var c=document.createElement('canvas');c.width=512;c.height=512;
+    var g=c.getContext('2d');
+    g.fillStyle='#4f46e5';g.fillRect(0,0,512,512);
+    g.fillStyle='#ffffff';g.font='bold 210px Arial,sans-serif';g.textAlign='center';g.textBaseline='middle';
+    g.fillText('ME',256,250);
+    g.font='90px Arial,sans-serif';g.fillText('✨',256,400);
+    return c.toDataURL('image/png');
+  }catch(e){return '';}
+}
+function pwaInit(){
+  try{
+    if(typeof location==='undefined'||location.protocol!=='https:')return;
+    var man={name:'Mon Espace — Dossiers, Notes & Tâches',short_name:'Mon Espace',description:'Gestion 100% locale de dossiers, notes, tâches et documents.',start_url:'.',scope:'.',display:'standalone',background_color:'#f6f7fb',theme_color:'#4f46e5',icons:[]};
+    var icon=pwaIconDataUrl();
+    if(icon){man.icons=[{src:icon,sizes:'512x512',type:'image/png',purpose:'any'},{src:icon,sizes:'512x512',type:'image/png',purpose:'maskable'}];}
+    var l=document.getElementById('app-manifest');
+    if(!l){l=document.createElement('link');l.id='app-manifest';l.rel='manifest';(document.head||document.documentElement).appendChild(l);}
+    l.href='data:application/manifest+json;charset=utf-8,'+encodeURIComponent(JSON.stringify(man));
+    if(navigator.serviceWorker&&navigator.serviceWorker.register){navigator.serviceWorker.register('sw.js').catch(function(){});}
+  }catch(e){}
+}
+
+// ===== Page Installer l'appli (guide) =====
+function pageInstall(){
+  var h='<div class="content"><div class="page-head"><h1 class="page-title">📱 Installer l’appli</h1></div>';
+  h+='<p class="small muted" style="margin-bottom:14px">Ce guide transforme le fichier en <b>application installable</b> : icône sur l’écran d’accueil du téléphone et du PC, ouverture plein écran — sans store, sans abonnement. Vos données restent stockées localement dans chaque navigateur. Suivez les étapes dans l’ordre.</p>';
+  h+='<div class="step"><h3>Étape 1 — Mettre l’appli en ligne (10 min, gratuit)</h3><ol>'
+   +'<li>Créez un compte gratuit sur <b>github.com</b> (ou connectez-vous).</li>'
+   +'<li>Créez un nouveau dépôt <i>(repository)</i> public, par ex. <b>mon-espace</b>, sans readme.</li>'
+   +'<li>Dans le dépôt : « Add file → Upload files ». Téléversez le fichier de l’appli renommé <b>index.html</b> (téléchargez ce fichier, ou 💾 Export &amp; sauvegarde → 🌐 HTML autonome).</li>'
+   +'<li>Téléversez aussi un second fichier <b>sw.js</b> avec le contenu ci-dessous (copier-coller), puis « Commit changes ».</li>'
+   +'<li>Settings → Pages → Source : « Deploy from a branch », branche <b>main</b>, dossier <b>/ (root)</b> → Save.</li>'
+   +'<li>Attendez 1–2 minutes : l’appli est en ligne à l’adresse <b>https://votre-compte.github.io/mon-espace/</b></li>'
+   +'</ol>'
+   +'<p class="tiny muted">Alternative sans compte : netlify.com → « Drop » → glissez un dossier contenant index.html et sw.js. Adresse https obtenue en quelques secondes.</p></div>';
+  h+='<div class="step"><h3>Contenu du fichier sw.js (copier-coller)</h3><div class="codeblk">'+esc(SW_SRC)+'</div><p class="tiny muted">Ce petit fichier met l’appli en cache pour qu’elle s’ouvre instantanément, même sans réseau.</p></div>';
+  h+='<div class="step"><h3>Étape 2 — Installer sur le téléphone</h3><ol>'
+   +'<li>Ouvrez l’adresse https dans Chrome (Android) ou Safari (iPhone).</li>'
+   +'<li>Menu du navigateur (⋯) → « Ajouter à l’écran d’accueil » ou « Installer l’application ».</li>'
+   +'<li>L’icône ✨ apparaît : l’appli s’ouvre plein écran, comme une vraie application. La capture rapide (touche C) fonctionne partout.</li>'
+   +'</ol>'
+   +'<p class="tiny muted">Sur PC : même principe depuis Chrome ou Edge (icône d’installation dans la barre d’adresse).</p></div>';
+  h+='<div class="step"><h3>Étape 3 — Connecter Outlook (optionnel, 15 min une seule fois)</h3><ol>'
+   +'<li>Allez sur <b>entra.microsoft.com</b> et connectez-vous avec votre compte Microsoft (celui d’Outlook).</li>'
+   +'<li>☰ → Identités → Enregistrements d’applications → « + Nouvelle inscription ».</li>'
+   +'<li>Nom : <b>Mon Espace</b> — Types de comptes : « Comptes dans un annuaire organisationnel… et comptes personnels Microsoft ».</li>'
+   +'<li>URI de redirection : <b>SPA (application à page unique)</b> → collez l’adresse https exacte de votre appli (ex. : https://votre-compte.github.io/mon-espace/) → Enregistrer.</li>'
+   +'<li>Copiez l’« ID d’application (client) » (série de chiffres et lettres).</li>'
+   +'<li>Dans cette appli : page 📧 Outlook → collez l’ID → Enregistrer → « Se connecter avec Microsoft » → Autoriser.</li>'
+   +'</ol>'
+   +'<p class="tiny muted">Ces autorisations (profil, agenda, lecture des mails) sont propres à votre appli, utilisées uniquement ici, et révocables à tout moment sur account.microsoft.com → Confidentialité.</p></div>';
+  h+='<div class="step"><h3>🔒 Et mes données ?</h3><p class="small">Dossiers, tâches, notes, documents : toujours stockés dans le navigateur de chaque appareil, exportables (💾) et supprimables à tout moment. La connexion Outlook <b>lit</b> l’agenda et les mails non lus à la demande — elle ne recopie rien. Continuez d’exporter vos sauvegardes pour passer d’un appareil à l’autre.</p></div>';
+  h+='</div>';
+  return h;
+}
+
+// ===== Exports =====
+function downloadText(name,content,mime){
+  var blob=new Blob([content],{type:mime||'text/plain'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a');
+  a.href=url;a.download=name;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(function(){URL.revokeObjectURL(url);a.remove();},500);
+}
+function csvEsc(v){
+  v=String(v==null?'':v);
+  if(/[;"\r\n]/.test(v)){return '"'+v.replace(/"/g,'""')+'"';}
+  return v;
+}
+function toCSV(rows){
+  var out='\ufeff';var i,j;
+  for(i=0;i<rows.length;i++){
+    var cells=[];
+    for(j=0;j<rows[i].length;j++){cells.push(csvEsc(rows[i][j]));}
+    out+=cells.join(';')+'\r\n';
+  }
+  return out;
+}
+function exportJson(){
+  downloadText('espace-'+stamp()+'.json',JSON.stringify({app:'espace-perso-pro',version:VERSION,exporte:new Date().toISOString(),dossiers:state.dossiers,taches:state.taches,notes:state.notes,docs:state.docs}),'application/json');
+  markSaved();toast('Export JSON téléchargé');
+}
+function exportCsvDossiers(){
+  var rows=[['id','nom','statut','contexte','categorie','echeance','taches_faites','taches_total','notes','description']];
+  var i;
+  for(i=0;i<state.dossiers.length;i++){
+    var d=state.dossiers[i];
+    var ts=dossierTaches(d.id),f=0,j;
+    for(j=0;j<ts.length;j++){if(ts[j].statut==='fait')f++;}
+    rows.push([d.id,d.nom,d.statut,d.contexte,d.categorie,d.echeance,f,ts.length,dossierNotes(d.id).length,d.description]);
+  }
+  downloadText('espace-dossiers-'+stamp()+'.csv',toCSV(rows),'text/csv');
+  markSaved();toast('Export CSV Dossiers téléchargé');
+}
+function exportCsvTaches(){
+  var rows=[['id','titre','statut','priorite','contexte','echeance','dossier','description']];
+  var i;
+  for(i=0;i<state.taches.length;i++){
+    var t=state.taches[i];
+    var d=findDossier(t.dossierId);
+    rows.push([t.id,t.titre,t.statut,t.priorite,t.contexte,t.echeance,d?d.nom:'',t.description]);
+  }
+  downloadText('espace-taches-'+stamp()+'.csv',toCSV(rows),'text/csv');
+  markSaved();toast('Export CSV Tâches téléchargé');
+}
+function exportCsvNotes(){
+  var rows=[['id','titre','tags','contexte','dossier','tache','modifiee','contenu']];
+  var i;
+  for(i=0;i<state.notes.length;i++){
+    var n=state.notes[i];
+    var d=findDossier(n.dossierId);
+    var t=findTache(n.tacheId);
+    rows.push([n.id,n.titre,(n.tags||[]).join(' | '),n.contexte,d?d.nom:'',t?t.titre:'',n.maj,n.contenu]);
+  }
+  downloadText('espace-notes-'+stamp()+'.csv',toCSV(rows),'text/csv');
+  markSaved();toast('Export CSV Notes téléchargé');
+}
+function exportCsvDocs(){
+  var rows=[['id','nom','type','role','localisation','dossiers','description']];
+  var i;
+  for(i=0;i<state.docs.length;i++){
+    var x=state.docs[i];
+    var dnames=[],j;
+    for(j=0;j<x.dossiers.length;j++){var d=findDossier(x.dossiers[j]);if(d)dnames.push(d.nom);}
+    rows.push([x.id,x.nom,x.type,x.role,x.localisation,dnames.join(' | '),x.description]);
+  }
+  downloadText('espace-documents-'+stamp()+'.csv',toCSV(rows),'text/csv');
+  markSaved();toast('Export CSV Documents téléchargé');
+}
+function exportHtmlAll(){
+  var data=JSON.stringify({app:'espace-perso-pro',version:VERSION,exporte:new Date().toISOString(),exemple:false,dossiers:state.dossiers,taches:state.taches,notes:state.notes,docs:state.docs}).replace(/<\//g,'<\\/');
+  var pre=OPEN_TAG+'window.'+EMBED_KEY+'='+data+';'+CLOSE_TAG;
+  var cl=document.documentElement.cloneNode(true);
+  var m=cl.querySelector('#main');if(m)m.innerHTML='';
+  var mr=cl.querySelector('#modal-root');if(mr)mr.innerHTML='';
+  var tr=cl.querySelector('#toast-root');if(tr)tr.innerHTML='';
+  var html=cl.outerHTML;
+  html='<!doctype html>'+html.replace(OPEN_TAG,function(){return pre+OPEN_TAG;});
+  downloadText('espace-'+stamp()+'.html',html,'text/html');
+  markSaved();toast('Export HTML autonome téléchargé');
+}
+function importJson(file){
+  var rd=new FileReader();
+  rd.onload=function(){
+    try{
+      var d=JSON.parse(rd.result);
+      if(!d||!Array.isArray(d.dossiers)||!Array.isArray(d.taches)||!Array.isArray(d.notes))throw new Error('format');
+      if(!confirm('Remplacer toutes les données actuelles par celles du fichier ?'))return;
+      var st=normalize(d);
+      state.dossiers=st.dossiers;state.taches=st.taches;state.notes=st.notes;state.exemple=false;
+      save();closeModal();toast('Import réussi');render();
+    }catch(e){alert('Fichier invalide ou illisible.');}
+  };
+  rd.readAsText(file);
+}
+
+// ===== Toast =====
+function toast(msg){
+  var r=document.getElementById('toast-root');if(!r)return;
+  r.innerHTML='<div class="toast">'+msg+'</div>';
+  setTimeout(function(){r.innerHTML='';},2400);
+}
+
+// ===== Formulaires =====
+function saveDossierForm(f){
+  var el=f.elements;
+  var id=el.id.value;
+  var d=id?findDossier(id):null;
+  var nouveau=!d;
+  if(!d){d={id:uid(),cree:today()};state.dossiers.push(d);}
+  d.nom=el.n.value.trim()||'Sans titre';
+  d.statut=el.st.value;
+  d.contexte=el.ctx.value;
+  d.categorie=el.cat.value.trim();
+  d.echeance=el.ech.value;
+  d.description=el.desc.value;
+  d.maj=today();
+  save();closeModal();toast('Dossier enregistré');
+  if(nouveau){navGo('dossier',d.id);}
+  render();
+}
+function saveTacheForm(f){
+  var el=f.elements;
+  var id=el.id.value;
+  var t=id?findTache(id):null;
+  if(!t){t={id:uid(),cree:today()};state.taches.push(t);}
+  t.titre=el.tit.value.trim()||'Sans titre';
+  t.statut=el.st.value;
+  t.priorite=el.prio.value;
+  t.contexte=el.ctx.value;
+  t.echeance=el.ech.value;
+  t.dossierId=el.dos.value;
+  t.description=el.desc.value;
+  t.maj=today();
+  save();closeModal();toast('Tâche enregistrée');
+  render();
+}
+function saveNoteForm(f){
+  var el=f.elements;
+  var id=el.id.value;
+  var n=id?findNote(id):null;
+  var nouveau=!n;
+  if(!n){n={id:uid(),maj:today()};state.notes.push(n);}
+  n.titre=el.tit.value.trim()||'Sans titre';
+  n.contenu=el.cont.value;
+  var raw=el.tags.value.split(',');
+  var tags=[],i;
+  for(i=0;i<raw.length;i++){var tg=raw[i].trim();if(tg)tags.push(tg);}
+  n.tags=tags;
+  n.contexte=el.ctx.value;
+  n.epinglee=(el.pin.value==='oui');
+  n.echeance=el.ech.value;
+  n.traitee=(el.tr.value==='oui');
+  n.dossierId=el.dos.value;
+  n.tacheId=el.ta.value;
+  n.docId=el.doc.value;
+  if(state._noteImg){n.image=state._noteImg;state._noteImg='';}
+  n.maj=today();
+  save();closeModal();toast('Note enregistrée');
+  if(nouveau){navGo('note',n.id);}
+  render();
+}
+function saveDocForm(f){
+  var el=f.elements;
+  var id=el.id.value;
+  var x=id?findDoc(id):null;
+  var nouveau=!x;
+  if(!x){x={id:uid(),cree:today()};state.docs.push(x);}
+  x.nom=el.n.value.trim()||'Sans nom';
+  x.type=el.ty.value;
+  x.role=el.ro.value;
+  x.localisation=el.loc.value.trim();
+  x.description=el.desc.value;
+  var ids=[],i;
+  if(el.dos){
+    if(el.dos.length){
+      for(i=0;i<el.dos.length;i++){if(el.dos[i].checked)ids.push(el.dos[i].value);}
+    }else if(el.dos.checked){ids.push(el.dos.value);}
+  }
+  x.dossiers=ids;
+  x.maj=today();
+  save();closeModal();toast('Document enregistré');
+  if(nouveau){navGo('doc',x.id);}
+  render();
+}
+function saveCaptureForm(f){
+  var el=f.elements;
+  var n={id:uid(),titre:el.tit.value.trim()||'Idée',contenu:'',tags:[],contexte:'perso',dossierId:el.dos.value,tacheId:'',docId:'',epinglee:false,echeance:el.ech.value,traitee:false,capture:true,image:state._capImg||'',maj:today()};
+  state.notes.push(n);
+  state._capImg='';
+  save();closeModal();toast('Idée capturée ⚡');
+  render();
+}
+function readImage(file,dest){
+  var rd=new FileReader();
+  rd.onload=function(){
+    var s=String(rd.result);
+    if(s.length>1500000){alert('Image trop lourde (plus d’1 Mo après conversion) — recadrez-la ou compressez-la avant.');return;}
+    if(dest==='cap'){
+      state._capImg=s;
+      var info=document.getElementById('cap-img-info');
+      if(info)info.innerHTML='🖼 Image jointe ('+Math.round(s.length/1365)+' Ko)';
+    }else{
+      state._noteImg=s;
+      var info2=document.getElementById('note-img-info');
+      if(info2)info2.innerHTML='🖼 Image jointe ('+Math.round(s.length/1365)+' Ko)';
+    }
+  };
+  rd.readAsDataURL(file);
+}
+
+// ===== Écouteurs globaux =====
+document.addEventListener('click',function(ev){
+  if(ev.target&&ev.target.classList&&ev.target.classList.contains('modal-back')){closeModal();return;}
+  if(ev.target.closest&&ev.target.closest('a[href]'))return;
+  var el=ev.target.closest('[data-act]');
+  if(!el)return;
+  ev.preventDefault();
+  var a=el.getAttribute('data-act');
+  var id=el.getAttribute('data-id');
+  if(a==='go'){navGo(el.getAttribute('data-page'),'');render();}
+  else if(a==='nav-back'){navBack();render();}
+  else if(a==='nav-fwd'){navFwd();render();}
+  else if(a==='open-dossier'){navGo('dossier',id);render();}
+  else if(a==='open-tache'){modalTache(id,'');}
+  else if(a==='open-note'){navGo('note',id);render();}
+  else if(a==='new-tache'){modalTache('',el.getAttribute('data-dos')||'');}
+  else if(a==='new-dossier'){modalDossier('');}
+  else if(a==='new-note'){modalNote('',el.getAttribute('data-dos')||'',el.getAttribute('data-doc')||'');}
+  else if(a==='edit-dossier'){modalDossier(id);}
+  else if(a==='edit-note'){modalNote(id,'');}
+  else if(a==='tache-toggle'){
+    var t=findTache(id);if(t){t.statut=(t.statut==='fait')?'a-faire':'fait';t.maj=today();save();render();}
+  }
+  else if(a==='del-dossier'){
+    var d=findDossier(id);
+    if(d&&confirm('Supprimer le dossier « '+d.nom+' » ?\nSes tâches et notes seront conservées mais détachées.')){
+      var i;
+      for(i=0;i<state.taches.length;i++){if(state.taches[i].dossierId===id)state.taches[i].dossierId='';}
+      for(i=0;i<state.notes.length;i++){if(state.notes[i].dossierId===id)state.notes[i].dossierId='';}
+      state.dossiers=state.dossiers.filter(function(x){return x.id!==id;});
+      if(state.page==='dossier'&&state.detailId===id){navGo('dossiers','');}
+      save();toast('Dossier supprimé');render();
+    }
+  }
+  else if(a==='del-tache'){
+    var t2=findTache(id);
+    if(t2&&confirm('Supprimer la tâche « '+t2.titre+' » ?')){
+      var j;
+      for(j=0;j<state.notes.length;j++){if(state.notes[j].tacheId===id)state.notes[j].tacheId='';}
+      state.taches=state.taches.filter(function(x){return x.id!==id;});
+      save();closeModal();toast('Tâche supprimée');render();
+    }
+  }
+  else if(a==='del-note'){
+    var n=findNote(id);
+    if(n&&confirm('Supprimer la note « '+n.titre+' » ?')){
+      state.notes=state.notes.filter(function(x){return x.id!==id;});
+      if(state.page==='note'&&state.detailId===id){navGo('notes','');}
+      save();toast('Note supprimée');render();
+    }
+  }
+  else if(a==='pin-note'){var n2=findNote(id);if(n2){n2.epinglee=!n2.epinglee;save();render();}}
+  else if(a==='open-export'){modalExport();}
+  else if(a==='open-help'){modalHelp();}
+  else if(a==='modal-close'){closeModal();}
+  else if(a==='tache-vue'){state.tacheVue=el.getAttribute('data-vue');render();}
+  else if(a==='cal-prev'){
+    state.calM--;if(state.calM<0){state.calM=11;state.calY--;}
+    renderPageBody();
+  }
+  else if(a==='cal-next'){
+    state.calM++;if(state.calM>11){state.calM=0;state.calY++;}
+    renderPageBody();
+  }
+  else if(a==='cal-today'){var nd=new Date();state.calY=nd.getFullYear();state.calM=nd.getMonth();renderPageBody();}
+  else if(a==='clear-exemple'){
+    if(confirm('Effacer toutes les données d’exemple ?')){
+      state.dossiers=[];state.taches=[];state.notes=[];state.docs=[];state.exemple=false;
+      save();toast('Données d’exemple effacées');render();
+    }
+  }
+  else if(a==='backup-ok'){markSaved();toast('Sauvegarde marquée comme faite');render();}
+  else if(a==='export-json'){exportJson();}
+  else if(a==='export-html'){exportHtmlAll();}
+  else if(a==='export-csv-dos'){exportCsvDossiers();}
+  else if(a==='export-csv-ta'){exportCsvTaches();}
+  else if(a==='export-csv-no'){exportCsvNotes();}
+  else if(a==='tag-filter'){
+    var tg2=el.getAttribute('data-tag');
+    state.filtres.no.tag=(state.filtres.no.tag===tg2)?'':tg2;
+    render();
+  }
+  else if(a==='tag-clear'){state.filtres.no.tag='';render();}
+  else if(a==='open-doc'){navGo('doc',id);render();}
+  else if(a==='new-doc'){modalDoc('',el.getAttribute('data-dos')||'');}
+  else if(a==='edit-doc'){modalDoc(id,'');}
+  else if(a==='link-doc'){modalLinkDoc(id);}
+  else if(a==='doc-tgl-dos'){
+    var x2=findDoc(id);var did2=el.getAttribute('data-dos');
+    if(x2&&did2){
+      var ix=x2.dossiers.indexOf(did2);
+      if(ix>=0){x2.dossiers.splice(ix,1);}
+      else{x2.dossiers.push(did2);}
+      x2.maj=today();save();modalLinkDoc(did2);render();
+    }
+  }
+  else if(a==='del-doc'){
+    var x3=findDoc(id);
+    if(x3&&confirm('Supprimer le document « '+x3.nom+' » ?\nSes notes seront conservées mais détachées.')){
+      var i3;
+      for(i3=0;i3<state.notes.length;i3++){if(state.notes[i3].docId===id)state.notes[i3].docId='';}
+      state.docs=state.docs.filter(function(y){return y.id!==id;});
+      if(state.page==='doc'&&state.detailId===id){navGo('docs','');}
+      save();toast('Document supprimé');render();
+    }
+  }
+  else if(a==='quick-capture'){modalCapture();}
+  else if(a==='note-traitee'){
+    var n3=findNote(id);if(n3){n3.traitee=!n3.traitee;save();render();}
+  }
+  else if(a==='note-delimg'){
+    var n4=findNote(id);if(n4){n4.image='';save();modalNote(id,'','');render();}
+  }
+  else if(a==='img-view'){
+    var src=el.getAttribute('src');
+    if(src)openModal('<div style="text-align:center"><img src="'+esc(src)+'" style="max-width:100%;border-radius:10px"/></div><div class="modal-foot"><button class="btn ghost" data-act="modal-close">Fermer</button></div>');
+  }
+  else if(a==='ms-saveclient'){
+    var inp=document.getElementById('ms-client');
+    if(inp){msSaveClientId(inp.value);toast('ID d’application enregistré — vous pouvez vous connecter');render();}
+  }
+  else if(a==='ms-login'){msLogin();}
+  else if(a==='ms-logout'){msSetRt('');msReset();toast('Déconnecté d’Outlook');render();}
+  else if(a==='ms-refresh'){
+    if(state.ms.connected||msSessionRt()){state.ms.busy=true;render();msLoadAll();}
+    else{toast('Connectez-vous d’abord.');}
+  }
+  else if(a==='mail-to-note'){msMailToNote(id);}
+  else if(a==='note-to-outlook'){msNoteToOutlook(id);}
+});
+document.addEventListener('submit',function(ev){
+  var f=ev.target;
+  if(!f||!f.id)return;
+  if(f.id==='f-dossier'){ev.preventDefault();saveDossierForm(f);}
+  else if(f.id==='f-tache'){ev.preventDefault();saveTacheForm(f);}
+  else if(f.id==='f-note'){ev.preventDefault();saveNoteForm(f);}
+  else if(f.id==='f-doc'){ev.preventDefault();saveDocForm(f);}
+  else if(f.id==='f-capture'){ev.preventDefault();saveCaptureForm(f);}
+});
+function setFilter(key,val){
+  var parts=key.split('.');
+  if(parts.length===2&&state.filtres[parts[0]]){state.filtres[parts[0]][parts[1]]=val;}
+}
+document.addEventListener('input',function(ev){
+  var el=ev.target;
+  if(!el||!el.getAttribute)return;
+  if(el.id==='gsearch'){
+    state.searchQ=el.value;
+    if(el.value.trim().length>=2){if(state.page!=='search')navGo('search','');render();}
+    else if(state.page==='search'){navGo('dash','');render();}
+    return;
+  }
+  var k=el.getAttribute('data-inp');
+  if(!k)return;
+  setFilter(k,el.value);
+  renderPageBody();
+});
+document.addEventListener('change',function(ev){
+  var el=ev.target;
+  if(!el||!el.getAttribute)return;
+  if(el.id==='imp-json'){if(el.files&&el.files[0])importJson(el.files[0]);return;}
+  if(el.id==='cap-img'){if(el.files&&el.files[0])readImage(el.files[0],'cap');return;}
+  if(el.id==='note-img'){if(el.files&&el.files[0])readImage(el.files[0],'note');return;}
+  var k=el.getAttribute('data-chg');
+  if(!k)return;
+  setFilter(k,el.value);
+  renderPageBody();
+});
+document.addEventListener('keydown',function(ev){
+  if(ev.key==='Escape'){closeModal();return;}
+  if(ev.ctrlKey&&ev.key==='Enter'){
+    var f=null;
+    try{f=document.querySelector('.modal form');}catch(e){}
+    if(f){
+      if(typeof f.requestSubmit==='function'){f.requestSubmit();}
+      else if(f.dispatchEvent){f.dispatchEvent(new Event('submit',{cancelable:true}));}
+    }
+    return;
+  }
+  if(ev.ctrlKey||ev.altKey||ev.metaKey)return;
+  var tag=(ev.target&&ev.target.tagName)?String(ev.target.tagName).toLowerCase():'';
+  if(tag==='input'||tag==='textarea'||tag==='select')return;
+  if(ev.target&&ev.target.isContentEditable)return;
+  if(ev.key==='c'||ev.key==='C'){modalCapture();}
+  else if(ev.key==='/'){var g=document.getElementById('gsearch');if(g&&g.focus){ev.preventDefault();g.focus();}}
+});
+document.addEventListener('paste',function(ev){
+  var inCap=false;
+  try{inCap=!!document.querySelector('#f-capture');}catch(e){}
+  if(!inCap)return;
+  var items=(ev.clipboardData&&ev.clipboardData.items)?ev.clipboardData.items:[];
+  var i;
+  for(i=0;i<items.length;i++){
+    if(items[i].type&&items[i].type.indexOf('image')===0){
+      var blob=items[i].getAsFile();
+      if(!blob)continue;
+      var rd=new FileReader();
+      rd.onload=function(){
+        var s=String(rd.result);
+        if(s.length>1500000){alert('Image trop lourde (plus d’1 Mo) — recadrez-la ou compressez-la avant.');return;}
+        state._capImg=s;
+        var info=document.getElementById('cap-img-info');
+        if(info)info.innerHTML='🖼 Image jointe ('+Math.round(s.length/1365)+' Ko)';
+      };
+      rd.readAsDataURL(blob);
+      ev.preventDefault();
+      break;
+    }
+  }
+});
+// Kanban : glisser-déposer
+document.addEventListener('dragstart',function(ev){
+  var c=ev.target.closest?ev.target.closest('.kcard'):null;
+  if(!c)return;
+  state._drag=c.getAttribute('data-id');
+  try{ev.dataTransfer.setData('text/plain',state._drag);ev.dataTransfer.effectAllowed='move';}catch(e){}
+});
+document.addEventListener('dragover',function(ev){
+  var c=ev.target.closest?ev.target.closest('.kcol'):null;
+  if(c){ev.preventDefault();}
+});
+document.addEventListener('drop',function(ev){
+  var c=ev.target.closest?ev.target.closest('.kcol'):null;
+  if(!c)return;
+  ev.preventDefault();
+  var id=state._drag;
+  try{var dt=ev.dataTransfer.getData('text/plain');if(dt)id=dt;}catch(e){}
+  var t=findTache(id);
+  if(t){t.statut=c.getAttribute('data-statut');t.maj=today();save();}
+  state._drag='';
+  render();
+});
+
+// ===== Démarrage =====
+function init(){
+  pwaInit();
+  msHandleRedirect();
+  var st=load();
+  state.dossiers=st.dossiers;
+  state.taches=st.taches;
+  state.notes=st.notes;
+  state.docs=st.docs;
+  state.exemple=st.exemple;
+  navGo('dash','');
+  render();
+  msBoot();
+}
+init();
+</script>
+</body>
+</html>
