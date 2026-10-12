@@ -199,7 +199,30 @@ input[type=file]{padding:5px;font-size:12px}
  main{padding:0}
  .card,.row{box-shadow:none}
 }
+/* ---- v5 : badges cliquables, KPI cliquables, relances, panneau ---- */
+.qk{cursor:pointer}
+.qk:hover{outline:2px dashed #94a3b8;outline-offset:1px;border-radius:6px}
+.kpi.kclick{cursor:pointer;transition:transform .08s ease}
+.kpi.kclick:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(15,23,42,.12)}
+.pinband-line{display:flex;flex-wrap:wrap;gap:4px 16px;align-items:center;background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:8px 12px;margin-bottom:14px;font-size:13px}
+.pinband-line .t{font-weight:600;cursor:pointer;white-space:nowrap;max-width:360px;overflow:hidden;text-overflow:ellipsis}
+.crumbs{display:flex;flex-wrap:wrap;gap:4px;align-items:center;font-size:12px;color:var(--muted);margin-bottom:10px}
+.crumbs a{color:var(--accent);cursor:pointer}
+#remind-root{position:fixed;top:64px;right:16px;z-index:40;display:flex;justify-content:flex-end;pointer-events:none}
+.remind{pointer-events:auto;width:min(320px,26vw);max-height:26vh;overflow:auto;background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:0 6px 18px rgba(15,23,42,.16);padding:10px 12px;font-size:12.5px}
+.remind h4{margin:0 0 6px;font-size:13px;display:flex;justify-content:space-between;align-items:center}
+.remind .rr{display:flex;gap:8px;align-items:center;padding:5px 8px;border-left:3px solid var(--line);border-radius:6px;margin-bottom:5px;cursor:pointer;background:#f8fafc}
+.remind .rr:hover{background:var(--accent-soft)}
+.remind .rr.late{border-left-color:#dc2626}
+.remind .rr.soon{border-left-color:#ea580c}
+.ms-dot.late{background:#dc2626}
+@media(max-width:900px){
+ #remind-root{top:auto;bottom:72px;right:8px}
+ .remind{width:min(300px,86vw);max-height:22vh}
+ .pinband-line .t{max-width:70vw}
+}
 </style>
+<style id="ech-styles"></style>
 </head>
 <body>
 <aside class="sidebar" id="sidebar">
@@ -213,13 +236,14 @@ input[type=file]{padding:5px;font-size:12px}
     <a class="snav" id="sn-cal" data-act="go" data-page="cal">📅 Calendrier</a>
     <a class="snav" id="sn-notes" data-act="go" data-page="notes">📝 Notes</a>
     <a class="snav" id="sn-outlook" data-act="go" data-page="outlook">📧 Outlook</a>
+    <a class="snav" id="sn-synchro" data-act="go" data-page="synchro">☁️ Synchro <span id="sb-dot" class="ms-dot off"></span></a>
   </nav>
   <div class="side-foot">
     <a class="snav" data-act="go" data-page="install">📱 Installer l’appli</a>
     <a class="snav" data-act="open-listes">⚙️ Mes listes</a>
     <a class="snav" data-act="open-export">💾 Export &amp; sauvegarde</a>
     <a class="snav" data-act="open-help">❓ Aide &amp; confidentialité</a>
-    <div class="side-note">100 % local : vos données restent sur cet appareil. La connexion Outlook est optionnelle et se limite à ce que vous y consultez.</div>
+    <div class="side-note">100 % local par défaut. Connexion Outlook et synchro chiffrée (page ☁️) optionnelles — vous décidez.</div>
   </div>
 </aside>
 <div class="wrap">
@@ -235,6 +259,7 @@ input[type=file]{padding:5px;font-size:12px}
 </div>
 <div id="modal-root"></div>
 <div id="toast-root"></div>
+<div id="remind-root"></div>
 <noscript>Cette application nécessite JavaScript.</noscript>
 <script>
 /* =====================================================
@@ -248,7 +273,7 @@ input[type=file]{padding:5px;font-size:12px}
 var STORE_KEY='gestion-dnt-v1';
 var PREFS_KEY='gestion-dnt-prefs-v1';
 var EMBED_KEY='__ESPACE_EMBEDDED_DATA__';
-var VERSION=4;
+var VERSION=5;
 var OPEN_TAG='<scr'+'ipt>';
 var CLOSE_TAG='<'+'/scr'+'ipt>';
 
@@ -318,6 +343,8 @@ var state={
   page:'dash',detailId:'',tacheVue:'liste',calY:0,calM:0,calVue:'mois',calSel:'',
   searchQ:'',_drag:'',_capImg:'',_noteImg:'',
   ms:{connected:false,nom:'',events:[],mails:[],err:'',busy:false,token:'',exp:0},
+  sb:{busy:false,last:'',err:''},
+  _kpiRetard:false,_sbOffer:null,
   filtres:{dos:{q:'',statut:'',ctx:''},ta:{q:'',statut:'',prio:'',ctx:''},no:{q:'',tag:'',ctx:'',tr:''},dc:{q:'',type:'',role:'',dos:''}}
 };
 var nav={stack:[],index:-1};
@@ -331,10 +358,26 @@ function plusJours(n){var d=new Date();d.setDate(d.getDate()+n);return d.getFull
 function daysUntil(ds){if(!ds)return null;var p=ds.split('-');var d=new Date(+p[0],+p[1]-1,+p[2]);var t=new Date();var mid=new Date(t.getFullYear(),t.getMonth(),t.getDate());return Math.round((d-mid)/86400000);}
 function fmtDate(ds){if(!ds)return '—';var p=ds.split('-');return p[2]+'/'+p[1]+'/'+p[0];}
 function relEch(ds,done,dl){var n=daysUntil(ds);if(n===null)return '';if(done)return dl||'Fait';if(n<0)return 'Retard '+(-n)+' j';if(n===0)return 'Aujourd’hui';if(n===1)return 'Demain';if(n<=7)return 'Dans '+n+' j';return fmtDate(ds);}
-function echClass(ds,done){if(done)return 'ok';var n=daysUntil(ds);if(n===null)return '';if(n<0)return 'late';if(n<=2)return 's2';if(n<=7)return 's7';return '';}
+function echClass(ds,done){if(done)return 'ok';var n=daysUntil(ds);if(n===null)return '';if(n<0)return 'late';if(n<=echSeuil2())return 's2';if(n<=echSeuil7())return 's7';return '';}
 function echLabel(ds,done,dl,heure){if(!ds)return '';return '<span class="eco '+echClass(ds,done)+'">'+relEch(ds,done,dl)+(heure?' · '+esc(heure):'')+'</span>';}
 function infoOf(list,k){var i;for(i=0;i<list.length;i++){if(list[i].k===k)return list[i];}return list[0];}
 function validK(list,k,def){var i;for(i=0;i<list.length;i++){if(list[i].k===k)return k;}return def;}
+// v5 : helpers édition rapide (badges cliquables) + hiérarchie de dossiers + seuils d’échéance réglables
+function qw(kind,id,field,inner,tip){if(!kind||!inner)return inner;return '<span class="qk" data-act="qedit" data-kind="'+kind+'" data-id="'+id+'" data-field="'+field+'" title="'+(tip||'Modifier d’un clic')+'">'+inner+'</span>';}
+function dossierEnfants(id){return state.dossiers.filter(function(d){return d.parentId===id;});}
+function dossierChemin(id){var parts=[];var d=findDossier(id);var n=0;while(d&&n<20){parts.unshift(d);d=d.parentId?findDossier(d.parentId):null;n++;}return parts;}
+function isDescendantOf(rootId,checkId){var i;for(i=0;i<state.dossiers.length;i++){if(state.dossiers[i].parentId===rootId){if(state.dossiers[i].id===checkId)return true;if(isDescendantOf(state.dossiers[i].id,checkId))return true;}}return false;}
+function echPrefs(){var p=getPrefs();return p.ech||{};}
+function echSeuil2(){var v=parseInt(echPrefs().s2,10);return isNaN(v)?2:v;}
+function echSeuil7(){var v=parseInt(echPrefs().s7,10);return isNaN(v)?7:v;}
+function applyEchStyles(){
+  var el=document.getElementById('ech-styles');if(!el)return;
+  var e=echPrefs();
+  el.textContent='.eco.late{background:'+(e.bgLate||'#fee2e2')+';color:'+(e.cLate||'#991b1b')+'}'
+   +'.eco.s2{background:'+(e.bgS2||'#ffedd5')+';color:'+(e.cS2||'#c2410c')+'}'
+   +'.eco.s7{background:'+(e.bgS7||'#fef9c3')+';color:'+(e.cS7||'#854d0e')+'}'
+   +'.eco.ok{background:'+(e.bgOk||'#d1fae5')+';color:'+(e.cOk||'#065f46')+'}';
+}
 function isRich(s){return /<\/?(b|i|u|strong|em|span|div|p|br|ul|ol|li|font)\b/i.test(String(s||''));}
 function richSan(s){
   var t=String(s||'');
@@ -363,6 +406,10 @@ function save(){
   try{
     localStorage.setItem(STORE_KEY,JSON.stringify({version:VERSION,exemple:state.exemple,dossiers:state.dossiers,taches:state.taches,notes:state.notes,docs:state.docs}));
   }catch(e){}
+  if(!SB_APPLYING){
+    try{var p=getPrefs();p.lastWriteTs=Date.now();setPrefs(p);}catch(e){}
+    try{syncSoon();}catch(e){}
+  }
 }
 function getPrefs(){try{var r=localStorage.getItem(PREFS_KEY);return r?JSON.parse(r):{};}catch(e){return {};}}
 function setPrefs(p){try{localStorage.setItem(PREFS_KEY,JSON.stringify(p));}catch(e){}}
@@ -383,7 +430,7 @@ function normalize(src){
   if(d.dossiers){
     for(i=0;i<d.dossiers.length;i++){
       x=d.dossiers[i];if(!x||!x.id)continue;
-      out.dossiers.push({id:String(x.id),nom:String(x.nom||'Sans titre'),statut:validK(DOS_STATUTS,x.statut,'ouvert'),contexte:validK(CONTEXTES,x.contexte,'perso'),categorie:String(x.categorie||''),echeance:String(x.echeance||''),description:String(x.description||''),cree:String(x.cree||today()),maj:String(x.maj||today())});
+      out.dossiers.push({id:String(x.id),parentId:String(x.parentId||''),nom:String(x.nom||'Sans titre'),statut:validK(DOS_STATUTS,x.statut,'ouvert'),contexte:validK(CONTEXTES,x.contexte,'perso'),categorie:String(x.categorie||''),echeance:String(x.echeance||''),description:String(x.description||''),cree:String(x.cree||today()),maj:String(x.maj||today())});
     }
   }
   if(d.taches){
@@ -413,34 +460,75 @@ function normalize(src){
   return out;
 }
 
-// ===== Données d'exemple (première ouverture) =====
+// ===== Données d’exemple (première ouverture / bouton « Charger les exemples ») =====
 function seedData(){
-  var d1=uid(),d2=uid();
-  var t1=uid(),t2=uid(),t3=uid(),t4=uid();
-  var n1=uid(),n2=uid();
+  var d1=uid(),d2=uid(),d3=uid(),d4=uid(),d5=uid(),d6=uid(),d7=uid();
+  var t=new Array(16),n=new Array(13),c=new Array(7),g=new Array(7),i;
+  for(i=1;i<16;i++)t[i]=uid();
+  for(i=1;i<13;i++)n[i]=uid();
+  for(i=1;i<7;i++)c[i]=uid();
+  for(i=1;i<7;i++)g[i]=uid();
+  var IMG='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+  var notes=[
+      {id:n[1],titre:'Checklist documents passeport',contenu:'- Photo d’identité conforme\n- Justificatif de domicile < 3 mois\n- Ancien passeport\n- Timbre fiscal (montant sur le site ANTS)',tags:['administratif','checklist'],contexte:'perso',dossierId:d2,tacheId:t[3],docId:'',epinglee:false,echeance:plusJours(2),heure:'',traitee:false,capture:false,image:'',prio:'haute',origine:'',autoFloat:false,trieeLe:'',maj:today()},
+      {id:n[2],titre:'Idées pour le stand',contenu:'- Quiz oiseaux pour les enfants\n- Maquette de nichoir à manipuler\n- Pétition à signer sur tablette',tags:['événement','idées'],contexte:'pro',dossierId:d4,tacheId:'',docId:'',epinglee:true,echeance:'',heure:'',traitee:false,capture:false,image:'',prio:'normale',origine:'',autoFloat:false,trieeLe:'',maj:today()},
+      {id:n[3],titre:'Bénévoles confirmés',contenu:'<b>Samedi :</b> Marie, Julien, Sophie<br/><b>Dimanche :</b> Paul, Camille (matin seulement)',tags:['planning'],contexte:'pro',dossierId:d5,tacheId:t[8],docId:'',epinglee:false,echeance:plusJours(9),heure:'',traitee:false,capture:false,image:'',prio:'normale',origine:'',autoFloat:false,trieeLe:'',maj:today()},
+      {id:n[4],titre:'Article annonce — brouillon',contenu:'L’association sera présente au <b>salon biodiversité 2026</b>. Venez découvrir nos actions pour les oiseaux : jeux, maquettes, sorties nature…',tags:['communication'],contexte:'pro',dossierId:d6,tacheId:t[10],docId:'',epinglee:false,echeance:plusJours(5),heure:'',traitee:false,capture:false,image:'',prio:'haute',origine:'',autoFloat:false,trieeLe:'',maj:today()},
+      {id:n[5],titre:'Prix constatés bâche / roll-up',contenu:'Bâche 2x1 m : 38 EUR chez Print24\nRoll-up 85x200 : 62 EUR chez Flyerbox',tags:['budget'],contexte:'pro',dossierId:d5,tacheId:t[7],docId:'',epinglee:false,echeance:plusJours(7),heure:'',traitee:false,capture:false,image:'',prio:'normale',origine:'',autoFloat:false,trieeLe:'',maj:today()},
+      {id:n[6],titre:'Questions à poser à l’assurance',contenu:'- Garantie dégât des eaux\n- Toiture après tempête\n- Bonus/malus actuel',tags:['assurance','questions'],contexte:'perso',dossierId:d3,tacheId:t[4],docId:'',epinglee:false,echeance:plusJours(6),heure:'14:30',traitee:false,capture:false,image:'',prio:'normale',origine:'',autoFloat:false,trieeLe:'',maj:today()},
+      {id:n[7],titre:'Espèces vedettes du refuge',contenu:'Gorge-bleue à miroir, Rollier d’Europe, Huppe fasciée. Vérifier les dates d’observation dans la base.',tags:['naturaliste'],contexte:'pro',dossierId:d7,tacheId:t[13],docId:g[2],epinglee:false,echeance:'',heure:'',traitee:false,capture:false,image:'',prio:'basse',origine:'',autoFloat:false,trieeLe:'',maj:today()},
+      {id:n[8],titre:'Réunions de préparation salon',contenu:'Prochaine réunion : fixer la date en début de mois prochain, salle de réunion n°2.',tags:['réunion'],contexte:'pro',dossierId:d4,tacheId:'',docId:'',epinglee:true,echeance:plusJours(4),heure:'18:00',traitee:false,capture:false,image:'',prio:'normale',origine:'',autoFloat:false,trieeLe:'',maj:today()},
+      {id:n[9],titre:'Rappel scellant photo',contenu:'Le scellant photo du passeport expire le mois prochain — voir avec la mairie.',tags:['administratif'],contexte:'perso',dossierId:d2,tacheId:'',docId:'',epinglee:false,echeance:plusJours(-1),heure:'',traitee:false,capture:false,image:'',prio:'urgente',origine:'',autoFloat:false,trieeLe:'',maj:today()},
+      {id:n[10],titre:'Revue de presse à piocher',contenu:'Article Ouest-France sur les nichoirs urbains ; interview radio France Bleu sur la biodiversité urbaine.',tags:['presse','source'],contexte:'pro',dossierId:d7,tacheId:t[14],docId:'',epinglee:false,echeance:'',heure:'',traitee:true,capture:false,image:'',prio:'normale',origine:'',autoFloat:false,trieeLe:'',maj:today()},
+      {id:n[11],titre:'Contact mairie — dépliant',contenu:'Marie (service communication) : marie.dupont@exemple.fr — a promis le dépliant 2025 dans la semaine.',tags:['contact'],contexte:'pro',dossierId:d6,tacheId:t[15],docId:'',epinglee:false,echeance:plusJours(3),heure:'',traitee:true,capture:false,image:'',prio:'normale',origine:'capture',autoFloat:false,trieeLe:today(),maj:today()},
+      {id:n[12],titre:'Note sur la base chiffres',contenu:'Attention : l’onglet « 2025 » de la base contient des doublons d’observations — nettoyer avant le salon.',tags:['base','qualité'],contexte:'pro',dossierId:d7,tacheId:t[13],docId:g[2],epinglee:false,echeance:plusJours(10),heure:'',traitee:false,capture:false,image:'',prio:'normale',origine:'',autoFloat:true,trieeLe:'',maj:today()}
+  ];
+  notes.push(
+      {id:c[1],titre:'Capture d’écran — post-it du salon',contenu:'Vu sur le site du salon des exposants.',tags:[],contexte:'pro',dossierId:'',tacheId:'',docId:'',epinglee:false,echeance:'',heure:'',traitee:false,capture:true,image:IMG,prio:'normale',origine:'',autoFloat:false,trieeLe:'',maj:today()},
+      {id:c[2],titre:'Relire la charte graphique',contenu:'Pour le flyer et le stand.',tags:[],contexte:'pro',dossierId:'',tacheId:'',docId:'',epinglee:false,echeance:plusJours(4),heure:'',traitee:false,capture:true,image:'',prio:'normale',origine:'',autoFloat:false,trieeLe:'',maj:today()},
+      {id:c[3],titre:'Idée : quiz vocal pour les enfants',contenu:'Un haut-parleur joue des chants d’oiseaux, les enfants devinent.',tags:[],contexte:'perso',dossierId:'',tacheId:'',docId:'',epinglee:false,echeance:'',heure:'',traitee:false,capture:true,image:'',prio:'normale',origine:'',autoFloat:false,trieeLe:'',maj:today()},
+      {id:c[4],titre:'Vérifier le statut associatif pour la subvention',contenu:'Rapprocher la subvention du dossier salon ?',tags:[],contexte:'pro',dossierId:'',tacheId:'',docId:'',epinglee:false,echeance:plusJours(-2),heure:'',traitee:false,capture:true,image:'',prio:'haute',origine:'',autoFloat:false,trieeLe:'',maj:today()},
+      {id:c[5],titre:'Photo du panneau d’information du refuge',contenu:'',tags:[],contexte:'perso',dossierId:'',tacheId:'',docId:'',epinglee:false,echeance:'',heure:'',traitee:false,capture:true,image:IMG,prio:'normale',origine:'',autoFloat:false,trieeLe:'',maj:today()},
+      {id:c[6],titre:'Rappel : appeler l’imprimeur pour les délais',contenu:'Avant de commander la bâche.',tags:[],contexte:'pro',dossierId:'',tacheId:'',docId:'',epinglee:false,echeance:plusJours(1),heure:'10:00',traitee:false,capture:true,image:'',prio:'haute',origine:'',autoFloat:false,trieeLe:'',maj:today()}
+  );
   return {version:VERSION,exemple:true,
     dossiers:[
-      {id:d1,nom:'Renouvellement du passeport',statut:'en-cours',contexte:'perso',categorie:'Administratif',echeance:plusJours(10),description:'Démarche de renouvellement auprès de l’ANTS. Prévoir un délai de plusieurs semaines.',cree:today(),maj:today()},
-      {id:d2,nom:'Préparation du salon biodiversité',statut:'ouvert',contexte:'pro',categorie:'Événement',echeance:plusJours(21),description:'Stand association : réservation, brochure, planning des bénévoles.',cree:today(),maj:today()}
+      {id:d1,parentId:'',nom:'Administratif & papiers',statut:'ouvert',contexte:'perso',categorie:'Administratif',echeance:'',description:'Dossier général : tout ce qui touche aux démarches, contrats et papiers de la maison.',cree:today(),maj:today()},
+      {id:d2,parentId:d1,nom:'Renouvellement du passeport',statut:'en-cours',contexte:'perso',categorie:'Administratif',echeance:plusJours(10),description:'Démarche auprès de l’ANTS. Prévoir plusieurs semaines entre le rendez-vous et la réception.',cree:today(),maj:today()},
+      {id:d3,parentId:d1,nom:'Assurance habitation',statut:'attente',contexte:'perso',categorie:'Contrats',echeance:plusJours(30),description:'Comparer les devis avant l’échéance annuelle de résiliation.',cree:today(),maj:today()},
+      {id:d4,parentId:'',nom:'Salon biodiversité 2026',statut:'ouvert',contexte:'pro',categorie:'Événement',echeance:plusJours(21),description:'Stand association au salon : réservation, brochure, planning des bénévoles et communication.',cree:today(),maj:today()},
+      {id:d5,parentId:d4,nom:'Stand & logistique',statut:'en-cours',contexte:'pro',categorie:'Logistique',echeance:plusJours(14),description:'Réservation de l’emplacement, transport du matériel, planning de présence.',cree:today(),maj:today()},
+      {id:d6,parentId:d4,nom:'Communication du salon',statut:'ouvert',contexte:'pro',categorie:'Communication',echeance:plusJours(18),description:'Flyers, réseaux sociaux, communiqué de presse locale.',cree:today(),maj:today()},
+      {id:d7,parentId:'',nom:'Veille naturaliste',statut:'ouvert',contexte:'pro',categorie:'Récurrent',echeance:'',description:'Dossier permanent : observations, articles scientifiques, données d’espèces à piocher pour les supports.',cree:today(),maj:today()}
     ],
     taches:[
-      {id:t1,titre:'Prendre rendez-vous ANTS',statut:'a-faire',priorite:'haute',contexte:'perso',echeance:plusJours(2),dossierId:d1,description:'',cree:today(),maj:today()},
-      {id:t2,titre:'Vérifier les photos d’identité',statut:'fait',priorite:'normale',contexte:'perso',echeance:plusJours(-3),dossierId:d1,description:'',cree:today(),maj:today()},
-      {id:t3,titre:'Réserver le stand',statut:'a-faire',priorite:'urgente',contexte:'pro',echeance:plusJours(-1),dossierId:d2,description:'Envoyer le formulaire avant fin de semaine.',cree:today(),maj:today()},
-      {id:t4,titre:'Préparer la brochure',statut:'en-cours',priorite:'normale',contexte:'pro',echeance:plusJours(14),dossierId:d2,description:'',cree:today(),maj:today()}
+      {id:t[1],titre:'Prendre rendez-vous ANTS',statut:'a-faire',priorite:'urgente',contexte:'perso',echeance:plusJours(-1),heure:'',dossierId:d2,description:'Sans rendez-vous, tout le dossier est bloqué.',cree:today(),maj:today()},
+      {id:t[2],titre:'Vérifier les photos d’identité',statut:'fait',priorite:'normale',contexte:'perso',echeance:plusJours(-3),heure:'',dossierId:d2,description:'',cree:today(),maj:today()},
+      {id:t[3],titre:'Rassembler les justificatifs de domicile',statut:'a-faire',priorite:'haute',contexte:'perso',echeance:plusJours(2),heure:'',dossierId:d2,description:'Facture d’électricité de moins de 3 mois.',cree:today(),maj:today()},
+      {id:t[4],titre:'Demander un devis à la MAIF',statut:'a-faire',priorite:'normale',contexte:'perso',echeance:plusJours(6),heure:'14:30',dossierId:d3,description:'Passer un appel, prévoir les questions sur le toit.',cree:today(),maj:today()},
+      {id:t[5],titre:'Comparer les 3 devis reçus',statut:'a-faire',priorite:'haute',contexte:'perso',echeance:plusJours(20),heure:'',dossierId:d3,description:'',cree:today(),maj:today()},
+      {id:t[6],titre:'Réserver le stand du salon',statut:'en-cours',priorite:'urgente',contexte:'pro',echeance:plusJours(-2),heure:'',dossierId:d5,description:'Envoyer le formulaire avant fin de semaine — en retard !',cree:today(),maj:today()},
+      {id:t[7],titre:'Commander la bâche et les roll-ups',statut:'a-faire',priorite:'haute',contexte:'pro',echeance:plusJours(7),heure:'',dossierId:d5,description:'',cree:today(),maj:today()},
+      {id:t[8],titre:'Planning des bénévoles',statut:'a-faire',priorite:'normale',contexte:'pro',echeance:plusJours(9),heure:'',dossierId:d5,description:'Relier les personnes dans la note dédiée.',cree:today(),maj:today()},
+      {id:t[9],titre:'Faire relire le flyer par Marie',statut:'a-faire',priorite:'normale',contexte:'pro',echeance:plusJours(3),heure:'',dossierId:d6,description:'',cree:today(),maj:today()},
+      {id:t[10],titre:'Publier l’article d’annonce sur le site',statut:'en-cours',priorite:'haute',contexte:'pro',echeance:plusJours(5),heure:'',dossierId:d6,description:'Brouillon dans la note « Article annonce ».',cree:today(),maj:today()},
+      {id:t[11],titre:'Écrire le communiqué de presse',statut:'a-faire',priorite:'haute',contexte:'pro',echeance:plusJours(11),heure:'',dossierId:d6,description:'',cree:today(),maj:today()},
+      {id:t[12],titre:'Photographier les nichoirs du refuge',statut:'a-faire',priorite:'basse',contexte:'pro',echeance:'',heure:'',dossierId:d7,description:'',cree:today(),maj:today()},
+      {id:t[13],titre:'Saisir les observations de la semaine',statut:'en-cours',priorite:'normale',contexte:'pro',echeance:plusJours(1),heure:'',dossierId:d7,description:'Base Excel à mettre à jour au fil de l’eau.',cree:today(),maj:today()},
+      {id:t[14],titre:'Lire le rapport MNHN sur les passereaux',statut:'a-faire',priorite:'basse',contexte:'pro',echeance:plusJours(25),heure:'',dossierId:d7,description:'',cree:today(),maj:today()},
+      {id:t[15],titre:'Penser à demander le dépliant 2025 à Marie',statut:'fait',priorite:'normale',contexte:'pro',echeance:plusJours(0),heure:'',dossierId:d6,description:'',cree:today(),maj:today()}
     ],
-    notes:[
-      {id:n1,titre:'Checklist documents passeport',contenu:'- Photo d’identité conforme\n- Justificatif de domicile < 3 mois\n- Ancien passeport\n- Timbre fiscal (voir montant sur ANTS)',tags:['administratif','checklist'],contexte:'perso',dossierId:d1,tacheId:'',epinglee:false,maj:today()},
-      {id:n2,titre:'Idées pour le stand',contenu:'- Quiz oiseaux pour les enfants\n- Maquette de nichoir\n- Pétition à signer sur tablette',tags:['événement','idées'],contexte:'pro',dossierId:d2,tacheId:'',docId:'',epinglee:true,echeance:'',traitee:false,capture:false,image:'',maj:today()},
-      {id:uid(),titre:'Demander le dépliant 2025 à Marie',contenu:'Capturé à la volée — à trier : relier au dossier salon ?',tags:[],contexte:'pro',dossierId:'',tacheId:'',docId:'',epinglee:false,echeance:plusJours(3),traitee:false,capture:true,image:'',maj:today()}
-    ],
+    notes:notes,
     docs:[
-      {id:uid(),nom:'Base chiffres biodiversité.xlsx',type:'excel',role:'base',localisation:'Bureau\\Bases\\chiffres-biodiversite.xlsx',description:'Base évolutive : mise à jour au fil de l’eau, je pioche dedans pour chaque présentation.',dossiers:[d2],cree:today(),maj:today()},
-      {id:uid(),nom:'Rapport LPO 2025.pdf',type:'pdf',role:'source',localisation:'SharePoint\\Documents partagés\\Rapports\\rapport-lpo-2025.pdf',description:'Document source : chiffres et synthèses à piocher à l’occasion.',dossiers:[],cree:today(),maj:today()}
+      {id:g[1],nom:'Base chiffres biodiversité.xlsx',type:'excel',role:'base',localisation:'Bureau\\Bases\\chiffres-biodiversite.xlsx',description:'Base évolutive : mise à jour au fil de l’eau, je pioche dedans pour chaque présentation.',dossiers:[d4,d7],stocke:false,cree:today(),maj:today()},
+      {id:g[2],nom:'Observations refuge 2026.xlsx',type:'excel',role:'base',localisation:'Bureau\\Bases\\observations-refuge-2026.xlsx',description:'Saisie des observations au fil de l’eau — tâche hebdomadaire.',dossiers:[d7],stocke:false,cree:today(),maj:today()},
+      {id:g[3],nom:'Rapport LPO 2025.pdf',type:'pdf',role:'source',localisation:'https://sharepoint.exemple.fr/Documents/Rapports/rapport-lpo-2025.pdf',description:'Lien SharePoint : s’ouvre dans le navigateur, se modifie en ligne et se réenregistre côté serveur.',dossiers:[d7],stocke:false,cree:today(),maj:today()},
+      {id:g[4],nom:'Flyer salon (maquette).docx',type:'word',role:'livrable',localisation:'Bureau\\Salon2026\\flyer-maquette.docx',description:'Maquette à faire relire par Marie avant impression.',dossiers:[d6],stocke:false,cree:today(),maj:today()},
+      {id:g[5],nom:'Planning bénévoles.xlsx',type:'excel',role:'livrable',localisation:'https://sharepoint.exemple.fr/Documents/Planning/benevoles-salon.xlsx',description:'Sur SharePoint : modification en ligne, réenregistrement automatique côté serveur.',dossiers:[d5],stocke:false,cree:today(),maj:today()},
+      {id:g[6],nom:'Diaporama stand 2025.pptx',type:'ppt',role:'modele',localisation:'Bureau\\Salon2026\\stand-2025.pptx',description:'Modèle de l’an dernier à adapter (gabarit de diapositives).',dossiers:[d4,d6],stocke:false,cree:today(),maj:today()}
     ]
   };
 }
-
 function load(){
   var raw=null;
   try{raw=localStorage.getItem(STORE_KEY);}catch(e){}
@@ -472,6 +560,17 @@ function badgeDocRole(k){var s=infoOf(DOC_ROLES,k);return '<span class="badge" s
 function optsHtml(list,sel){var h='';var i;for(i=0;i<list.length;i++){h+='<option value="'+list[i].k+'"'+(list[i].k===sel?' selected':'')+'>'+list[i].l+'</option>';}return h;}
 
 // ===== Sélections =====
+function dossierParentOptions(sel,excludeId){
+  var h='<option value="">— Aucun (dossier racine) —</option>';
+  var dos=state.dossiers.slice().sort(function(a,b){return a.nom.toLowerCase()<b.nom.toLowerCase()?-1:1;});
+  var i;
+  for(i=0;i<dos.length;i++){
+    var d=dos[i];
+    if(excludeId&&(d.id===excludeId||isDescendantOf(excludeId,d.id)))continue;
+    h+='<option value="'+d.id+'"'+(d.id===sel?' selected':'')+'>'+esc(d.nom)+'</option>';
+  }
+  return h;
+}
 function dossierOptions(sel){
   var h='<option value="">— Aucun dossier —</option>';var i;
   for(i=0;i<state.dossiers.length;i++){var d=state.dossiers[i];h+='<option value="'+d.id+'"'+(d.id===sel?' selected':'')+'>'+esc(d.nom)+'</option>';}
@@ -532,10 +631,12 @@ function render(){
   else if(state.page==='cal')h=pageCal();
   else if(state.page==='outlook')h=pageOutlook();
   else if(state.page==='install')h=pageInstall();
+  else if(state.page==='synchro')h=pageSynchro();
   else if(state.page==='search')h=pageSearch();
   else h=page404();
   main.innerHTML=h;
   updateSidebar();updateTopbar();
+  applyEchStyles();renderRemind();
 }
 function renderPageBody(){
   var el=document.getElementById('page-body');if(!el)return;
@@ -545,9 +646,10 @@ function renderPageBody(){
   else if(state.page==='docs')el.innerHTML=docsBody();
 }
 function updateSidebar(){
-  var map={dash:'sn-dash',dossiers:'sn-dossiers',dossier:'sn-dossiers',taches:'sn-taches',notes:'sn-notes',note:'sn-notes',docs:'sn-docs',doc:'sn-docs',capture:'sn-capture',cal:'sn-cal',outlook:'sn-outlook'};
-  var key=map[state.page];var ids=['sn-dash','sn-dossiers','sn-docs','sn-taches','sn-capture','sn-cal','sn-notes','sn-outlook'];var i;
+  var map={dash:'sn-dash',dossiers:'sn-dossiers',dossier:'sn-dossiers',taches:'sn-taches',notes:'sn-notes',note:'sn-notes',docs:'sn-docs',doc:'sn-docs',capture:'sn-capture',cal:'sn-cal',outlook:'sn-outlook',synchro:'sn-synchro'};
+  var key=map[state.page];var ids=['sn-dash','sn-dossiers','sn-docs','sn-taches','sn-capture','sn-cal','sn-notes','sn-outlook','sn-synchro'];var i;
   for(i=0;i<ids.length;i++){var el=document.getElementById(ids[i]);if(el){el.className='snav'+(ids[i]===key?' active':'');}}
+  sbRefreshBadge();
 }
 function updateTopbar(){
   var b=document.getElementById('btn-back'),f=document.getElementById('btn-fwd');
@@ -559,6 +661,26 @@ function page404(){
 }
 
 // ===== Page Accueil =====
+function kpiTitles(arr,fn){
+  var t=[];var i;
+  for(i=0;i<Math.min(arr.length,15);i++)t.push(fn?fn(arr[i]):arr[i]);
+  return t.join(' • ');
+}
+function noteRowDash(n){
+  var ex=stripTags(String(n.contenu||'')).replace(/\s+/g,' ');
+  if(ex.length>90)ex=ex.slice(0,90)+'…';
+  var h='<div class="row" style="padding:7px 12px">'
+   +(n.epinglee?'<span title="Épinglée">📌</span>':'')
+   +'<span class="row-title" data-act="open-note" data-id="'+n.id+'">'+esc(n.titre)+'</span>'
+   +qw('note',n.id,'ctx',badgeCtx(n.contexte))
+   +((n.prio&&n.prio!=='normale')?qw('note',n.id,'prio',badgePrio(n.prio)):'')
+   +(n.capture?'<span class="badge" style="background:#fffbeb;color:#b45309">⚡</span>':'')
+   +(n.image?'<span class="badge" style="background:#f5f3ff;color:#6d28d9">🖼</span>':'')
+   +(n.echeance?qw('note',n.id,'ech',echLabel(n.echeance,n.traitee,'Traitée',n.heure||'')):'')
+   +(ex?'<span class="tiny muted" style="margin-left:auto;flex:0 0 auto;max-width:38%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(ex)+'</span>':'')
+   +'</div>';
+  return h;
+}
 function pageDash(){
   var ouverts=tachesOuvertes(),rd=retards(),se=semaine(),act=dossiersActifs();
   var h='<div class="content">';
@@ -576,17 +698,23 @@ function pageDash(){
   }
   var pinband=state.notes.filter(function(n){return n.epinglee;});
   if(pinband.length){
-    h+='<h2 class="sec-title">📌 Notes épinglées</h2><div class="pinband">';
-    var m;for(m=0;m<pinband.length;m++){h+=noteCard(pinband[m]);}
-    h+='</div>';
+    var m;for(m=0;m<pinband.length;m++){
+      var pn=pinband[m];
+      var ex=stripTags(String(pn.contenu||'')).replace(/\s+/g,' ');
+      if(ex.length>70)ex=ex.slice(0,70)+'…';
+      h+='<div class="pinband-line"><span title="Note épinglée">📌</span><a class="t" data-act="open-note" data-id="'+pn.id+'">'+esc(pn.titre)+'</a>'
+       +(ex?'<span class="x">'+esc(ex)+'</span>':'')
+       +(pn.echeance?qw('note',pn.id,'ech',echLabel(pn.echeance,pn.traitee,'Traitée',pn.heure||'')):'')
+       +'</div>';
+    }
   }
   var captri=state.notes.filter(function(n){return n.capture&&!n.traitee;});
   var notesRetard=state.notes.filter(function(n){return !n.traitee&&n.echeance&&daysUntil(n.echeance)<0;});
   h+='<div class="kpi-grid">'
-   +'<div class="kpi blue"><div class="num">'+ouverts.length+'</div><div class="lbl">Tâches à faire</div></div>'
-   +'<div class="kpi red"><div class="num">'+rd.length+'</div><div class="lbl">Tâches en retard</div></div>'
-   +'<div class="kpi amber"><div class="num">'+captri.length+'</div><div class="lbl">Idées à trier (capture)</div></div>'
-   +'<div class="kpi green"><div class="num">'+act.length+'</div><div class="lbl">Dossiers actifs</div></div>'
+   +'<div class="kpi blue kclick" data-act="kpi-go" data-k="afaire" title="'+esc(kpiTitles(ouverts,function(x){return x.titre;})||(ouverts.length?'':'Aucune tâche à faire'))+'"><div class="num">'+ouverts.length+'</div><div class="lbl">Tâches à faire</div></div>'
+   +'<div class="kpi red kclick" data-act="kpi-go" data-k="retard" title="'+esc(kpiTitles(rd,function(x){return x.titre;})||'Aucune tâche en retard')+'"><div class="num">'+rd.length+'</div><div class="lbl">Tâches en retard</div></div>'
+   +'<div class="kpi amber kclick" data-act="kpi-go" data-k="cap" title="'+esc(kpiTitles(captri,function(x){return x.titre;})||'Rien à trier')+'"><div class="num">'+captri.length+'</div><div class="lbl">Idées à trier (capture)</div></div>'
+   +'<div class="kpi green kclick" data-act="kpi-go" data-k="dos" title="'+esc(kpiTitles(act,function(x){return x.nom;})||'Aucun dossier actif')+'"><div class="num">'+act.length+'</div><div class="lbl">Dossiers actifs</div></div>'
    +'</div>';
   if(notesRetard.length){
     h+='<div class="banner warn">📌 '+notesRetard.length+' note(s) dont l’échéance de traitement est dépassée. <button class="btn sm" data-act="go" data-page="notes">Voir les notes</button></div>';
@@ -597,7 +725,7 @@ function pageDash(){
     h+='<h2 class="sec-title">🚨 En retard</h2>';
     var i;for(i=0;i<rd.length;i++){h+=tacheRow(rd[i]);}
     for(i=0;i<dosRd.length;i++){var d=dosRd[i];
-      h+='<div class="row"><span class="row-title" data-act="open-dossier" data-id="'+d.id+'">📁 '+esc(d.nom)+'</span>'+badgeDossier(d.statut)+echLabel(d.echeance,false)+'</div>';
+      h+='<div class="row"><span class="row-title" data-act="open-dossier" data-id="'+d.id+'">📁 '+esc(d.nom)+'</span>'+badgeDossier(d.statut)+qw('dossier',d.id,'ech',echLabel(d.echeance,false))+'</div>';
     }
   }
   // Semaine
@@ -619,6 +747,15 @@ function pageDash(){
     var q;for(q=0;q<Math.min(caps.length,5);q++){h+=captureRow(caps[q]);}
     if(caps.length>5)h+='<div class="small muted" style="padding:4px 4px 0">+'+(caps.length-5)+' autres — <a class="chip" data-act="go" data-page="capture">ouvrir la boîte de capture</a></div>';
   }
+  // Notes récentes (épinglées incluses)
+  var notesRecentes=state.notes.filter(function(n){return !n.capture;}).sort(function(a,b){return a.maj>b.maj?-1:1;});
+  h+='<h2 class="sec-title">📝 Notes récentes</h2>';
+  if(notesRecentes.length){
+    var q2;for(q2=0;q2<Math.min(notesRecentes.length,8);q2++){h+=noteRowDash(notesRecentes[q2]);}
+    if(notesRecentes.length>8)h+='<div class="small muted" style="padding:4px 4px 0">+'+(notesRecentes.length-8)+' autres — <a class="chip" data-act="go" data-page="notes">toutes les notes</a></div>';
+  }else{
+    h+='<div class="empty">Aucune note pour l’instant. <button class="btn sm" data-act="new-note">Créer une note</button></div>';
+  }
   // Dossiers actifs
   h+='<h2 class="sec-title">📁 Dossiers actifs</h2>';
   if(act.length){
@@ -633,7 +770,6 @@ function pageDash(){
   h+='</div>';
   return h;
 }
-
 // ===== Ligne de tâche =====
 function tacheRow(t){
   var d=findDossier(t.dossierId);
@@ -641,11 +777,11 @@ function tacheRow(t){
   var h='<div class="row tache-row'+(done?' done':'')+'">'
    +'<button class="chk" title="Marquer fait / à faire" data-act="tache-toggle" data-id="'+t.id+'">'+(done?'✓':'')+'</button>'
    +'<span class="row-title" data-act="open-tache" data-id="'+t.id+'">'+esc(t.titre)+'</span>';
-  if(!done&&t.statut!=='a-faire')h+=badgeTache(t.statut);
-  if(!done)h+=badgePrio(t.priorite);
-  h+=badgeCtx(t.contexte);
+  if(!done&&t.statut!=='a-faire')h+=qw('tache',t.id,'statut',badgeTache(t.statut));
+  if(!done)h+=qw('tache',t.id,'prio',badgePrio(t.priorite));
+  h+=qw('tache',t.id,'ctx',badgeCtx(t.contexte));
   if(d)h+='<span class="chip" data-act="open-dossier" data-id="'+d.id+'">📁 '+esc(d.nom)+'</span>';
-  h+=echLabel(t.echeance,done,'',t.heure||'');
+  h+=(t.echeance&&!done?qw('tache',t.id,'ech',echLabel(t.echeance,done,'',t.heure||'')):echLabel(t.echeance,done,'',t.heure||''));
   h+='</div>';
   return h;
 }
@@ -659,7 +795,7 @@ function captureRow(n){
   if(n.image)h+='<span class="chip">🖼 image jointe</span>';
   if(d)h+='<span class="chip" data-act="open-dossier" data-id="'+d.id+'">📁 '+esc(d.nom)+'</span>';
   if(doc)h+='<span class="chip" data-act="open-doc" data-id="'+doc.id+'">📄 '+esc(doc.nom)+'</span>';
-  h+=echLabel(n.echeance,n.traitee,'Traitée',n.heure||'')
+  h+=(n.echeance&&!n.traitee?qw('note',n.id,'ech',echLabel(n.echeance,n.traitee,'Traitée',n.heure||'')):echLabel(n.echeance,n.traitee,'Traitée',n.heure||''))
    +(n.traitee?'':'<button class="btn sm ghost" data-act="edit-note" data-id="'+n.id+'" title="Relier à un projet, une échéance…">Trier</button>')
    +'</div>';
   return h;
@@ -710,11 +846,14 @@ function dossierCard(d){
   if(d.categorie)meta.push(esc(d.categorie));
   meta.push(faites+'/'+ts.length+' tâches');
   meta.push(ns+' note(s)');
+  var enf=dossierEnfants(d.id).length;
+  if(enf)meta.push(enf+' sous-dossier'+(enf>1?'s':''));
+  var par=d.parentId?findDossier(d.parentId):null;
   return '<div class="card" data-act="open-dossier" data-id="'+d.id+'">'
-   +'<div class="card-top">'+badgeDossier(d.statut)+badgeCtx(d.contexte)+'</div>'
+   +'<div class="card-top">'+qw('dossier',d.id,'statut',badgeDossier(d.statut))+qw('dossier',d.id,'ctx',badgeCtx(d.contexte))+(par?'<span class="chip" data-act="open-dossier" data-id="'+par.id+'" title="Dossier parent">⬑ '+esc(par.nom)+'</span>':'')+'</div>'
    +'<div class="card-title">'+esc(d.nom)+'</div>'
    +'<div class="card-meta">'+meta.join(' · ')+'</div>'
-   +(d.echeance?echLabel(d.echeance,done):'')
+   +(d.echeance?qw('dossier',d.id,'ech',echLabel(d.echeance,done)):'')
    +'</div>';
 }
 
@@ -723,16 +862,27 @@ function pageDossier(id){
   var d=findDossier(id);if(!d)return page404();
   var ts=dossierTaches(id),ns=dossierNotes(id);
   var h='<div class="content">';
-  h+='<div class="crumbs"><a class="chip" data-act="go" data-page="dossiers">← Dossiers</a></div>';
-  h+='<div class="page-head"><div><h1 class="page-title">'+esc(d.nom)+'</h1><div class="badges">'+badgeDossier(d.statut)+badgeCtx(d.contexte)
-   +(d.categorie?'<span class="badge gray">'+esc(d.categorie)+'</span>':'')+(d.echeance?echLabel(d.echeance,d.statut==='termine'):'')+'</div></div>'
+  var chemin=dossierChemin(id);
+  h+='<div class="crumbs"><a class="chip" data-act="go" data-page="dossiers">← Dossiers</a>';
+  var ci;for(ci=0;ci<chemin.length-1;ci++){h+=' <a class="chip" data-act="open-dossier" data-id="'+chemin[ci].id+'">📁 '+esc(chemin[ci].nom)+'</a>';}
+  h+='</div>';
+  h+='<div class="page-head"><div><h1 class="page-title">'+esc(d.nom)+'</h1><div class="badges">'+qw('dossier',d.id,'statut',badgeDossier(d.statut))+qw('dossier',d.id,'ctx',badgeCtx(d.contexte))
+   +(d.categorie?'<span class="badge gray">'+esc(d.categorie)+'</span>':'')+(d.echeance?qw('dossier',d.id,'ech',echLabel(d.echeance,d.statut==='termine')):'')+'</div></div>'
    +'<div class="toolbar">'
    +'<button class="btn" data-act="new-tache" data-dos="'+d.id+'">+ Tâche</button>'
    +'<button class="btn" data-act="new-note" data-dos="'+d.id+'">+ Note</button>'
+   +'<button class="btn" data-act="new-sousdos" data-id="'+d.id+'" title="Créer un sous-dossier rattaché à ce dossier">+ Sous-dossier</button>'
    +'<button class="btn ghost" data-act="edit-dossier" data-id="'+d.id+'">✎ Modifier</button>'
    +'<button class="btn danger ghost" data-act="del-dossier" data-id="'+d.id+'" title="Supprimer">🗑</button>'
    +'</div></div>';
   h+='<div class="desc-inline" data-kind="dossier" data-id="'+d.id+'" contenteditable="true">'+(d.description?esc(d.description).replace(/\n/g,'<br/>'):'<span class="muted">Ajoutez ici contexte, démarches, références… (enregistrement automatique en cliquant ailleurs)</span>')+'</div>';
+  var enf2=dossierEnfants(id);
+  h+=alertesHtml(alertesDossier(id));
+  if(enf2.length){
+    h+='<h2 class="sec-title">📁 Sous-dossiers ('+enf2.length+')</h2><div class="tags-row">';
+    var e2;for(e2=0;e2<enf2.length;e2++){h+='<a class="chip" data-act="open-dossier" data-id="'+enf2[e2].id+'">📁 '+esc(enf2[e2].nom)+' <span class="tiny muted">('+infoOf(DOS_STATUTS,enf2[e2].statut).l+')</span></a>';}
+    h+='</div>';
+  }
   h+='<h2 class="sec-title">✅ Tâches ('+ts.length+')</h2>';
   if(ts.length){
     var sorted=ts.slice().sort(function(a,b){var ea=a.echeance||'9999',eb=b.echeance||'9999';return ea<eb?-1:1;});
@@ -780,6 +930,7 @@ function filterTaches(){
   var f=state.filtres.ta;
   var q=f.q.trim().toLowerCase();
   return state.taches.filter(function(t){
+    if(state._kpiRetard){var nr=daysUntil(t.echeance);if(t.statut==='fait'||nr===null||nr>=0)return false;}
     if(f.statut&&t.statut!==f.statut)return false;
     if(f.prio&&t.priorite!==f.prio)return false;
     if(f.ctx&&t.contexte!==f.ctx)return false;
@@ -798,7 +949,9 @@ function tachesBody(){
 }
 function tachesListe(){
   var list=filterTaches();
-  if(!list.length)return '<div class="empty">Aucune tâche ne correspond. <button class="btn sm" data-act="new-tache">Créer une tâche</button></div>';
+  var h='';
+  if(state._kpiRetard){h+='<div class="banner warn" style="margin-bottom:12px">🚨 Filtre « en retard » actif (clic sur le compteur d’accueil) — seules les tâches en retard sont affichées. <button class="btn sm" data-act="kpi-clear">Retirer le filtre</button></div>';}
+  if(!list.length)return h+'<div class="empty">Aucune tâche ne correspond. <button class="btn sm" data-act="new-tache">Créer une tâche</button></div>';
   var rd=[],se=[],plus=[],sans=[],faites=[];
   var i;
   for(i=0;i<list.length;i++){
@@ -813,7 +966,6 @@ function tachesListe(){
   var cmp=function(a,b){var ea=a.echeance||'9999',eb=b.echeance||'9999';return ea<eb?-1:1;};
   rd.sort(cmp);se.sort(cmp);plus.sort(cmp);
   faites.sort(function(a,b){return a.maj>b.maj?-1:1;});
-  var h='';
   if(rd.length){h+='<h2 class="sec-title">🚨 En retard ('+rd.length+')</h2>';var a;for(a=0;a<rd.length;a++){h+=tacheRow(rd[a]);}}
   if(se.length){h+='<h2 class="sec-title">📅 Aujourd’hui &amp; 7 jours ('+se.length+')</h2>';var b;for(b=0;b<se.length;b++){h+=tacheRow(se[b]);}}
   if(plus.length){h+='<h2 class="sec-title">⏳ Plus tard ('+plus.length+')</h2>';var c;for(c=0;c<plus.length;c++){h+=tacheRow(plus[c]);}}
@@ -844,9 +996,9 @@ function kcard(t){
   var d=findDossier(t.dossierId);
   var h='<div class="kcard" draggable="true" data-id="'+t.id+'">'
    +'<span class="row-title" data-act="open-tache" data-id="'+t.id+'">'+esc(t.titre)+'</span>'
-   +'<div class="sub">'+badgePrio(t.priorite)+badgeCtx(t.contexte);
+   +'<div class="sub">'+qw('tache',t.id,'prio',badgePrio(t.priorite))+qw('tache',t.id,'ctx',badgeCtx(t.contexte));
   if(d)h+='<span class="chip" data-act="open-dossier" data-id="'+d.id+'">📁 '+esc(d.nom)+'</span>';
-  h+=echLabel(t.echeance,t.statut==='fait','',t.heure||'');
+  h+=(t.echeance&&t.statut!=='fait'?qw('tache',t.id,'ech',echLabel(t.echeance,t.statut==='fait','',t.heure||'')):echLabel(t.echeance,t.statut==='fait','',t.heure||''));
   h+='</div></div>';
   return h;
 }
@@ -1034,10 +1186,10 @@ function calChipHtml(it){
 
 // ===== Page Documents =====
 function dropzoneHtml(dosId){
-  return '<div class="dropzone" id="dz-docs" data-dos="'+esc(dosId||'')+'">📄 <b>Déposez ici vos fichiers</b> (Word, Excel, PowerPoint, PDF, images…) ou cliquez pour parcourir.<br/><span class="tiny muted">Une copie (≤ 10 Mo par fichier) est enregistrée dans l’appli : ouvrable et téléchargeable depuis la fiche du document. Vos originaux ne bougent pas.</span><input type="file" id="doc-file" multiple data-dos="'+esc(dosId||'')+'" style="display:none"/></div>';
+  return '<div class="dropzone" id="dz-docs" data-dos="'+esc(dosId||'')+'">📄 <b>Déposez ici vos fichiers</b> (Word, Excel, PowerPoint, PDF, images, raccourcis .url / .lnk…) ou cliquez pour parcourir.<br/><span class="tiny muted">Une copie (≤ 10 Mo par fichier) est enregistrée dans l’appli : ouvrable et téléchargeable depuis la fiche. Les raccourcis et liens (SharePoint…) sont enregistrés comme cibles cliquables. Vos originaux ne bougent pas.</span><input type="file" id="doc-file" multiple data-dos="'+esc(dosId||'')+'" style="display:none"/></div>';
 }
 function pageDocs(){
-  var h='<div class="content"><div class="page-head"><h1 class="page-title">📄 Documents</h1><div class="toolbar"><button class="btn primary" data-act="new-doc">+ Référencer un document</button></div></div>';
+  var h='<div class="content"><div class="page-head"><h1 class="page-title">📄 Documents</h1><div class="toolbar"><button class="btn primary" data-act="new-doc">+ Référencer un document</button><button class="btn" data-act="new-doc-link" title="Ajouter un lien web ou SharePoint">+ Lien</button></div></div>';
   h+='<p class="small muted" style="margin-bottom:12px">Vos fichiers Word, Excel, PowerPoint, PDF, liens… rangés et liés à vos dossiers. Un même document peut servir plusieurs projets. Rôle « Source » = vos documents à piocher ; « Base évolutive » = vos fichiers que vous modifiez au fil de l’eau.</p>';
   h+=dropzoneHtml('');
   h+=filtersDocs();
@@ -1076,7 +1228,7 @@ function docsBody(){
 function docCard(x){
   var lienk='';
   if(/^https?:\/\//i.test(x.localisation)){lienk='<a class="doc-path" href="'+esc(x.localisation)+'" target="_blank" rel="noopener noreferrer">🔗 '+esc(x.localisation)+'</a>';}
-  else if(x.localisation){lienk='<span class="doc-path">📍 '+esc(x.localisation)+'</span>';}
+  else if(x.localisation){lienk='<span class="doc-path" data-act="doc-copy" data-id="'+x.id+'" title="Copier le chemin (un navigateur ne peut pas ouvrir seul un fichier local : collez-le dans l’Explorateur)">📋 '+esc(x.localisation)+'</span>';}
   var h='<div class="doc-card" data-act="open-doc" data-id="'+x.id+'">'
    +'<div class="card-top">'+badgeDocType(x.type)+badgeDocRole(x.role)+(x.stocke?'<span class="badge" style="background:#ecfdf5;color:#065f46">💾 copie</span>':'')+'</div>'
    +'<div class="card-title">'+esc(x.nom)+'</div>'
@@ -1092,6 +1244,8 @@ function pageDoc(id){
   h+='<div class="page-head"><div><h1 class="page-title">'+esc(x.nom)+'</h1><div class="badges">'+badgeDocType(x.type)+badgeDocRole(x.role)
    +(x.localisation?( /^https?:\/\//i.test(x.localisation)?'<a class="chip" href="'+esc(x.localisation)+'" target="_blank" rel="noopener noreferrer">🔗 ouvrir le lien</a>':'<span class="chip">📍 '+esc(x.localisation)+'</span>'):'')+'</div></div>'
    +'<div class="toolbar">'
+   +(x.localisation&&/^https?:\/\//i.test(x.localisation)?'<button class="btn" data-act="doc-openlink" data-id="'+x.id+'" title="Ouvrir dans un nouvel onglet (les liens SharePoint s’éditent en ligne et se réenregistrent côté serveur)">🔗 Ouvrir le lien</button>':'')
+   +(x.localisation&&!/^https?:\/\//i.test(x.localisation)?'<button class="btn" data-act="doc-copy" data-id="'+x.id+'" title="Copier le chemin dans le presse-papier, puis collez-le dans l’Explorateur pour ouvrir le fichier">📋 Copier le chemin</button>':'')
    +(x.stocke?'<button class="btn" data-act="doc-open" data-id="'+x.id+'" title="Ouvrir la copie enregistrée dans un nouvel onglet">⬇️ Ouvrir la copie</button>':'')
    +'<button class="btn" data-act="new-note" data-doc="'+x.id+'">+ Note sur ce document</button>'
    +'<button class="btn ghost" data-act="edit-doc" data-id="'+x.id+'">✎ Modifier</button>'
@@ -1101,7 +1255,7 @@ function pageDoc(id){
   h+='<h2 class="sec-title">📁 Dossiers utilisant ce document ('+x.dossiers.length+')</h2>';
   if(x.dossiers.length){
     var i;for(i=0;i<x.dossiers.length;i++){var d=findDossier(x.dossiers[i]);
-      if(d)h+='<div class="row"><span class="row-title" data-act="open-dossier" data-id="'+d.id+'">'+esc(d.nom)+'</span>'+badgeDossier(d.statut)+badgeCtx(d.contexte)+'</div>';
+      if(d)h+='<div class="row"><span class="row-title" data-act="open-dossier" data-id="'+d.id+'">'+esc(d.nom)+'</span>'+qw('dossier',d.id,'statut',badgeDossier(d.statut))+qw('dossier',d.id,'ctx',badgeCtx(d.contexte))+'</div>';
     }
   }else{h+='<div class="empty small">Ce document n’est lié à aucun dossier. <button class="btn sm" data-act="edit-doc" data-id="'+x.id+'">Lier à des dossiers</button></div>';}
   h+='<h2 class="sec-title">📝 Notes sur ce document ('+ns.length+')</h2>';
@@ -1115,7 +1269,7 @@ function pageDoc(id){
   h+='</div>';
   return h;
 }
-function modalDoc(id,presetDos){
+function modalDoc(id,presetDos,presetType){
   var x=id?findDoc(id):null;
   var checks='';var i;
   var dos=state.dossiers.slice().sort(function(a,b){return a.nom.toLowerCase()<b.nom.toLowerCase()?-1:1;});
@@ -1127,7 +1281,7 @@ function modalDoc(id,presetDos){
    +'<input type="hidden" name="id" value="'+(x?x.id:'')+'"/>'
    +'<div class="form-row"><label>Nom *</label><input name="n" required maxlength="160" value="'+(x?esc(x.nom):'')+'" placeholder="Ex. : Base chiffres 2026.xlsx"/></div>'
    +'<div class="form-row two">'
-   +'<div><label>Type</label><select name="ty">'+optsHtml(DOC_TYPES,x?x.type:'word')+'</select></div>'
+   +'<div><label>Type</label><select name="ty">'+optsHtml(DOC_TYPES,x?x.type:(presetType||'word'))+'</select></div>'
    +'<div><label>Rôle</label><select name="ro">'+optsHtml(DOC_ROLES,x?x.role:'livrable')+'</select></div>'
    +'</div>'
    +'<div class="form-row"><label>Localisation (chemin ou URL — pour retrouver le fichier)</label><input name="loc" maxlength="400" value="'+(x?esc(x.localisation):'')+'" placeholder="Ex. : Bureau\\Projets\\rapport.docx ou https://…"/></div>'
@@ -1273,9 +1427,9 @@ function noteCard(n,extra){
    +(n.epinglee?'<span class="pin">📌</span>':'')
    +'<div class="card-title">'+esc(n.titre)+'</div>'
    +'<div class="note-extrait">'+esc(ex)+'</div>'
-   +'<div class="badges">'+badgeCtx(n.contexte)+(n.capture?'<span class="badge" style="background:#fffbeb;color:#b45309">⚡</span>':'')+(n.image?'<span class="badge" style="background:#f5f3ff;color:#6d28d9">🖼</span>':'')+(n.traitee?'<span class="badge" style="background:#d1fae5;color:#065f46">✓ traitée</span>':'')
-   +((n.prio&&n.prio!=='normale')?badgePrio(n.prio):'')
-   +echLabel(n.echeance,n.traitee,'Traitée',n.heure||'');
+   +'<div class="badges">'+qw('note',n.id,'ctx',badgeCtx(n.contexte))+(n.capture?'<span class="badge" style="background:#fffbeb;color:#b45309">⚡</span>':'')+(n.image?'<span class="badge" style="background:#f5f3ff;color:#6d28d9">🖼</span>':'')+(n.traitee?'<span class="badge" style="background:#d1fae5;color:#065f46">✓ traitée</span>':'')
+   +((n.prio&&n.prio!=='normale')?qw('note',n.id,'prio',badgePrio(n.prio)):'')
+   +(n.echeance&&!n.traitee?qw('note',n.id,'ech',echLabel(n.echeance,n.traitee,'Traitée',n.heure||'')):echLabel(n.echeance,n.traitee,'Traitée',n.heure||''));
   var i;var tg=n.tags||[];
   for(i=0;i<tg.length;i++){h+='<span class="badge gray">#'+esc(tg[i])+'</span>';}
   if(d)h+='<span class="chip">📁 '+esc(d.nom)+'</span>';
@@ -1289,8 +1443,8 @@ function pageNote(id){
   var t=findTache(n.tacheId);
   var h='<div class="content note-view">';
   h+='<div class="crumbs"><a class="chip" data-act="go" data-page="notes">← Notes</a></div>';
-  h+='<div class="page-head"><div><h1 class="page-title">'+(n.epinglee?'📌 ':'')+esc(n.titre)+'</h1><div class="badges">'+badgeCtx(n.contexte)
-   +(n.traitee?'<span class="badge" style="background:#d1fae5;color:#065f46">✓ traitée</span>':((n.echeance||n.capture)?'<span class="badge" style="background:#fef3c7;color:#92400e">à traiter</span>':''))+echLabel(n.echeance,n.traitee,'Traitée',n.heure||'')
+  h+='<div class="page-head"><div><h1 class="page-title">'+(n.epinglee?'📌 ':'')+esc(n.titre)+'</h1><div class="badges">'+qw('note',n.id,'ctx',badgeCtx(n.contexte))
+   +(n.traitee?'<span class="badge" style="background:#d1fae5;color:#065f46">✓ traitée</span>':((n.echeance||n.capture)?qw('note',n.id,'tr','<span class="badge" style="background:#fef3c7;color:#92400e">à traiter</span>','Marquer traitée d’un clic'):''))+(n.echeance&&!n.traitee?qw('note',n.id,'ech',echLabel(n.echeance,n.traitee,'Traitée',n.heure||'')):echLabel(n.echeance,n.traitee,'Traitée',n.heure||''))
    +(n.maj?'<span class="badge gray">modifiée le '+fmtDate(n.maj)+'</span>':'')+'</div></div>'
    +'<div class="toolbar">'
    +'<button class="btn ghost" data-act="pin-note" data-id="'+n.id+'">'+(n.epinglee?'Détacher 📌':'Épingler 📌')+'</button>'
@@ -1300,6 +1454,8 @@ function pageNote(id){
    +'<button class="btn ghost" data-act="edit-note" data-id="'+n.id+'">✎ Modifier</button>'
    +'<button class="btn danger ghost" data-act="del-note" data-id="'+n.id+'" title="Supprimer">🗑</button>'
    +'</div></div>';
+  if(n.dossierId){h+=alertesHtml(alertesDossier(n.dossierId,n.id));}
+  else if(t&&t.echeance&&t.statut!=='fait'){h+=alertesHtml([{kind:'tache',id:t.id,tit:t.titre,echeance:t.echeance,heure:t.heure||'',done:false}]);}
   var i;var tg=n.tags||[];
   if(tg.length){
     h+='<div class="tags-row" style="margin-bottom:12px">';
@@ -1388,11 +1544,12 @@ function openModal(html){
 function closeModal(){
   var r=document.getElementById('modal-root');if(r)r.innerHTML='';
 }
-function modalDossier(id){
+function modalDossier(id,presetParent){
   var d=id?findDossier(id):null;
   var h='<h3>'+(d?'Modifier le dossier':'Nouveau dossier')+'</h3><form id="f-dossier">'
    +'<input type="hidden" name="id" value="'+(d?d.id:'')+'"/>'
    +'<div class="form-row"><label>Nom *</label><input name="n" required maxlength="120" value="'+(d?esc(d.nom):'')+'" placeholder="Ex. : Renouvellement passeport"/></div>'
+   +'<div class="form-row"><label>Dossier parent (pour une arborescence générale → sous-dossiers)</label><select name="parent">'+dossierParentOptions(d?d.parentId:(presetParent||''),d?d.id:'')+'</select></div>'
    +'<div class="form-row two">'
    +'<div><label>Statut</label><select name="st">'+optsHtml(DOS_STATUTS,d?d.statut:'ouvert')+'</select></div>'
    +'<div><label>Contexte</label><select name="ctx">'+optsHtml(CONTEXTES,d?d.contexte:'perso')+'</select></div>'
@@ -1409,7 +1566,9 @@ function modalDossier(id){
 function modalTache(id,presetDos){
   var t=id?findTache(id):null;
   var dos=(t?t.dossierId:(presetDos||''));
-  var h='<h3>'+(t?'Modifier la tâche':'Nouvelle tâche')+'</h3><form id="f-tache">'
+  var h='<h3>'+(t?'Modifier la tâche':'Nouvelle tâche')+'</h3>';
+  if(dos){h+=alertesHtml(alertesDossier(dos,t?t.id:''));}
+  h+='<form id="f-tache">'
    +'<input type="hidden" name="id" value="'+(t?t.id:'')+'"/>'
    +'<div class="form-row"><label>Titre *</label><input name="tit" required maxlength="160" value="'+(t?esc(t.titre):'')+'" placeholder="Que faut-il faire ?"/></div>'
    +'<div class="form-row two">'
@@ -1480,7 +1639,7 @@ function modalListes(){
     if(!cust.length)h+='<span class="tiny muted">Aucune valeur personnelle pour l’instant.</span>';
     h+='</div><div style="display:flex;gap:6px;margin-top:6px"><input id="liste-inp-'+name+'" placeholder="Ajouter une valeur…" style="max-width:280px"/><button class="btn sm" data-act="liste-add" data-liste="'+name+'">＋ Ajouter</button></div></div>';
   }
-  h+='<div class="modal-foot"><button class="btn ghost" data-act="modal-close">Fermer</button></div>';
+  h+='<div class="modal-foot"><button class="btn ghost" data-act="modal-close">Fermer</button><button class="btn" data-act="open-ech" title="Couleurs et seuils des badges d’échéance (retard, très proche, bientôt)">🎯 Couleurs &amp; seuils des échéances</button></div>';
   openModal(h);
 }
 function modalExport(){
@@ -1495,6 +1654,7 @@ function modalExport(){
    +'<button class="btn" data-act="export-csv-ta">📊 CSV Tâches<br/><span class="tiny muted">ouvre dans Excel</span></button>'
    +'<button class="btn" data-act="export-csv-no">📊 CSV Notes<br/><span class="tiny muted">ouvre dans Excel</span></button>'
    +'<button class="btn" data-act="export-csv-doc">📊 CSV Documents<br/><span class="tiny muted">ouvre dans Excel</span></button>'
+   +'<button class="btn" data-act="load-demo" title="Remplace tout par un jeu de données d’exemple riche (dossiers hiérarchiques, tâches, notes, captures, documents) — un export JSON de sauvegarde est téléchargé avant">🧪 Charger les exemples<br/><span class="tiny muted">remplace tout — export auto avant</span></button>'
    +'</div>'
    +'<div class="form-row"><label>Importer une sauvegarde JSON (remplace tout)</label><input type="file" id="imp-json" accept=".json,application/json"/></div>'
    +'<p class="tiny muted">⚠️ L’import remplace l’ensemble des données actuelles.</p>'
@@ -1519,9 +1679,451 @@ function modalHelp(){
    +'<p style="margin-top:8px"><b>Mes listes</b> — Menu ⚙️ Mes listes : ajoutez vos propres valeurs à tous les menus déroulants (contextes, priorités, types, rôles…). Elles restent enregistrées sur cet appareil.</p>'
    +'<p style="margin-top:8px"><b>Post-its → notes</b> — Un post-it de la boîte ⚡ Capture, une fois trié (bouton Trier), devient une vraie note rangée dans 📝 Notes : échéance, importance et heure. L’historique des post-its triés reste visible dans ⚡ Capture.</p>'
    +'<p style="margin-top:8px"><b>Astuce</b> — Tâches : glissez-déposez dans le Kanban. La recherche en haut cherche partout : dossiers, tâches, notes, documents.</p>'
+   +'<p style="margin-top:8px"><b>Badges modifiables d’un clic (v5)</b> — Tous les petits badges colorés (contexte « pro », priorité, statut, « à traiter », échéance « Dans 3 j »…) sont cliquables : une mini-fenêtre s’ouvre pour changer la valeur, partout dans l’appli (listes, fiches, accueil). Le badge d’échéance propose aussi l’heure.</p>'
+   +'<p style="margin-top:8px"><b>Dossiers hiérarchiques (v5)</b> — Un dossier peut avoir un parent et des sous-dossiers (bouton « + Sous-dossier » dans une fiche). Le fil d’Ariane en haut de fiche permet de remonter d’un niveau.</p>'
+   +'<p style="margin-top:8px"><b>Relances (v5)</b> — Le panneau 🔔 en haut à droite liste en continu les échéances en retard (rouge) et proches (orange), toutes natures confondues (tâches, notes, dossiers). Réductible d’un clic, il reste discret quand tout va bien.</p>'
+   +'<p style="margin-top:8px"><b>Raccourcis &amp; liens SharePoint (v5)</b> — Déposez un fichier .url ou .lnk sur la zone d’import : la cible est lue automatiquement. Les liens http(s) (SharePoint, OneDrive, web) s’ouvrent depuis la fiche via 🔗 — un document SharePoint s’ouvre dans Office Online et s’y réenregistre. Pour un fichier local (C:\\…), le navigateur ne peut pas l’ouvrir seul : cliquez 📋 pour copier le chemin, puis collez-le dans l’Explorateur.</p>'
+   +'<p style="margin-top:8px"><b>Synchro chiffrée multi-appareils (v5)</b> — Page ☁️ : après une configuration unique (projet Supabase, compte, passphrase), vos données sont chiffrées de bout en bout sur l’appareil puis envoyées dans le cloud ; l’autre appareil les récupère automatiquement au chargement ou au retour sur l’onglet. Conflit ? Un choix vous est proposé, avec export de sauvegarde avant remplacement.</p>'
    +'</div>'
    +'<div class="modal-foot" style="margin-top:12px"><button class="btn ghost" data-act="modal-close">Fermer</button></div>';
   openModal(h);
+}
+
+// ===== Alertes d’échéance (v5) =====
+function alertesDossier(id,excludeId){
+  var items=[];var i;
+  var ts=dossierTaches(id);
+  for(i=0;i<ts.length;i++){if(!excludeId||ts[i].id!==excludeId)items.push({kind:'tache',id:ts[i].id,tit:ts[i].titre,echeance:ts[i].echeance,heure:ts[i].heure||'',done:ts[i].statut==='fait'});}
+  var ns=dossierNotes(id);
+  for(i=0;i<ns.length;i++){if(!excludeId||ns[i].id!==excludeId)items.push({kind:'note',id:ns[i].id,tit:ns[i].titre,echeance:ns[i].echeance,heure:ns[i].heure||'',done:ns[i].traitee});}
+  var enf=dossierEnfants(id);
+  for(i=0;i<enf.length;i++){items.push({kind:'dossier',id:enf[i].id,tit:'📁 '+enf[i].nom,echeance:enf[i].echeance,heure:'',done:(enf[i].statut==='termine'||enf[i].statut==='archive')});}
+  return items;
+}
+function alertesHtml(items){
+  var out=[];var i;
+  for(i=0;i<items.length;i++){
+    var it=items[i];
+    if(it.done||!it.echeance)continue;
+    var n=daysUntil(it.echeance);
+    if(n===null||n>echSeuil7())continue;
+    var lab=(n<0)?'en retard de '+(-n)+' j':(n===0?'à faire aujourd’hui':'dans '+n+' j');
+    out.push('<a class="chip" data-act="open-'+it.kind+'" data-id="'+it.id+'">'+esc(it.tit)+' à faire pour le '+fmtDate(it.echeance)+(it.heure?' à '+esc(it.heure):'')+' <b>('+lab+')</b></a>');
+  }
+  if(!out.length)return '';
+  return '<div class="banner warn" style="margin-bottom:14px">⚠️ <b>Attention :</b> '+out.join(' ')+'</div>';
+}
+
+// ===== Édition rapide par clic sur les badges (v5) =====
+function modalQedit(kind,id,field){
+  var titre='',cur='',curHeur='',curTr=false;
+  if(kind==='tache'){var t=findTache(id);if(!t)return;titre=t.titre;cur=(field==='ech')?(t.echeance||''):String(t[field]||'');curHeur=t.heure||'';}
+  else if(kind==='note'){var n=findNote(id);if(!n)return;titre=n.titre;if(field==='ech'){cur=n.echeance||'';curHeur=n.heure||'';}else if(field==='tr'){curTr=n.traitee;}else if(field==='prio'){cur=n.prio||'normale';}else{cur=String(n[field]||'');}}
+  else if(kind==='dossier'){var d=findDossier(id);if(!d)return;titre=d.nom;cur=(field==='ech')?(d.echeance||''):String(d[field]||'');}
+  else{return;
+  }
+  var fieldLbl={statut:'Statut',prio:'Priorité / importance',ctx:'Contexte',ech:'Échéance',tr:'État'}[field]||field;
+  var h='<h3>Modifier — '+esc(titre)+'</h3><form id="f-qedit">'
+   +'<input type="hidden" name="kind" value="'+kind+'"/><input type="hidden" name="id" value="'+id+'"/><input type="hidden" name="field" value="'+field+'"/>';
+  if(field==='ech'){
+    h+='<div class="form-row two"><div><label>Nouvelle échéance</label><input type="date" name="val" value="'+esc(cur)+'"/></div>'
+     +'<div><label>Heure (optionnel)</label><input type="time" name="heur" value="'+esc(curHeur)+'"/></div></div>';
+  }else if(field==='tr'){
+    h+='<div class="form-row"><label>État de traitement</label><select name="val"><option value="non"'+(!curTr?' selected':'')+'>À traiter</option><option value="oui"'+(curTr?' selected':'')+'>Traitée ✓</option></select></div>';
+  }else{
+    var list=(field==='statut')?(kind==='tache'?TACHE_STATUTS:DOS_STATUTS):(field==='prio'?PRIORITES:CONTEXTES);
+    h+='<div class="form-row"><label>'+esc(fieldLbl)+'</label><select name="val">'+optsHtml(list,cur)+'</select></div>';
+  }
+  h+='<div class="modal-foot"><button type="button" class="btn ghost" data-act="modal-close">Annuler</button><button type="submit" class="btn primary">Enregistrer</button></div></form>';
+  openModal(h);
+}
+function saveQeditForm(f){
+  var el=f.elements;
+  var kind=el.kind.value,id=el.id.value,field=el.field.value;
+  var v=el.val?el.val.value:'';
+  var heur=(el.heur&&el.heur.value)?el.heur.value:'';
+  if(kind==='tache'){
+    var t=findTache(id);if(!t)return;
+    if(field==='ech'){t.echeance=v;t.heure=heur;}else{t[field]=v;}
+    t.maj=today();
+  }else if(kind==='note'){
+    var n=findNote(id);if(!n)return;
+    if(field==='ech'){n.echeance=v;n.heure=heur;}
+    else if(field==='tr'){n.traitee=(v==='oui');}
+    else if(field==='prio'){n.prio=v;}
+    else{n[field]=v;}
+    n.maj=today();
+  }else if(kind==='dossier'){
+    var d=findDossier(id);if(!d)return;
+    if(field==='ech'){d.echeance=v;}else{d[field]=v;}
+    d.maj=today();
+  }
+  save();closeModal();render();
+}
+
+// ===== Paramétrage des échéances (couleurs & seuils, v5) =====
+function modalEchances(){
+  var e=echPrefs();
+  var h='<h3>🎯 Couleurs &amp; seuils des échéances</h3><form id="f-ech">'
+   +'<p class="small muted">Règle l’affichage des badges d’échéance partout dans l’appli (retard = rouge, bientôt = orange…).</p>'
+   +'<div class="form-row two">'
+   +'<div><label>Seuil « très proche » (jours, orange foncé)</label><input type="number" name="s2" min="0" max="30" value="'+esc(e.s2!==undefined?e.s2:'2')+'"/></div>'
+   +'<div><label>Seuil « bientôt » (jours, jaune)</label><input type="number" name="s7" min="0" max="60" value="'+esc(e.s7!==undefined?e.s7:'7')+'"/></div>'
+   +'</div>'
+   +'<div class="form-row two">'
+   +'<div><label>Retard — fond</label><input type="color" name="bgLate" value="'+esc(e.bgLate||'#fee2e2')+'"/></div>'
+   +'<div><label>Retard — texte</label><input type="color" name="cLate" value="'+esc(e.cLate||'#991b1b')+'"/></div>'
+   +'</div>'
+   +'<div class="form-row two">'
+   +'<div><label>Très proche — fond</label><input type="color" name="bgS2" value="'+esc(e.bgS2||'#ffedd5')+'"/></div>'
+   +'<div><label>Très proche — texte</label><input type="color" name="cS2" value="'+esc(e.cS2||'#c2410c')+'"/></div>'
+   +'</div>'
+   +'<div class="form-row two">'
+   +'<div><label>Bientôt — fond</label><input type="color" name="bgS7" value="'+esc(e.bgS7||'#fef9c3')+'"/></div>'
+   +'<div><label>Bientôt — texte</label><input type="color" name="cS7" value="'+esc(e.cS7||'#854d0e')+'"/></div>'
+   +'</div>'
+   +'<div class="form-row two">'
+   +'<div><label>Fait / traité — fond</label><input type="color" name="bgOk" value="'+esc(e.bgOk||'#d1fae5')+'"/></div>'
+   +'<div><label>Fait / traité — texte</label><input type="color" name="cOk" value="'+esc(e.cOk||'#065f46')+'"/></div>'
+   +'</div>'
+   +'<div class="modal-foot"><button type="button" class="btn ghost" data-act="modal-close">Annuler</button><button type="submit" class="btn primary">Enregistrer</button></div></form>';
+  openModal(h);
+}
+function saveEchForm(f){
+  var el=f.elements;
+  var e={s2:el.s2.value,s7:el.s7.value,bgLate:el.bgLate.value,cLate:el.cLate.value,bgS2:el.bgS2.value,cS2:el.cS2.value,bgS7:el.bgS7.value,cS7:el.cS7.value,bgOk:el.bgOk.value,cOk:el.cOk.value};
+  var p=getPrefs();p.ech=e;setPrefs(p);
+  applyEchStyles();
+  closeModal();toast('Échéances reparamétrées ✓');render();
+}
+
+// ===== Panneau de relances (haut droite, v5) =====
+function remindItems(){
+  var items=[];var i;
+  var rd=retards();
+  for(i=0;i<rd.length;i++)items.push({cls:'late',kind:'tache',id:rd[i].id,lab:'✅ '+rd[i].titre,sub:relEch(rd[i].echeance,false,'')});
+  var dosRd=dossiersActifs().filter(function(d){return d.echeance&&daysUntil(d.echeance)<0;});
+  for(i=0;i<dosRd.length;i++)items.push({cls:'late',kind:'dossier',id:dosRd[i].id,lab:'📁 '+dosRd[i].nom,sub:relEch(dosRd[i].echeance,false,'')});
+  var noRd=state.notes.filter(function(n){return !n.traitee&&n.echeance&&daysUntil(n.echeance)<0;});
+  for(i=0;i<noRd.length;i++)items.push({cls:'late',kind:'note',id:noRd[i].id,lab:'📝 '+noRd[i].titre,sub:relEch(noRd[i].echeance,false,'')});
+  var se=semaine();
+  for(i=0;i<se.length;i++)items.push({cls:'soon',kind:'tache',id:se[i].id,lab:'✅ '+se[i].titre,sub:relEch(se[i].echeance,false,'')});
+  var dosSe=dossiersActifs().filter(function(d){return d.echeance&&daysUntil(d.echeance)>=0&&daysUntil(d.echeance)<=echSeuil7();});
+  for(i=0;i<dosSe.length;i++)items.push({cls:'soon',kind:'dossier',id:dosSe[i].id,lab:'📁 '+dosSe[i].nom,sub:relEch(dosSe[i].echeance,false,'')});
+  var noSe=state.notes.filter(function(n){return !n.traitee&&n.echeance&&daysUntil(n.echeance)>=0&&daysUntil(n.echeance)<=echSeuil7();});
+  for(i=0;i<noSe.length;i++)items.push({cls:'soon',kind:'note',id:noSe[i].id,lab:'📝 '+noSe[i].titre,sub:relEch(noSe[i].echeance,false,'')});
+  return items;
+}
+function renderRemind(){
+  var root=document.getElementById('remind-root');
+  if(!root)return;
+  var p=getPrefs();
+  var items=remindItems();
+  if(p.remindOff||!items.length){root.innerHTML=(items.length?'<button class="btn sm remind-toggle" data-act="remind-toggle" title="Afficher le panneau des relances">🔔 '+items.length+'</button>':'');return;}
+  var lat=[],son=[],i;
+  for(i=0;i<items.length;i++){if(items[i].cls==='late')lat.push(items[i]);else son.push(items[i]);}
+  var h='<div class="remind">';
+  h+='<h4>🔔 Relances ('+items.length+')<button class="btn sm ghost" data-act="remind-toggle" title="Réduire le panneau">✕</button></h4>';
+  if(lat.length){h+='<div class="small" style="color:var(--danger);font-weight:600;margin-bottom:4px">🚨 En retard ('+lat.length+')</div>';
+    for(i=0;i<Math.min(lat.length,15);i++){h+='<div class="rr late" data-act="open-'+lat[i].kind+'" data-id="'+lat[i].id+'" title="Ouvrir"><span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(lat[i].lab)+'</span><span class="tiny muted" style="flex:0 0 auto">'+esc(lat[i].sub)+'</span></div>';}
+  }
+  if(son.length){h+='<div class="small" style="color:var(--warn);font-weight:600;margin:6px 0 4px">🟠 À venir ('+son.length+')</div>';
+    for(i=0;i<Math.min(son.length,15);i++){h+='<div class="rr soon" data-act="open-'+son[i].kind+'" data-id="'+son[i].id+'" title="Ouvrir"><span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(son[i].lab)+'</span><span class="tiny muted" style="flex:0 0 auto">'+esc(son[i].sub)+'</span></div>';}
+  }
+  h+='</div>';
+  root.innerHTML=h;
+}
+
+// ===== Presse-papier (v5) =====
+function copyText(txt,msg){
+  try{
+    if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(txt);toast(msg||'Copié ✓');return;}
+  }catch(e){}
+  try{
+    var ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();toast(msg||'Copié ✓');
+  }catch(e2){
+    toast('Impossible de copier automatiquement — voici le chemin : '+txt);
+  }
+}
+
+// ===== Synchro chiffrée multi-appareils (Supabase, v5) =====
+var SB_APPLYING=false;
+var SB_SALT_KEY='gestion-dnt-salt-v1';
+function sbCfg(){var p=getPrefs();return p.sb||{};}
+function sbSetCfg(c){var p=getPrefs();p.sb=c;setPrefs(p);}
+function b64FromBytes(buf){var b=new Uint8Array(buf);var s='';var i;for(i=0;i<b.length;i++){s+=String.fromCharCode(b[i]);}try{return btoa(s);}catch(e){return '';}}
+function b64ToBytes(str){try{var s=atob(String(str||''));var b=new Uint8Array(s.length);var i;for(i=0;i<s.length;i++){b[i]=s.charCodeAt(i);}return b;}catch(e){return new Uint8Array(0);}}
+function sbSalt(){
+  var s='';try{s=localStorage.getItem(SB_SALT_KEY)||'';}catch(e){}
+  if(!s){
+    var b=new Uint8Array(16);
+    try{crypto.getRandomValues(b);}catch(e){var i0;for(i0=0;i0<16;i0++){b[i0]=(i0*17+29)%256;}}
+    s=b64FromBytes(b);
+    try{localStorage.setItem(SB_SALT_KEY,s);}catch(e){}
+  }
+  return b64ToBytes(s);
+}
+function sbDerive(pass){
+  return crypto.subtle.importKey('raw',new TextEncoder().encode(pass),'PBKDF2',false,['deriveKey']).then(function(km){
+    return crypto.subtle.deriveKey({name:'PBKDF2',salt:sbSalt(),iterations:120000,hash:'SHA-256'},km,{name:'AES-GCM',length:256},false,['encrypt','decrypt']);
+  });
+}
+function sbEncrypt(json,pass){
+  var iv=new Uint8Array(12);
+  try{crypto.getRandomValues(iv);}catch(e){var i1;for(i1=0;i1<12;i1++){iv[i1]=i1;}}
+  return sbDerive(pass).then(function(key){
+    return crypto.subtle.encrypt({name:'AES-GCM',iv:iv},key,new TextEncoder().encode(json));
+  }).then(function(buf){
+    return b64FromBytes(iv)+':'+b64FromBytes(buf);
+  });
+}
+function sbDecrypt(blob,pass){
+  var parts=String(blob||'').split(':');
+  if(parts.length<2)return Promise.reject(new Error('blob illisible'));
+  return sbDerive(pass).then(function(key){
+    return crypto.subtle.decrypt({name:'AES-GCM',iv:b64ToBytes(parts[0])},key,b64ToBytes(parts.slice(1).join(':')));
+  }).then(function(buf){
+    return new TextDecoder().decode(buf);
+  });
+}
+function sbHeaders(token){
+  var c=sbCfg();
+  var h={'Content-Type':'application/json','apikey':c.key};
+  if(token)h.Authorization='Bearer '+token;
+  return h;
+}
+function sbAuthUrl(){return String(sbCfg().url||'').replace(/\/+$/,'')+'/auth/v1/';}
+function sbRestUrl(){return String(sbCfg().url||'').replace(/\/+$/,'')+'/rest/v1/';}
+function sbApplyAuth(j){
+  if(j&&j.access_token){
+    var c=sbCfg();c.token=j.access_token;c.refresh=j.refresh_token||'';c.exp=Date.now()+((j.expires_in||3600)*1000);sbSetCfg(c);
+    return true;
+  }
+  return false;
+}
+function sbSignup(){
+  var c=sbCfg();
+  return fetch(sbAuthUrl()+'signup',{method:'POST',headers:sbHeaders(''),body:JSON.stringify({email:c.email,password:c.password})}).then(function(r){return r.json();});
+}
+function sbLoginReq(){
+  var c=sbCfg();
+  return fetch(sbAuthUrl()+'token?grant_type=password',{method:'POST',headers:sbHeaders(''),body:JSON.stringify({email:c.email,password:c.password})}).then(function(r){return r.json();});
+}
+function sbEnsureToken(){
+  var c=sbCfg();
+  if(c.token&&c.exp&&Date.now()<(c.exp-60000))return Promise.resolve(c.token);
+  var p1;
+  if(c.refresh){
+    p1=fetch(sbAuthUrl()+'token?grant_type=refresh_token',{method:'POST',headers:sbHeaders(''),body:JSON.stringify({refresh_token:c.refresh})}).then(function(r){return r.json();});
+  }else{
+    p1=Promise.resolve(null);
+  }
+  return p1.then(function(j){
+    if(sbApplyAuth(j))return sbCfg().token;
+    return sbLoginReq().then(function(j2){
+      if(sbApplyAuth(j2))return sbCfg().token;
+      throw new Error('connexion refusée — vérifiez email / mot de passe');
+    });
+  });
+}
+function sbUpsert(blobStr){
+  return sbEnsureToken().then(function(tok){
+    return fetch(sbRestUrl()+'sync_data',{method:'POST',headers:{'Content-Type':'application/json','apikey':sbCfg().key,'Authorization':'Bearer '+tok,'Prefer':'resolution=merge-duplicates'},body:JSON.stringify({blob:blobStr,updated_at:new Date().toISOString(),version:VERSION})});
+  });
+}
+function sbGetRow(){
+  return sbEnsureToken().then(function(tok){
+    return fetch(sbRestUrl()+'sync_data?select=*',{headers:{'apikey':sbCfg().key,'Authorization':'Bearer '+tok}});
+  }).then(function(r){return r.json();});
+}
+function sbReady(){
+  var c=sbCfg();
+  return !!(c.url&&c.key&&c.email&&c.password&&c.pass);
+}
+function sbRefreshBadge(){
+  var el=document.getElementById('sb-dot');
+  if(!el)return;
+  var on=sbReady()&&!state.sb.busy&&!state.sb.err;
+  var off=!sbReady();
+  el.className='ms-dot '+(off?'off':(state.sb.busy?'off':(state.sb.err?'late':'on')));
+}
+var __syncTimer=null;
+function syncDataStr(){
+  return JSON.stringify({version:VERSION,exemple:state.exemple,dossiers:state.dossiers,taches:state.taches,notes:state.notes,docs:state.docs});
+}
+function syncSoon(){
+  if(!sbReady())return;
+  if(__syncTimer)clearTimeout(__syncTimer);
+  __syncTimer=setTimeout(function(){__syncTimer=null;syncPush(true);},5000);
+}
+function syncPush(silent){
+  if(!sbReady())return;
+  if(state.sb.busy)return;
+  state.sb.busy=true;state.sb.err='';sbRefreshBadge();
+  sbEncrypt(syncDataStr(),sbCfg().pass).then(function(blob){
+    return sbUpsert(blob);
+  }).then(function(r){
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    var p=getPrefs();p.lastPushTs=Date.now();p.lastWriteTs=p.lastPushTs;setPrefs(p);
+    state.sb.busy=false;state.sb.last=new Date().toLocaleTimeString('fr-FR');sbRefreshBadge();
+    if(!silent)toast('☁️ Envoyé vers le cloud');
+    if(state.page==='synchro')render();
+  }).catch(function(e){
+    state.sb.busy=false;state.sb.err=String(e&&e.message||e);sbRefreshBadge();
+    if(!silent)toast('Synchro impossible : '+state.sb.err);
+    if(state.page==='synchro')render();
+  });
+}
+function syncPull(silent){
+  if(!sbReady())return;
+  if(state.sb.busy)return;
+  state.sb.busy=true;state.sb.err='';sbRefreshBadge();
+  sbGetRow().then(function(rows){
+    state.sb.busy=false;sbRefreshBadge();
+    if(!rows||!rows.length){
+      var p=getPrefs();
+      if(p.lastWriteTs>(p.lastPushTs||0)){syncPush(true);}
+      else if(!silent){toast('Aucune donnée dans le cloud pour ce compte — utilisez « Envoyer vers le cloud ».');}
+      return;
+    }
+    var row=rows[0];
+    var cloudTs=new Date(row.updated_at).getTime()||0;
+    var p2=getPrefs();
+    var lastPush=p2.lastPushTs||0;
+    var lastWrite=p2.lastWriteTs||0;
+    if(lastPush&&cloudTs<=lastPush)return;
+    if(lastWrite>lastPush){syncOfferCloud(row);return;}
+    syncApply(row,silent);
+  }).catch(function(e){
+    state.sb.busy=false;state.sb.err=String(e&&e.message||e);sbRefreshBadge();
+    if(!silent)toast('Synchro impossible : '+state.sb.err);
+    if(state.page==='synchro')render();
+  });
+}
+function syncApply(row,silent){
+  sbDecrypt(row.blob,sbCfg().pass).then(function(txt){
+    var st=normalize(JSON.parse(txt));
+    SB_APPLYING=true;
+    state.dossiers=st.dossiers;state.taches=st.taches;state.notes=st.notes;state.docs=st.docs;state.exemple=st.exemple;
+    try{
+      localStorage.setItem(STORE_KEY,JSON.stringify({version:VERSION,exemple:state.exemple,dossiers:state.dossiers,taches:state.taches,notes:state.notes,docs:state.docs}));
+    }catch(e){}
+    var p=getPrefs();p.lastPushTs=new Date(row.updated_at).getTime()||Date.now();p.lastWriteTs=p.lastPushTs;setPrefs(p);
+    SB_APPLYING=false;
+    state.sb.last=new Date().toLocaleTimeString('fr-FR');sbRefreshBadge();
+    render();
+    if(!silent)toast('☁️ Données récupérées du cloud');
+  }).catch(function(){
+    SB_APPLYING=false;
+    state.sb.err='Passphrase incorrecte — le blob du cloud est illisible';sbRefreshBadge();
+    if(!silent)toast(state.sb.err);
+    if(state.page==='synchro')render();
+  });
+}
+function syncOfferCloud(row){
+  state._sbOffer=row;
+  openModal('<h3>☁️ Données plus récentes dans le cloud</h3>'
+   +'<p class="small">Le cloud contient une version <b>plus récente</b>, mais vous avez aussi des modifications locales pas encore envoyées.</p>'
+   +'<p class="small"><b>Garder la locale</b> : vos données actuelles seront envoyées et écraseront le cloud.<br/><b>Récupérer le cloud</b> : votre version locale sera d’abord exportée en sauvegarde, puis remplacée.</p>'
+   +'<div class="modal-foot"><button class="btn ghost" data-act="modal-close">Annuler</button><button class="btn" data-act="sync-keep-local">Garder la locale</button><button class="btn primary" data-act="sync-take-cloud">Récupérer le cloud</button></div>');
+}
+function sbReadForm(){
+  var f=null;
+  try{f=document.getElementById('f-synchro');}catch(e){}
+  if(!f||!f.elements)return sbCfg();
+  var el=f.elements;
+  var c=sbCfg();
+  c.url=(el.url.value||'').trim();
+  c.key=(el.key.value||'').trim();
+  c.email=(el.email.value||'').trim();
+  if(el.password.value)c.password=el.password.value;
+  c.pass=(el.pass.value||'').trim();
+  sbSetCfg(c);
+  return c;
+}
+function pageSynchro(){
+  var c=sbCfg();
+  var h='<div class="content"><div class="page-head"><h1 class="page-title">☁️ Synchro multi-appareils</h1></div>';
+  h+='<div class="banner info">Vos données sont <b>chiffrées de bout en bout</b> (AES-GCM 256 bits, clé dérivée de votre passphrase) avant tout envoi. Le serveur ne voit jamais le contenu, ni la passphrase — uniquement un email de compte.</div>';
+  h+='<h2 class="sec-title">État</h2><div class="step">';
+  h+='<p>Configuration : '+(sbReady()?'<b style="color:var(--ok)">complète ✓</b>':'<b>incomplète</b> — renseignez les champs ci-dessous')+(c.email?' — compte : <b>'+esc(c.email)+'</b>':'')+'</p>';
+  h+='<p>Dernière synchro : <b>'+(state.sb.last||'jamais')+'</b>'+(state.sb.busy?' (en cours…)':'')+(state.sb.err?' <span style="color:var(--danger)">⚠️ '+esc(state.sb.err)+'</span>':'')+'</p>';
+  h+='<div class="toolbar" style="margin-top:8px">'
+   +'<button class="btn primary" data-act="sync-push"'+(sbReady()?'':' disabled')+'>⬆️ Envoyer vers le cloud</button>'
+   +'<button class="btn" data-act="sync-pull"'+(sbReady()?'':' disabled')+'>⬇️ Récupérer depuis le cloud</button>'
+   +(sbReady()?'<button class="btn ghost" data-act="sync-logout">Oublier le compte sur cet appareil</button>':'')
+   +'</div></div>';
+  h+='<h2 class="sec-title">Configuration (identique sur tous vos appareils)</h2><div class="step"><form id="f-synchro">';
+  h+='<div class="form-row"><label>URL du projet Supabase</label><input name="url" value="'+esc(c.url||'')+'" placeholder="https://xxxx.supabase.co"/></div>';
+  h+='<div class="form-row"><label>Clé publique (publishable / anon)</label><input name="key" value="'+esc(c.key||'')+'" placeholder="sb_publishable__…"/></div>';
+  h+='<div class="form-row two"><div><label>Email du compte</label><input name="email" value="'+esc(c.email||'')+'" placeholder="vous@exemple.fr"/></div><div><label>Mot de passe du compte</label><input type="password" name="password" value="'+esc(c.password||'')+'" placeholder="(inchangé si vide)"/></div></div>';
+  h+='<div class="form-row"><label>Passphrase de chiffrement <span class="tiny muted">(jamais envoyée sur le réseau — identique partout pour lire les mêmes données)</span></label><input name="pass" value="'+esc(c.pass||'')+'" placeholder="Une phrase secrète personnelle"/></div>';
+  h+='<div class="modal-foot"><button type="submit" class="btn primary">💾 Enregistrer la configuration</button></div>';
+  h+='</form>';
+  h+='<div class="toolbar" style="margin-top:10px">'
+   +'<button class="btn" data-act="sync-signup">1. Créer le compte (première fois seulement)</button>'
+   +'<button class="btn" data-act="sync-login">2. Se connecter</button>'
+   +'</div>';
+  h+='<p class="tiny muted" style="margin-top:10px">Le mot de passe part chez Supabase (région UE) uniquement pour ouvrir la session. La passphrase, elle, ne quitte jamais cet appareil : elle chiffre localement. En cas de passphrase différente entre appareils, le blob du cloud sera illisible (message explicite).</p>';
+  h+='</div>';
+  h+='<h2 class="sec-title">Comment ça marche</h2><div class="step small" style="line-height:1.7">'
+   +'• Après chaque modification, l’appli envoie automatiquement le tout (chiffré) ~5 secondes plus tard.<br/>'
+   +'• Au chargement et à chaque retour sur l’onglet, elle récupère les changements faits depuis un autre appareil — un post-it capturé sur le téléphone apparaît sur le PC, image jointe comprise.<br/>'
+   +'• En cas de conflit (modifications des deux côtés), un choix vous est proposé — avec export de sauvegarde avant tout remplacement.<br/>'
+   +'• Hors ligne : les modifications restent locales et repartent dès le retour du réseau. Les exports (💾) restent la sauvegarde de premier secours.</div>';
+  h+='</div>';
+  return h;
+}
+function saveSynchroForm(f){
+  var el=f.elements;
+  var c=sbCfg();
+  c.url=(el.url.value||'').trim();
+  c.key=(el.key.value||'').trim();
+  c.email=(el.email.value||'').trim();
+  if(el.password.value)c.password=el.password.value;
+  c.pass=(el.pass.value||'').trim();
+  sbSetCfg(c);
+  toast('Configuration synchro enregistrée ✓');
+  render();
+}
+
+// ===== Import de raccourcis .url / .lnk (v5) =====
+function lnkExtractPath(bin){
+  var s='';
+  var i;
+  for(i=0;i<bin.length;i++){s+=String.fromCharCode(bin[i]);}
+  var m=s.match(/[A-Za-z]:\\[^\x00"<>|*]{1,240}/);
+  if(m)return m[0];
+  var u='';
+  for(i=0;i+1<s.length;i+=2){u+=String.fromCharCode(s.charCodeAt(i)+(s.charCodeAt(i+1)<<8));}
+  var m2=u.match(/[A-Za-z]:\\[^\x00"<>|*]{1,240}/);
+  if(m2)return m2[0];
+  var m3=s.match(/\\\\[^\x00"<>|*]{2,240}/);
+  if(m3)return m3[0];
+  var m4=u.match(/\\\\[^\x00"<>|*]{2,240}/);
+  if(m4)return m4[0];
+  return '';
+}
+function importShortcut(f,ext,dosId,next){
+  var rd=new FileReader();
+  rd.onload=function(){
+    var target='';
+    if(ext==='url'){
+      var txt=String(rd.result||'');
+      var m=txt.match(/^URL\s*=\s*(\S+)/mi);
+      if(m)target=m[1];
+    }else{
+      var bin=new Uint8Array(rd.result||new ArrayBuffer(0));
+      target=lnkExtractPath(bin);
+    }
+    var x={id:uid(),nom:String((f&&f.name)||'Raccourci').replace(/\.(url|lnk)$/i,''),type:target?guessDocType(target):'autre',role:'livrable',localisation:target,description:(ext==='lnk'?'Raccourci Windows (fichier d’origine)':'Raccourci Internet (fichier d’origine)'),dossiers:dosId?[dosId]:[],stocke:false,cree:today(),maj:today()};
+    state.docs.push(x);
+    if(target){toast('Raccourci importé : « '+x.nom+' » → '+target);}
+    else{toast('Raccourci importé, cible introuvable — complétez la localisation dans la fiche.');}
+    next();
+  };
+  rd.onerror=function(){toast('Lecture du raccourci impossible.');next();};
+  if(ext==='lnk')rd.readAsArrayBuffer(f);else rd.readAsText(f);
 }
 
 // ===== Connexion Microsoft Outlook (Microsoft Graph — optionnelle) =====
@@ -1757,7 +2359,7 @@ function pageOutlook(){
 
 // ===== PWA (installation en tant qu'application) =====
 var SW_SRC=[
-'var C="espace-cache-v2";',
+'var C="espace-cache-v3";',
 'self.addEventListener("install",function(e){self.skipWaiting();});',
 'self.addEventListener("activate",function(e){e.waitUntil(self.clients.claim());});',
 'self.addEventListener("fetch",function(e){',
@@ -1950,6 +2552,7 @@ function saveDossierForm(f){
   var nouveau=!d;
   if(!d){d={id:uid(),cree:today()};state.dossiers.push(d);}
   d.nom=el.n.value.trim()||'Sans titre';
+  d.parentId=el.parent?String(el.parent.value||''):'';
   d.statut=el.st.value;
   d.contexte=el.ctx.value;
   d.categorie=el.cat.value.trim();
@@ -2093,6 +2696,9 @@ function importFiles(files,dosId){
   for(i=0;i<list.length;i++){importOneFile(list[i],dosId,next);}
 }
 function importOneFile(f,dosId,next){
+  var nm=String((f&&f.name)||'');
+  if(/\.url$/i.test(nm)){importShortcut(f,'url',dosId,next);return;}
+  if(/\.lnk$/i.test(nm)){importShortcut(f,'lnk',dosId,next);return;}
   var big=((f&&f.size)?f.size:0)>10*1024*1024;
   var x={id:uid(),nom:String((f&&f.name)||'Fichier'),type:guessDocType(f&&f.name),role:'livrable',localisation:'',description:'',dossiers:dosId?[dosId]:[],cree:today(),maj:today()};
   state.docs.push(x);
@@ -2346,6 +2952,84 @@ document.addEventListener('click',function(ev){
   }
   else if(a==='mail-to-note'){msMailToNote(id);}
   else if(a==='note-to-outlook'){msNoteToOutlook(id);}
+  else if(a==='qedit'){modalQedit(el.getAttribute('data-kind'),id,el.getAttribute('data-field'));}
+  else if(a==='kpi-go'){
+    var kk=el.getAttribute('data-k');
+    state._kpiRetard=false;
+    if(kk==='afaire'){state.filtres.ta.statut='a-faire';state.filtres.ta.q='';navGo('taches','');}
+    else if(kk==='retard'){state._kpiRetard=true;state.filtres.ta.statut='';state.filtres.ta.q='';navGo('taches','');}
+    else if(kk==='cap'){navGo('capture','');}
+    else if(kk==='dos'){navGo('dossiers','');}
+    render();
+  }
+  else if(a==='kpi-clear'){state._kpiRetard=false;render();}
+  else if(a==='new-sousdos'){modalDossier('',id);}
+  else if(a==='new-doc-link'){modalDoc('','','lien');}
+  else if(a==='doc-copy'){
+    var x5=findDoc(id);
+    if(x5&&x5.localisation){copyText(x5.localisation);}
+    else{toast('Aucune localisation enregistrée pour ce document.');}
+  }
+  else if(a==='doc-openlink'){
+    var x6=findDoc(id);
+    if(x6&&/^https?:\/\//i.test(String(x6.localisation||''))){try{window.open(x6.localisation,'_blank');}catch(e8){toast('Ouverture bloquée par le navigateur.');}}
+    else{toast('Ce document pointe vers un fichier local : copiez le chemin (📋) et collez-le dans l’Explorateur.');}
+  }
+  else if(a==='remind-toggle'){var pr3=getPrefs();pr3.remindOff=!pr3.remindOff;setPrefs(pr3);renderRemind();}
+  else if(a==='open-ech'){modalEchances();}
+  else if(a==='load-demo'){
+    if(confirm('Charger le jeu de données d’exemple ?\n\n⚠️ Vos données actuelles seront REMPLACÉES. Un export JSON de sauvegarde sera téléchargé automatiquement avant.')){
+      exportJson();
+      var sd=normalize(seedData());
+      state.dossiers=sd.dossiers;state.taches=sd.taches;state.notes=sd.notes;state.docs=sd.docs;state.exemple=true;
+      save();closeModal();toast('Exemples chargés ✓');render();
+    }
+  }
+  else if(a==='sync-push'){
+    sbReadForm();
+    if(!sbReady()){toast('Configuration incomplète — renseignez tous les champs ci-dessous.');return;}
+    syncPush(false);
+  }
+  else if(a==='sync-pull'){
+    sbReadForm();
+    if(!sbReady()){toast('Configuration incomplète — renseignez tous les champs ci-dessous.');return;}
+    syncPull(false);
+  }
+  else if(a==='sync-logout'){
+    var c7=sbCfg();c7.token='';c7.refresh='';c7.exp=0;sbSetCfg(c7);
+    toast('Compte synchro oublié sur cet appareil');render();
+  }
+  else if(a==='sync-signup'){
+    var c1=sbReadForm();
+    if(!c1.url||!c1.key||!c1.email||!c1.password){toast('Renseignez URL, clé, email et mot de passe d’abord.');return;}
+    if(!c1.pass){toast('Renseignez aussi la passphrase de chiffrement.');return;}
+    state.sb.busy=true;render();
+    sbSignup().then(function(j){
+      state.sb.busy=false;
+      if(j&&(j.user||j.access_token)){toast('Compte créé ✓ — cliquez sur « 2. Se connecter ».');}
+      else{toast('Création impossible : '+String((j&&(j.msg||j.error||j.message||j.code))||'réponse inconnue'));}
+      render();
+    }).catch(function(e9){state.sb.busy=false;toast('Création impossible : '+String(e9&&e9.message||e9));render();});
+  }
+  else if(a==='sync-login'){
+    sbReadForm();
+    if(!sbReady()){toast('Configuration incomplète — renseignez tous les champs ci-dessous.');return;}
+    state.sb.busy=true;render();
+    sbEnsureToken().then(function(){
+      state.sb.busy=false;state.sb.last=new Date().toLocaleTimeString('fr-FR');
+      toast('Connecté ✓ — vous pouvez envoyer / récupérer.');render();
+    }).catch(function(e10){
+      state.sb.busy=false;state.sb.err=String(e10&&e10.message||e10);
+      toast('Connexion refusée : '+state.sb.err);render();
+    });
+  }
+  else if(a==='sync-keep-local'){closeModal();syncPush(false);}
+  else if(a==='sync-take-cloud'){
+    closeModal();
+    exportJson();
+    var rowOff=state._sbOffer;state._sbOffer=null;
+    if(rowOff){syncApply(rowOff,false);}
+  }
 });
 document.addEventListener('submit',function(ev){
   var f=ev.target;
@@ -2355,6 +3039,9 @@ document.addEventListener('submit',function(ev){
   else if(f.id==='f-note'){ev.preventDefault();saveNoteForm(f);}
   else if(f.id==='f-doc'){ev.preventDefault();saveDocForm(f);}
   else if(f.id==='f-capture'){ev.preventDefault();saveCaptureForm(f);}
+  else if(f.id==='f-qedit'){ev.preventDefault();saveQeditForm(f);}
+  else if(f.id==='f-ech'){ev.preventDefault();saveEchForm(f);}
+  else if(f.id==='f-synchro'){ev.preventDefault();saveSynchroForm(f);}
 });
 function setFilter(key,val){
   var parts=key.split('.');
@@ -2491,6 +3178,10 @@ function init(){
   navGo('dash','');
   render();
   msBoot();
+  document.addEventListener('visibilitychange',function(){
+    try{if(document.visibilityState==='visible'&&sbReady()&&!state.sb.busy){syncPull(true);}}catch(e){}
+  });
+  setTimeout(function(){if(sbReady()&&!state.sb.busy)syncPull(true);},1500);
 }
 init();
 </script>
