@@ -1941,6 +1941,15 @@ function sbReady(){
   var c=sbCfg();
   return !!(c.url&&c.key&&c.email&&c.password&&c.pass);
 }
+function sbMissing(){
+  var c=sbCfg();var m=[];
+  if(!c.url)m.push('URL du projet');
+  if(!c.key)m.push('clé publique');
+  if(!c.email)m.push('email du compte');
+  if(!c.password)m.push('mot de passe du compte');
+  if(!c.pass)m.push('passphrase de chiffrement');
+  return m.join(', ');
+}
 function sbRefreshBadge(){
   var el=document.getElementById('sb-dot');
   if(!el)return;
@@ -2047,11 +2056,11 @@ function pageSynchro(){
   var h='<div class="content"><div class="page-head"><h1 class="page-title">☁️ Synchro multi-appareils</h1></div>';
   h+='<div class="banner info">Vos données sont <b>chiffrées de bout en bout</b> (AES-GCM 256 bits, clé dérivée de votre passphrase) avant tout envoi. Le serveur ne voit jamais le contenu, ni la passphrase — uniquement un email de compte.</div>';
   h+='<h2 class="sec-title">État</h2><div class="step">';
-  h+='<p>Configuration : '+(sbReady()?'<b style="color:var(--ok)">complète ✓</b>':'<b>incomplète</b> — renseignez les champs ci-dessous')+(c.email?' — compte : <b>'+esc(c.email)+'</b>':'')+'</p>';
+  h+='<p>Configuration : '+(sbReady()?'<b style="color:var(--ok)">complète ✓</b>':'<b>incomplète</b> — il manque : <b>'+sbMissing()+'</b>')+(c.email?' — compte : <b>'+esc(c.email)+'</b>':'')+'</p>';
   h+='<p>Dernière synchro : <b>'+(state.sb.last||'jamais')+'</b>'+(state.sb.busy?' (en cours…)':'')+(state.sb.err?' <span style="color:var(--danger)">⚠️ '+esc(state.sb.err)+'</span>':'')+'</p>';
   h+='<div class="toolbar" style="margin-top:8px">'
-   +'<button class="btn primary" data-act="sync-push"'+(sbReady()?'':' disabled')+'>⬆️ Envoyer vers le cloud</button>'
-   +'<button class="btn" data-act="sync-pull"'+(sbReady()?'':' disabled')+'>⬇️ Récupérer depuis le cloud</button>'
+   +'<button class="btn primary" data-act="sync-push">⬆️ Envoyer vers le cloud</button>'
+   +'<button class="btn" data-act="sync-pull">⬇️ Récupérer depuis le cloud</button>'
    +(sbReady()?'<button class="btn ghost" data-act="sync-logout">Oublier le compte sur cet appareil</button>':'')
    +'</div></div>';
   h+='<h2 class="sec-title">Configuration (identique sur tous vos appareils)</h2><div class="step"><form id="f-synchro">';
@@ -2084,7 +2093,8 @@ function saveSynchroForm(f){
   if(el.password.value)c.password=el.password.value;
   c.pass=(el.pass.value||'').trim();
   sbSetCfg(c);
-  toast('Configuration synchro enregistrée ✓');
+  if(!sbReady()){toast('Enregistré, mais il manque : '+sbMissing()+' — complétez puis réenregistrez.');}
+  else{toast('Configuration synchro enregistrée ✓ — cliquez sur « 2. Se connecter ».');}
   render();
 }
 
@@ -2988,12 +2998,12 @@ document.addEventListener('click',function(ev){
   }
   else if(a==='sync-push'){
     sbReadForm();
-    if(!sbReady()){toast('Configuration incomplète — renseignez tous les champs ci-dessous.');return;}
+    if(!sbReady()){toast('Synchro impossible — renseignez d’abord : '+sbMissing()+'.');return;}
     syncPush(false);
   }
   else if(a==='sync-pull'){
     sbReadForm();
-    if(!sbReady()){toast('Configuration incomplète — renseignez tous les champs ci-dessous.');return;}
+    if(!sbReady()){toast('Synchro impossible — renseignez d’abord : '+sbMissing()+'.');return;}
     syncPull(false);
   }
   else if(a==='sync-logout'){
@@ -3014,7 +3024,7 @@ document.addEventListener('click',function(ev){
   }
   else if(a==='sync-login'){
     sbReadForm();
-    if(!sbReady()){toast('Configuration incomplète — renseignez tous les champs ci-dessous.');return;}
+    if(!sbReady()){toast('Connexion impossible — renseignez d’abord : '+sbMissing()+'.');return;}
     state.sb.busy=true;render();
     sbEnsureToken().then(function(){
       state.sb.busy=false;state.sb.last=new Date().toLocaleTimeString('fr-FR');
