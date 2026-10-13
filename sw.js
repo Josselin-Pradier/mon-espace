@@ -15,3 +15,4 @@ self.addEventListener("fetch",function(e){
     })
   );
 });
+// rebuild trigger 13/10/2026
