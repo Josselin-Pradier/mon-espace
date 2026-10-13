@@ -60,7 +60,7 @@ h2.sec-title{font-size:15px;margin:22px 0 10px;color:#334155}
 .banner{display:flex;align-items:center;gap:10px;flex-wrap:wrap;border-radius:10px;padding:11px 14px;margin-bottom:14px;font-size:14px}
 .banner.info{background:#eef2ff;border:1px solid #c7d2fe}
 .banner.warn{background:#fffbeb;border:1px solid #fde68a}
-.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
+.kpi-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:18px}
 .kpi{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
 .kpi .num{font-size:24px;font-weight:700}
 .kpi .lbl{font-size:12px;color:var(--muted);margin-top:2px}
@@ -68,6 +68,7 @@ h2.sec-title{font-size:15px;margin:22px 0 10px;color:#334155}
 .kpi.blue .num{color:var(--accent)}
 .kpi.amber .num{color:var(--warn)}
 .kpi.green .num{color:var(--ok)}
+.kpi.violet .num{color:#7c3aed}
 /* ---- Cartes ---- */
 .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;cursor:pointer;transition:box-shadow .15s}
@@ -90,6 +91,12 @@ h2.sec-title{font-size:15px;margin:22px 0 10px;color:#334155}
 .row-title:hover{color:var(--accent)}
 .row.done .row-title{text-decoration:line-through;color:var(--muted)}
 .chk{width:22px;height:22px;flex:0 0 22px;border-radius:6px;border:1.5px solid #94a3b8;background:#fff;color:var(--ok);font-size:14px;line-height:1;padding:0}
+.mini-btn{border:none;background:none;cursor:pointer;padding:2px 5px;font-size:12px;line-height:1.3;color:var(--muted);border-radius:4px;flex:0 0 auto}
+.mini-btn:hover{background:var(--accent-soft);color:var(--ink)}
+.ac-box{position:relative;display:flex;gap:6px;align-items:center}
+.ac-list{position:absolute;top:calc(100% + 4px);left:0;right:44px;background:#fff;border:1px solid var(--line);border-radius:8px;box-shadow:0 8px 22px rgba(15,23,42,.14);z-index:30;max-height:220px;overflow:auto}
+.ac-item{display:block;width:100%;text-align:left;padding:7px 10px;background:none;border:none;font-size:13px;cursor:pointer;font-family:inherit}
+.ac-item:hover{background:var(--accent-soft)}
 .chk:hover{border-color:var(--accent)}
 .empty{background:var(--card);border:1px dashed var(--line);border-radius:12px;padding:26px;text-align:center;color:var(--muted);font-size:14px}
 /* ---- Filtres ---- */
@@ -209,7 +216,8 @@ input[type=file]{padding:5px;font-size:12px}
 .qk:hover{outline:2px dashed #94a3b8;outline-offset:1px;border-radius:6px}
 .kpi.kclick{cursor:pointer;transition:transform .08s ease}
 .kpi.kclick:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(15,23,42,.12)}
-.pinband-line{display:flex;flex-wrap:wrap;gap:4px 16px;align-items:center;background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:8px 12px;margin-bottom:14px;font-size:13px}
+.pinband{background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:3px 10px;margin-bottom:10px}
+.pinband-line{display:flex;flex-wrap:wrap;gap:2px 14px;align-items:center;padding:2px 0;font-size:12.5px}
 .pinband-line .t{font-weight:600;cursor:pointer;white-space:nowrap;max-width:360px;overflow:hidden;text-overflow:ellipsis}
 .crumbs{display:flex;flex-wrap:wrap;gap:4px;align-items:center;font-size:12px;color:var(--muted);margin-bottom:10px}
 .crumbs a{color:var(--accent);cursor:pointer}
@@ -276,7 +284,7 @@ input[type=file]{padding:5px;font-size:12px}
     <a class="snav" data-act="open-listes">⚙️ Mes listes</a>
     <a class="snav" data-act="open-export">💾 Export &amp; sauvegarde</a>
     <a class="snav" data-act="open-help">❓ Aide &amp; confidentialité</a>
-    <div class="side-note">Mon Espace v5.10 — 100 % local par défaut. Connexion Outlook et synchro chiffrée (page ☁️) optionnelles — vous décidez.</div>
+    <div class="side-note">Mon Espace v5.11 — 100 % local par défaut. Connexion Outlook et synchro chiffrée (page ☁️) optionnelles — vous décidez.</div>
   </div>
 </aside>
 <aside id="qa-root" class="off"></aside>
@@ -378,7 +386,7 @@ var state={
   searchQ:'',_drag:'',_capImg:'',_noteImg:'',_capImgs:[],_noteImgs:[],_clip:null,
   ms:{connected:false,nom:'',events:[],mails:[],err:'',busy:false,token:'',exp:0},
   sb:{busy:false,last:'',err:''},
-  _kpiRetard:false,_sbOffer:null,
+  _kpiRetard:false,_kpiAuj:false,_sbOffer:null,
   filtres:{dos:{q:'',statut:'',ctx:''},ta:{q:'',statut:'',prio:'',ctx:''},no:{q:'',tag:'',ctx:'',tr:''},dc:{q:'',type:'',role:'',dos:''}}
 };
 var nav={stack:[],index:-1};
@@ -879,6 +887,52 @@ function docOptions(sel){
   for(i=0;i<list.length;i++){h+='<option value="'+list[i].id+'"'+(list[i].id===sel?' selected':'')+'>'+esc(list[i].nom)+'</option>';}
   return h;
 }
+// ===== v5.11 : barres de recherche avec autocomplétion (remplacent les déroulants « Dossier lié » / « Tâche liée » / « Document lié ») =====
+function normTxt(sv){return String(sv||'').toLowerCase().replace(/[àáâãä]/g,'a').replace(/[éèêë]/g,'e').replace(/[îïí]/g,'i').replace(/[ôöõ]/g,'o').replace(/[ùûüú]/g,'u').replace(/ç/g,'c');}
+function acListFor(kind){
+  if(kind==='dossier')return state.dossiers.slice().sort(function(a,b){return a.nom.toLowerCase()<b.nom.toLowerCase()?-1:1;});
+  if(kind==='tache')return state.taches.slice().sort(function(a,b){return a.titre.toLowerCase()<b.titre.toLowerCase()?-1:1;});
+  return state.docs.slice().sort(function(a,b){return a.nom.toLowerCase()<b.nom.toLowerCase()?-1:1;});
+}
+function acLabelOf(kind,x){return kind==='tache'?x.titre:x.nom;}
+function acNoLbl(kind){return kind==='dossier'?'dossier':(kind==='tache'?'tâche':'document');}
+function acHtml(kind,name,sel){
+  var cur=null;var list=acListFor(kind);var i;
+  for(i=0;i<list.length;i++){if(list[i].id===sel){cur=list[i];break;}}
+  var ph=kind==='dossier'?'Tapez pour chercher un dossier — vide = aucun':(kind==='tache'?'Tapez pour chercher une tâche — vide = aucune':'Tapez pour chercher un document — vide = aucun');
+  return '<input type="hidden" name="'+name+'" value="'+esc(sel||'')+'"/>'
+   +'<div class="ac-box">'
+   +'<input type="text" class="ac-inp" data-ac="'+name+'" data-ackind="'+kind+'" autocomplete="off" spellcheck="false" placeholder="'+ph+'" value="'+esc(cur?acLabelOf(kind,cur):'')+'" style="flex:1"/>'
+   +'<button type="button" class="btn sm ghost" data-act="ac-clear" data-ac="'+name+'" title="Retirer le lien (aucun '+acNoLbl(kind)+')">✕</button>'
+   +'<div class="ac-list" id="ac-list-'+name+'"></div>'
+   +'</div>';
+}
+function acRender(name,kind,q){
+  var listEl=null;
+  try{listEl=document.getElementById('ac-list-'+name);}catch(eAcR){}
+  if(!listEl)return;
+  var items=acListFor(kind);var nq=normTxt(q);
+  var out=[];var i;
+  for(i=0;i<items.length&&out.length<10;i++){
+    var x=items[i];
+    if(!nq||normTxt(acLabelOf(kind,x)).indexOf(nq)>=0)out.push(x);
+  }
+  var h='';var j;
+  if(!q||!String(q).trim()){
+    h='<div class="tiny muted" style="padding:6px 10px">'+(items.length?'Rechercher… ('+items.length+' '+acNoLbl(kind)+(items.length>1?'s':'')+')':'Aucun '+acNoLbl(kind)+' n’existe encore')+'</div>';
+  }else if(!out.length){
+    h='<div class="tiny muted" style="padding:6px 10px">Aucun résultat pour « '+esc(q)+' »</div>';
+  }else{
+    for(j=0;j<out.length;j++)h+='<button type="button" class="ac-item" data-act="ac-pick" data-ac="'+name+'" data-id="'+out[j].id+'" data-lbl="'+esc(acLabelOf(kind,out[j]))+'">'+esc(acLabelOf(kind,out[j]))+'</button>';
+  }
+  listEl.innerHTML=h;
+}
+function acFindHidden(name){
+  var f=null;
+  try{f=document.querySelector('.modal form');}catch(eAcH){}
+  if(!f||!f.elements)return null;
+  return f.elements[name]||null;
+}
 function dossierFilterOptions(sel){
   var h='';var i;
   for(i=0;i<state.dossiers.length;i++){var d=state.dossiers[i];h+='<option value="'+d.id+'"'+(d.id===sel?' selected':'')+'>'+esc(d.nom)+'</option>';}
@@ -1008,7 +1062,7 @@ function pageDash(){
    +'<button class="btn primary" data-act="new-tache">+ Tâche</button>'
    +'<button class="btn" data-act="new-dossier">+ Dossier</button>'
    +'<button class="btn" data-act="new-note">+ Note</button> '
-   +'<select id="dash-jours" title="Choisir jusqu’où regarder en avance sur l’accueil"><option value="3"'+(djp===3?' selected':'')+'>anticipation : 3 jours</option><option value="7"'+(djp===7?' selected':'')+'>anticipation : 7 jours</option><option value="14"'+(djp===14?' selected':'')+'>anticipation : 14 jours</option><option value="30"'+(djp===30?' selected':'')+'>anticipation : 30 jours</option></select></div></div>';
+   +'<select id="dash-jours" title="Choisir jusqu’où regarder en avance sur l’accueil" style="max-width:170px;font-size:12.5px;padding:4px 6px;flex:0 0 auto"><option value="3"'+(djp===3?' selected':'')+'>anticipation : 3 jours</option><option value="7"'+(djp===7?' selected':'')+'>anticipation : 7 jours</option><option value="14"'+(djp===14?' selected':'')+'>anticipation : 14 jours</option><option value="30"'+(djp===30?' selected':'')+'>anticipation : 30 jours</option></select></div></div>';
   if(state.exemple){
     h+='<div class="banner info">🧪 Ceci est un jeu de données d’exemple pour découvrir l’outil — modifiez-le ou effacez-le. <button class="btn sm" data-act="clear-exemple">Effacer les exemples</button></div>';
   }
@@ -1019,6 +1073,8 @@ function pageDash(){
   }
   var pinband=state.notes.filter(function(n){return n.epinglee;});
   if(pinband.length){
+    // v5.11 : épinglées compactes — une seule boîte jaune, une ligne fine par note
+    h+='<div class="pinband">';
     var m;for(m=0;m<pinband.length;m++){
       var pn=pinband[m];
       var ex=stripTags(String(pn.contenu||'')).replace(/\s+/g,' ');
@@ -1028,48 +1084,66 @@ function pageDash(){
        +(pn.echeance?qw('note',pn.id,'ech',echLabel(pn.echeance,pn.traitee,'Traitée',pn.heure||'')):'')
        +'</div>';
     }
+    h+='</div>';
   }
   var captri=state.notes.filter(function(n){return n.capture&&!n.traitee;});
+  var auj=ouverts.filter(function(t){var n=daysUntil(t.echeance);return n===0;});
   var notesRetard=state.notes.filter(function(n){return !n.traitee&&n.echeance&&daysUntil(n.echeance)<0;});
   h+='<div class="kpi-grid">'
    +'<div class="kpi blue kclick" data-act="kpi-go" data-k="afaire" title="'+esc(kpiTitles(ouverts,function(x){return x.titre;})||(ouverts.length?'':'Aucune tâche à faire'))+'"><div class="num">'+ouverts.length+'</div><div class="lbl">Tâches à faire</div></div>'
    +'<div class="kpi red kclick" data-act="kpi-go" data-k="retard" title="'+esc(kpiTitles(rd,function(x){return x.titre;})||'Aucune tâche en retard')+'"><div class="num">'+rd.length+'</div><div class="lbl">Tâches en retard</div></div>'
+   +'<div class="kpi violet kclick" data-act="kpi-go" data-k="auj" title="'+esc(kpiTitles(auj,function(x){return x.titre;})||'Rien pour aujourd’hui')+'"><div class="num">'+auj.length+'</div><div class="lbl">Tâches aujourd’hui</div></div>'
    +'<div class="kpi amber kclick" data-act="kpi-go" data-k="cap" title="'+esc(kpiTitles(captri,function(x){return x.titre;})||'Rien à trier')+'"><div class="num">'+captri.length+'</div><div class="lbl">Idées à trier (capture)</div></div>'
    +'<div class="kpi green kclick" data-act="kpi-go" data-k="dos" title="'+esc(kpiTitles(act,function(x){return x.nom;})||'Aucun dossier actif')+'"><div class="num">'+act.length+'</div><div class="lbl">Dossiers actifs</div></div>'
    +'</div>';
   if(notesRetard.length){
     h+='<div class="banner warn">📌 '+notesRetard.length+' note(s) dont l’échéance de traitement est dépassée. <button class="btn sm" data-act="go" data-page="notes">Voir les notes</button></div>';
   }
-  // Retards
-  var dosRd=dossiersActifs().filter(function(d){return d.echeance&&daysUntil(d.echeance)<0;});
-  if(rd.length||dosRd.length){
-    h+='<h2 class="sec-title">🚨 En retard</h2>';
-    var i;for(i=0;i<rd.length;i++){h+=tacheRow(rd[i]);}
-    for(i=0;i<dosRd.length;i++){var d=dosRd[i];
-      h+='<div class="row"><span class="row-title" data-act="open-dossier" data-id="'+d.id+'">📁 '+esc(d.nom)+'</span>'+badgeDossier(d.statut)+qw('dossier',d.id,'ech',echLabel(d.echeance,false))+'</div>';
-    }
-  }
-  // Proches : deadlines orange jusqu’au seuil réglable (v5.10 — défaut J+2)
+  // v5.11 : En retard → Proches (J+seuil) → À venir (délai réglable) — TOUS les types d’éléments avec leur picto ✅📝⚡📁
   var s2=echSeuil2();
-  var j1=ouverts.filter(function(t){var n=daysUntil(t.echeance);return n!==null&&n>=0&&n<=s2;}).sort(function(a,b){return a.echeance<b.echeance?-1:1;});
-  if(j1.length){
-    h+='<h2 class="sec-title">🟠 Proches — orange jusqu’à J+'+s2+' ('+j1.length+')</h2>';
-    var j1i;for(j1i=0;j1i<j1.length;j1i++){h+=tacheRow(j1[j1i]);}
+  function dashEchItems(a,b){
+    var out=[],all=allDated(),i2;
+    for(i2=0;i2<all.length;i2++){
+      var it=all[i2];
+      if(it.done)continue;
+      var n=daysUntil(it.date);
+      if(n===null||n<a||n>b)continue;
+      out.push(it);
+    }
+    out.sort(function(x,y){return x.date<y.date?-1:(x.date>y.date?1:(x.heure<y.heure?-1:1));});
+    return out;
   }
-  // Toutes les échéances, tous types (v5.10 — façon Relance, avec pictos)
-  var tousEch=allDated().filter(function(it){return !it.done;});
-  if(tousEch.length){
-    h+='<h2 class="sec-title">📅 Toutes les échéances ('+tousEch.length+')</h2>';
-    var tei;for(tei=0;tei<Math.min(tousEch.length,12);tei++){h+=calItemRow(tousEch[tei]);}
-    if(tousEch.length>12)h+='<div class="small muted" style="padding:4px 4px 0">+'+(tousEch.length-12)+' autres — <a class="chip" data-act="go" data-page="cal">ouvrir le calendrier</a></div>';
+  function dashItemRow(it){
+    var act=it.kind==='tache'?'open-tache':((it.kind==='note'||it.kind==='capture')?'open-note':(it.kind==='crm'?'crm-open':'open-dossier'));
+    var ico=it.kind==='tache'?'✅':(it.kind==='capture'?'⚡':(it.kind==='note'?'📝':(it.kind==='crm'?'🤝':'📁')));
+    return '<div class="row"><span class="row-title" data-act="'+act+'" data-id="'+it.id+'"'+(it.kind==='crm'?' data-hash="'+esc(it.crmHash)+'" title="Ouvrir dans le CRM"':'')+'>'+ico+' '+esc(it.titre)+'</span>'
+     +(it.heure?'<span class="chip">🕒 '+esc(it.heure)+'</span>':'')
+     +'<span class="chip">'+esc(relEch(it.date,false,''))+'</span>'
+     +(it.prio&&it.kind!=='dossier'?badgePrio(it.prio):'')
+     +'</div>';
   }
-  // À venir sous djp jours (v5.9 — délai réglable)
-  var av=ouverts.filter(function(t){var n=daysUntil(t.echeance);return n!==null&&n>1&&n<=djp;}).sort(function(a,b){return a.echeance<b.echeance?-1:1;});
-  if(av.length){
-    h+='<h2 class="sec-title">📅 À venir sous '+djp+' jours ('+av.length+')</h2>';
-    var avi;for(avi=0;avi<av.length;avi++){h+=tacheRow(av[avi]);}
-    if(av.length>10)h+='<div class="small muted" style="padding:4px 4px 0">+'+(av.length-10)+' autres — <a class="chip" data-act="go" data-page="taches">voir toutes les tâches</a></div>';
+  var lateAll=dashEchItems(-9999,-1);
+  if(lateAll.length){
+    h+='<h2 class="sec-title">🚨 En retard ('+lateAll.length+')</h2>';
+    var k11;for(k11=0;k11<Math.min(lateAll.length,10);k11++){h+=dashItemRow(lateAll[k11]);}
+    if(lateAll.length>10)h+='<div class="small muted" style="padding:2px 4px 0">+'+(lateAll.length-10)+' autre(s) — <a class="chip" data-act="go" data-page="cal">calendrier</a></div>';
   }
+  var prochesAll=dashEchItems(0,s2);
+  if(prochesAll.length){
+    h+='<h2 class="sec-title">🟠 Proches — jusqu’à J+'+s2+' ('+prochesAll.length+')</h2>';
+    var k12;for(k12=0;k12<Math.min(prochesAll.length,10);k12++){h+=dashItemRow(prochesAll[k12]);}
+    if(prochesAll.length>10)h+='<div class="small muted" style="padding:2px 4px 0">+'+(prochesAll.length-10)+' autre(s) — <a class="chip" data-act="go" data-page="cal">calendrier</a></div>';
+  }
+  var avAll=dashEchItems(s2+1,djp);
+  if(avAll.length){
+    h+='<h2 class="sec-title">📅 À venir sous '+djp+' jours ('+avAll.length+')</h2>';
+    var k13;for(k13=0;k13<Math.min(avAll.length,10);k13++){h+=dashItemRow(avAll[k13]);}
+    if(avAll.length>10)h+='<div class="small muted" style="padding:2px 4px 0">+'+(avAll.length-10)+' autre(s) — <a class="chip" data-act="go" data-page="cal">calendrier</a></div>';
+  }
+  // Toutes les échéances : plus de liste sur l’accueil — juste le titre qui mène au calendrier
+  var nbEch=0;var allEch=allDated();
+  var k14;for(k14=0;k14<allEch.length;k14++){if(!allEch[k14].done)nbEch++;}
+  h+='<div style="margin:12px 0 2px"><a class="chip" data-act="go" data-page="cal" title="Ouvrir le calendrier de toutes les échéances (tâches, notes, captures, dossiers)">📅 Toutes les échéances ('+nbEch+') — ouvrir le calendrier →</a></div>'; 
   // Priorités hautes plus lointaines (v5.9)
   var ph=ouverts.filter(function(t){var n=daysUntil(t.echeance);return (n===null||n>djp)&&(t.priorite==='haute'||t.priorite==='urgente');}).sort(function(a,b){return (a.echeance||'9999')<(b.echeance||'9999')?-1:1;});
   if(ph.length){
@@ -1118,8 +1192,7 @@ function tacheRow(t){
   var done=(t.statut==='fait');
   var h='<div class="row tache-row'+(done?' done':'')+'" draggable="true" data-drag="tac:'+t.id+'" title="Ouvrir — ou glissez-la sur un dossier pour la déplacer">'
    +'<button class="chk" title="Marquer fait / à faire" data-act="tache-toggle" data-id="'+t.id+'">'+(done?'✓':'')+'</button>'
-   +'<button class="btn sm ghost" data-act="tac-pin" data-id="'+t.id+'" title="'+(t.epingle?'Détacher du panneau ⭐ Accès rapide':'Épingler — visible dans le panneau ⭐ Accès rapide')+'">'+(t.epingle?'📌':'📍')+'</button>'
-   +'<span class="row-title" data-act="open-tache" data-id="'+t.id+'">'+(t.epingle?'📌 ':'')+esc(t.titre)+'</span>';
+   +'<span class="row-title" data-act="open-tache" data-id="'+t.id+'">'+esc(t.titre)+'</span>';
   if(!done&&t.statut!=='a-faire')h+=qw('tache',t.id,'statut',badgeTache(t.statut));
   if(!done)h+=qw('tache',t.id,'prio',badgePrio(prioAff(t)))+(isUrgente(t)&&t.priorite!=='urgente'?'<span class="badge" style="background:#fee2e2;color:#b91c1c" title="Échéance J-1, jour J ou dépassée">🔥 J-1</span>':'');
   h+=qw('tache',t.id,'ctx',badgeCtx(t.contexte));
@@ -1128,6 +1201,8 @@ function tacheRow(t){
   if(done&&t.faitLe)h+='<span class="badge" style="background:#d1fae5;color:#065f46" title="Date de passage en « fait »">✓ fait le '+fmtDate(t.faitLe)+'</span>';
   h+=clipBtnsHtml('tache',t.id);
   if(state.filtres.ta.tri==='perso')h+=ordBtns('tache',t.id);
+  // v5.11 : épinglage discret, calé à droite de la ligne
+  h+='<button type="button" class="mini-btn" style="margin-left:auto" data-act="tac-pin" data-id="'+t.id+'" title="'+(t.epingle?'Détacher du panneau ⭐ Accès rapide':'Épingler — visible dans le panneau ⭐ Accès rapide')+'">'+(t.epingle?'📌':'📍')+'</button>';
   h+='</div>';
   return h;
 }
@@ -1394,9 +1469,15 @@ function dossierTreeHtml(id,depth,curId){
     var d=enf[e];
     var nb=dossierEnfants(d.id).length;
     var isCur=(d.id===curId);
-    h+='<div style="margin-left:'+(depth*20)+'px;padding:2px 0">'
+    h+='<div style="margin-left:'+(depth*20)+'px;padding:2px 0;display:flex;align-items:center;gap:4px;flex-wrap:wrap">'
      +'<a class="chip"'+(isCur?' style="font-weight:700;background:var(--accent-soft)"':'')+' data-act="open-dossier" data-id="'+d.id+'" data-drop="'+d.id+'" draggable="true" data-drag="dos:'+d.id+'" title="Ouvrir — ou glissez-y un élément pour le déplacer dedans">'+(isCur?'📍 ':'')+'📁 '+esc(d.nom)+(nb?' <span class="tiny muted">('+nb+')</span>':'')+' <span class="tiny muted">('+infoOf(DOS_STATUTS,d.statut).l+')</span></a>'
      +(d.echeance?'<span class="tiny muted" style="margin-left:6px">'+esc(relEch(d.echeance,false,''))+'</span>':'')
+     // v5.11 : couper/copier/coller directement dans l’arborescence pour déplacer les dossiers
+     +'<span style="display:inline-flex;gap:2px;margin-left:auto;flex:0 0 auto">'
+     +'<button type="button" class="mini-btn" data-act="clip-cut" data-kind="dossier" data-id="'+d.id+'" title="Déplacer ce dossier — cliquez ensuite sur 📥 du dossier de destination (ou « Coller à la racine »)">✂</button>'
+     +'<button type="button" class="mini-btn" data-act="clip-copy" data-kind="dossier" data-id="'+d.id+'" title="Copier ce dossier — cliquez ensuite sur 📥 du dossier de destination">⧉</button>'
+     +(state._clip?'<button type="button" class="mini-btn" data-act="clip-paste" data-id="'+d.id+'" title="Coller ici : « '+esc(clipLabel())+' » ('+(state._clip.mode==='cut'?'déplacement':'copie')+')">📥</button>':'')
+     +'</span>'
      +'</div>';
     if(nb)h+=dossierTreeHtml(d.id,depth+1,curId);
   }
@@ -1428,7 +1509,9 @@ function pageDossier(id){
   var racineArb=chemin.length?chemin[0]:d;
   var sousArb=dossierEnfants(racineArb.id);
   if(sousArb.length){
-    h+='<h2 class="sec-title">📁 Arborescence complète — depuis « '+esc(racineArb.nom)+' »</h2><div style="border:1px solid var(--line);border-radius:10px;background:#fff;padding:8px 10px">';
+    h+='<h2 class="sec-title">📁 Arborescence complète — depuis « '+esc(racineArb.nom)+' »'
+     +(state._clip?' <button class="btn sm" data-act="clip-paste" data-id="" title="Coller à la racine : « '+esc(clipLabel())+' » ('+(state._clip.mode==='cut'?'déplacement':'copie')+')">📥 Coller à la racine</button>':'')
+     +' <span class="tiny muted" style="font-weight:400">— ✂ couper puis 📥 pour déplacer un dossier</span></h2><div style="border:1px solid var(--line);border-radius:10px;background:#fff;padding:8px 10px">';
     h+=dossierTreeHtml(racineArb.id,0,id);
     h+='</div>';
   }
@@ -1481,6 +1564,7 @@ function filterTaches(){
   var q=f.q.trim().toLowerCase();
   return state.taches.filter(function(t){
     if(state._kpiRetard){var nr=daysUntil(t.echeance);if(t.statut==='fait'||nr===null||nr>=0)return false;}
+    if(state._kpiAuj){var na=daysUntil(t.echeance);if(t.statut==='fait'||na!==0)return false;}
     if(f.statut&&t.statut!==f.statut)return false;
     if(f.prio&&t.priorite!==f.prio)return false;
     if(f.ctx&&t.contexte!==f.ctx)return false;
@@ -1501,6 +1585,7 @@ function tachesListe(){
   var list=filterTaches();
   var h='';
   if(state._kpiRetard){h+='<div class="banner warn" style="margin-bottom:12px">🚨 Filtre « en retard » actif (clic sur le compteur d’accueil) — seules les tâches en retard sont affichées. <button class="btn sm" data-act="kpi-clear">Retirer le filtre</button></div>';}
+  if(state._kpiAuj){h+='<div class="banner warn" style="margin-bottom:12px">📅 Filtre « aujourd’hui » actif (clic sur le compteur d’accueil) — seules les tâches à faire aujourd’hui sont affichées. <button class="btn sm" data-act="kpi-clear">Retirer le filtre</button></div>';}
   if(!list.length)return h+'<div class="empty">Aucune tâche ne correspond. <button class="btn sm" data-act="new-tache">Créer une tâche</button></div>';
   var rd=[],se=[],plus=[],sans=[],faites=[];
   var i;
@@ -1961,7 +2046,7 @@ function modalCapture(){
    +'<div class="form-row"><label>L’idée *</label><textarea name="tit" rows="3" required placeholder="Notez vite, vous trierez plus tard… (Ctrl+Entrée pour enregistrer)"></textarea></div>'
    +'<div class="form-row two">'
    +'<div><label>Échéance (optionnel)</label><input type="date" name="ech"/></div>'
-   +'<div><label>Dossier (optionnel)</label><select name="dos">'+dossierOptions('')+'</select></div>'
+   +'<div><label>Dossier (optionnel)</label>'+acHtml('dossier','dos','')+'</div>'
    +'</div>'
    +'<div class="form-row img-pick"><label>Joindre des images / captures d’écran (optionnel — plusieurs possibles)</label><input type="file" id="cap-img" accept="image/*" multiple/></div>'
    +'<div class="form-row img-pick"><label>📷 Depuis la caméra de l’appareil (pratique sur téléphone)</label><input type="file" id="cap-cam" accept="image/*" capture="environment"/></div>'
@@ -2235,7 +2320,7 @@ function modalTache(id,presetDos){
    +'</div>'
    +'<div class="form-row two">'
    +'<div><label>Heure (optionnel — détail de la deadline)</label><input type="time" name="heur" value="'+(t?esc(t.heure||''):'')+'"/></div>'
-   +'<div><label>Dossier lié</label><select name="dos">'+dossierOptions(dos)+'</select></div>'
+   +'<div><label>Dossier lié</label>'+acHtml('dossier','dos',dos)+'</div>'
    +'</div>'
    +'<div class="form-row"><label>Description</label><textarea name="desc" rows="3">'+(t?esc(t.description):'')+'</textarea></div>'
    +'<div class="modal-foot"><button type="button" class="btn ghost" data-act="modal-close">Annuler</button><button type="submit" class="btn primary" data-act="form-submit">Enregistrer</button></div>'
@@ -2267,9 +2352,9 @@ function modalNote(id,presetDos,presetDoc){
    +'<label style="display:block;margin:4px 0"><input type="radio" name="capdo" value="conv" checked/> 📝 Le transformer en note (rangé dans 📝 Notes, conservé dans l’historique de ⚡ Capture)</label>'
    +'<label style="display:block;margin:4px 0"><input type="radio" name="capdo" value="keep"/> ⚡ Le garder en post-it dans la boîte de capture</label>'
    +'</div>':'')
-   +'<div class="form-row"><label>Dossier lié</label><select name="dos">'+dossierOptions(dos)+'</select></div>'
-   +'<div class="form-row"><label>Tâche liée</label><select name="ta">'+tacheOptions(n?n.tacheId:'')+'</select></div>'
-   +'<div class="form-row"><label>Document lié</label><select name="doc">'+docOptions(n?n.docId:(presetDoc||''))+'</select></div>'
+   +'<div class="form-row"><label>Dossier lié</label>'+acHtml('dossier','dos',dos)+'</div>'
+   +'<div class="form-row"><label>Tâche liée</label>'+acHtml('tache','ta',n?n.tacheId:'')+'</div>'
+   +'<div class="form-row"><label>Document lié</label>'+acHtml('doc','doc',n?n.docId:(presetDoc||''))+'</div>'
    +'<div class="form-row img-pick"><label>Images jointes (optionnel — plusieurs possibles)</label>'
    +(n&&noteImgCount(n)?'<div class="small muted" style="margin-bottom:4px">🖼 '+noteImgCount(n)+' image(s) déjà jointe(s) — les nouvelles s’ajoutent (visibles et supprimables une par une dans la fiche). (<button type="button" class="btn sm ghost" data-act="note-delimg" data-id="'+n.id+'">tout retirer</button>)</div>':'')
    +'<input type="file" id="note-img" accept="image/*" multiple/> <span id="note-img-info" class="tiny muted"></span></div>'
@@ -2343,7 +2428,7 @@ function modalHelp(){
    +'<p style="margin-top:8px"><b>Listes à cocher (v5.9)</b> — Dans une note, cochez « 🛒 Ajouter une liste à cocher » : un espace Liste apparaît sous le contenu, façon liste de courses — ajoutez des lignes, cochez-les, elles se barrent.</p>'
    +'<p style="margin-top:8px"><b>Glisser-déposer façon Explorateur (v5.9)</b> — Sur les listes Dossiers, Documents, Tâches et Notes, déplacez un élément : le haut d’une carte le place <b>avant</b>, le bas <b>après</b> (l’ordre devient « Personnalisé » automatiquement), le centre le range <b>dedans</b> (dossier) ou le déplace. L’onglet Dossiers n’affiche que les dossiers racine, comme l’Explorateur Windows.</p>'
    +'<p style="margin-top:8px"><b>Accès rapide (v5.9)</b> — Le panneau ⭐ est désormais fixe à gauche, juste après le menu. Réduisez-le avec « – », rouvrez-le avec le bouton ⭐ vertical : il liste vos dossiers, tâches et notes épinglés et vos derniers consultés.</p>'
-   +'<p style="margin-top:8px"><b>Nouveautés v5.10</b> — Tâches épinglables (📍) dans ⭐ Accès rapide · vues Liste/Kanban/Calendrier sur Dossiers, Documents, Notes et Capture · bouton Enregistrer qui ne reste jamais silencieux (champ obligatoire signalé explicitement) · 📋 Copier le chemin ne télécharge plus rien (le raccourci .url devient un bouton séparé) et bouton ⚡ Ouvrir pour ouvrir un document en un clic · accueil : deadlines orange jusqu’à J+2 et section « Toutes les échéances » (tâches ✅, notes 📝, captures ⚡, dossiers 📁) · date de passage en « fait / traitée » en bout de ligne · relances séparées En retard / Aujourd’hui / À venir, triables par échéance ou par type, captures incluses · arborescence complète visible dans la fiche dossier · glisser-déposer qui s’intercale (haut/bas de carte) au lieu de rentrer dedans · copier ⧉ / couper ✂ / coller 📥 pour tout (dossiers, tâches, notes, captures, documents) · plusieurs images par note/capture (Ctrl+V, glisser-déposer, bouton 📋) · option liste à cocher directement sous le contenu d’une note.</p>'
+   +'<p style="margin-top:8px"><b>Nouveautés v5.11</b> — bouton Enregistrer fiabilisé (appel direct, le clic fonctionne quel que soit le navigateur) · boutons ✂ couper / ⧉ copier / 📥 coller directement dans l’arborescence des dossiers (plus le bouton « Coller à la racine ») · accueil allégé : épinglées regroupées en une seule boîte compacte, sélecteur d’anticipation plus discret à côté des boutons « + », sections En retard / Proches / À venir regroupant TOUS les types d’éléments avec leur picto (✅ tâches, 📝 notes, ⚡ captures, 📁 dossiers), « Toutes les échéances » devient un simple lien vers le calendrier, nouveau compteur « Tâches aujourd’hui » (cliquable) · bouton d’épinglage 📍 plus discret, aligné à droite des lignes · « Dossier lié » / « Tâche liée » / « Document lié » : barre de recherche avec autocomplétion à la place du déroulant.</p>'
    +'</div>'
    +'<div class="modal-foot" style="margin-top:12px"><button class="btn ghost" data-act="modal-close">Fermer</button></div>';
   openModal(h);
@@ -2747,7 +2832,7 @@ function pageSynchro(){
   var h='<div class="content"><div class="page-head"><h1 class="page-title">☁️ Synchro multi-appareils</h1></div>';
   h+='<div class="banner info">Vos données sont <b>chiffrées de bout en bout</b> (AES-GCM 256 bits, clé dérivée de votre passphrase) avant tout envoi. Le serveur ne voit jamais le contenu, ni la passphrase — uniquement un email de compte.</div>';
   h+='<h2 class="sec-title">État</h2><div class="step">';
-  h+='<p>Version de l’appli : <b>v5.10</b></p>';
+  h+='<p>Version de l’appli : <b>v5.11</b></p>';
   h+='<p>Configuration : '+(sbReady()?'<b style="color:var(--ok)">complète ✓</b>':'<b>incomplète</b> — il manque : <b>'+sbMissing()+'</b>')+(c.email?' — compte : <b>'+esc(c.email)+'</b>':'')+'</p>';
   h+='<p>Dernière synchro : <b>'+(state.sb.last||'jamais')+'</b>'+(state.sb.busy?' (en cours…)':'')+(state.sb.err?' <span style="color:var(--danger)">⚠️ '+esc(state.sb.err)+'</span>':'')+'</p>';
   h+='<div class="toolbar" style="margin-top:8px">'
@@ -2755,12 +2840,12 @@ function pageSynchro(){
    +'<button class="btn" data-act="sync-pull">⬇️ Récupérer depuis le cloud</button>'
    +(sbReady()?'<button class="btn ghost" data-act="sync-logout">Oublier le compte sur cet appareil</button>':'')
    +'</div></div>';
-  h+='<h2 class="sec-title">Configuration (identique sur tous vos appareils)</h2><div class="step"><form id="f-synchro">';
+  h+='<h2 class="sec-title">Configuration (identique sur tous vos appareils)</h2><div class="step"><form id="f-synchro" novalidate>';
   h+='<div class="form-row"><label>URL du projet Supabase</label><input name="url" value="'+esc(c.url||'')+'" placeholder="https://xxxx.supabase.co"/></div>';
   h+='<div class="form-row"><label>Clé publique (publishable / anon)</label><input name="key" value="'+esc(c.key||'')+'" placeholder="sb_publishable__…"/></div>';
   h+='<div class="form-row two"><div><label>Email du compte</label><input name="email" value="'+esc(c.email||'')+'" placeholder="vous@exemple.fr"/></div><div><label>Mot de passe du compte</label><input type="password" name="password" value="'+esc(c.password||'')+'" placeholder="(inchangé si vide)"/></div></div>';
   h+='<div class="form-row"><label>Passphrase de chiffrement <span class="tiny muted">(jamais envoyée sur le réseau — identique partout pour lire les mêmes données)</span></label><input name="pass" value="'+esc(c.pass||'')+'" placeholder="Une phrase secrète personnelle"/></div>';
-  h+='<div class="modal-foot"><button type="submit" class="btn primary">💾 Enregistrer la configuration</button></div>';
+  h+='<div class="modal-foot"><button type="submit" class="btn primary" data-act="form-submit">💾 Enregistrer la configuration</button></div>';
   h+='</form>';
   h+='<div class="toolbar" style="margin-top:10px">'
    +'<button class="btn" data-act="sync-signup">1. Créer le compte (première fois seulement)</button>'
@@ -3062,7 +3147,7 @@ function pageOutlook(){
 
 // ===== PWA (installation en tant qu'application) =====
 var SW_SRC=[
-'var C="espace-cache-v3";',
+'var C="espace-cache-v14";',
 'self.addEventListener("install",function(e){self.skipWaiting();});',
 'self.addEventListener("activate",function(e){e.waitUntil(self.clients.claim());});',
 'self.addEventListener("fetch",function(e){',
@@ -3507,6 +3592,14 @@ document.addEventListener('click',function(ev){
     try{document.execCommand(cmd.getAttribute('data-cmd'),false,null);}catch(e){}
     return;
   }
+  // v5.11 : refermer les listes d’autocomplétion si on clique ailleurs
+  try{
+    if(!ev.target.closest||!ev.target.closest('.ac-box')){
+      var listsAc=document.querySelectorAll('.ac-list');
+      var zAc;
+      for(zAc=0;zAc<listsAc.length;zAc++){if(listsAc[zAc]&&listsAc[zAc].innerHTML)listsAc[zAc].innerHTML='';}
+    }
+  }catch(eAcZ){}
   var el=ev.target.closest('[data-act]');
   if(!el){
     var dz0=ev.target.closest?ev.target.closest('#dz-docs'):null;
@@ -3745,13 +3838,15 @@ document.addEventListener('click',function(ev){
   else if(a==='kpi-go'){
     var kk=el.getAttribute('data-k');
     state._kpiRetard=false;
+    state._kpiAuj=false;
     if(kk==='afaire'){state.filtres.ta.statut='a-faire';state.filtres.ta.q='';navGo('taches','');}
     else if(kk==='retard'){state._kpiRetard=true;state.filtres.ta.statut='';state.filtres.ta.q='';navGo('taches','');}
+    else if(kk==='auj'){state._kpiAuj=true;state.filtres.ta.statut='';state.filtres.ta.q='';navGo('taches','');}
     else if(kk==='cap'){navGo('capture','');}
     else if(kk==='dos'){navGo('dossiers','');}
     render();
   }
-  else if(a==='kpi-clear'){state._kpiRetard=false;render();}
+  else if(a==='kpi-clear'){state._kpiRetard=false;state._kpiAuj=false;render();}
   else if(a==='new-sousdos'){modalDossier('',id);}
   else if(a==='new-doc-link'){modalDoc('','','lien');}
   else if(a==='doc-copy'){
@@ -3877,17 +3972,43 @@ document.addEventListener('click',function(ev){
       nd.maj=today();save();render();
     }
   }
+  else if(a==='ac-pick'){
+    var acnP=el.getAttribute('data-ac')||'';
+    var hidP=acFindHidden(acnP);
+    var inpP=null;
+    try{inpP=document.querySelector('.ac-inp[data-ac="'+acnP+'"]');}catch(eAcP){}
+    if(hidP)hidP.value=(id||'');
+    if(inpP)inpP.value=el.getAttribute('data-lbl')||'';
+    var lstP=null;
+    try{lstP=document.getElementById('ac-list-'+acnP);}catch(eAcP2){}
+    if(lstP)lstP.innerHTML='';
+  }
+  else if(a==='ac-clear'){
+    var acnC=el.getAttribute('data-ac')||'';
+    var hidC=acFindHidden(acnC);
+    var inpC=null;
+    try{inpC=document.querySelector('.ac-inp[data-ac="'+acnC+'"]');}catch(eAcC){}
+    if(hidC)hidC.value='';
+    if(inpC){
+      inpC.value='';
+      acRender(acnC,inpC.getAttribute('data-ackind')||'dossier','');
+      if(inpC.focus)inpC.focus();
+    }
+    var lstC=null;
+    try{lstC=document.getElementById('ac-list-'+acnC);}catch(eAcC2){}
+    if(lstC)lstC.innerHTML='';
+  }
   else if(a==='note-liste-on'){
     var nl0=findNote(id);
     if(nl0){nl0.listeOn=true;if(!nl0.liste)nl0.liste=[];nl0.maj=today();save();render();toast('Liste ajoutée sous le contenu ✓ — ajoutez vos articles, cochez-les, ils se barrent.');}
   }
   else if(a==='form-submit'){
+    // v5.11 : appel direct — plus aucun recours à requestSubmit() ni à la bulle d’événement submit
     var fS=null;
     try{fS=el.closest?el.closest('form'):null;}catch(eFs){}
-    if(fS){
-      if(typeof fS.requestSubmit==='function'){fS.requestSubmit();}
-      else if(fS.dispatchEvent){fS.dispatchEvent(new Event('submit',{cancelable:true}));}
-    }
+    if(!fS){try{fS=document.querySelector('.modal form');}catch(eFs2){fS=null;}}
+    if(fS){handleFormSubmit(fS);}
+    else{toast('⚠️ Bouton Enregistrer : formulaire introuvable — réessayez, et prévenez si le problème persiste.');}
   }
   // ===== v5.9 : historiques déroulants, listes à cocher, exemples fusionnés =====
   else if(a==='voir-faites'){state._voirFaites=!state._voirFaites;renderPageBody();}
@@ -3977,13 +4098,13 @@ document.addEventListener('click',function(ev){
     if(rowOff){syncApply(rowOff,false);}
   }
 });
-document.addEventListener('submit',function(ev){
-  var f=ev.target;
-  if(!f||!f.id)return;
-  ev.preventDefault();
+// v5.11 : le parcours « Enregistrer » ne dépend plus de requestSubmit() ni de l’événement submit du navigateur —
+// le clic sur le bouton appelle DIRECTEMENT handleFormSubmit() (le listener submit reste pour la touche Entrée dans un champ).
+function handleFormSubmit(f){
+  if(!f||!f.id)return false;
   var wrap={'f-dossier':saveDossierForm,'f-tache':saveTacheForm,'f-note':saveNoteForm,'f-doc':saveDocForm,'f-capture':saveCaptureForm,'f-qedit':saveQeditForm,'f-ech':saveEchForm,'f-synchro':saveSynchroForm};
   var fn=wrap[f.id];
-  if(!fn)return;
+  if(!fn){toast('⚠️ Formulaire inconnu : '+(f.id||'?'));return false;}
   // v5.10 : plus jamais un « Enregistrer » silencieux — les champs obligatoires vides sont signalés explicitement
   var reqs=null;
   try{reqs=f.querySelectorAll('[required]');}catch(eReq){reqs=null;}
@@ -4001,7 +4122,7 @@ document.addEventListener('submit',function(ev){
         }catch(eLab){}
         toast('⚠️ Enregistrement impossible : « '+lbl+' » est obligatoire et vide — il est surligné dans la fenêtre.');
         try{elReq.style.outline='2px solid #dc2626';elReq.focus();}catch(eFoc){}
-        return;
+        return false;
       }
     }
   }
@@ -4009,7 +4130,15 @@ document.addEventListener('submit',function(ev){
   catch(eSave){
     try{console.error(eSave);}catch(eC){}
     toast('⚠️ Erreur à l’enregistrement : '+(eSave&&eSave.message?eSave.message:String(eSave)));
+    return false;
   }
+  return true;
+}
+document.addEventListener('submit',function(ev){
+  var f=ev.target;
+  if(!f||!f.id)return;
+  ev.preventDefault();
+  handleFormSubmit(f);
 });
 function setFilter(key,val){
   var parts=key.split('.');
@@ -4022,6 +4151,13 @@ document.addEventListener('input',function(ev){
     state.searchQ=el.value;
     if(el.value.trim().length>=2){if(state.page!=='search')navGo('search','');render();}
     else if(state.page==='search'){navGo('dash','');render();}
+    return;
+  }
+  var acn=el.getAttribute('data-ac');
+  if(acn){
+    var hid=acFindHidden(acn);
+    if(hid)hid.value='';
+    acRender(acn,el.getAttribute('data-ackind')||'dossier',el.value);
     return;
   }
   var k=el.getAttribute('data-inp');
@@ -4048,7 +4184,10 @@ document.addEventListener('change',function(ev){
 });
 document.addEventListener('focusin',function(ev){
   var el=ev.target;
-  if(!el||!el.getAttribute||el.getAttribute('data-ph')!=='1')return;
+  if(!el||!el.getAttribute)return;
+  var acnF=el.getAttribute('data-ac');
+  if(acnF){acRender(acnF,el.getAttribute('data-ackind')||'dossier',el.value);return;}
+  if(el.getAttribute('data-ph')!=='1')return;
   el.innerHTML='';
   el.removeAttribute('data-ph');
 });
@@ -4077,10 +4216,14 @@ document.addEventListener('keydown',function(ev){
   if(ev.ctrlKey&&ev.key==='Enter'){
     var f=null;
     try{f=document.querySelector('.modal form');}catch(e){}
-    if(f){
-      if(typeof f.requestSubmit==='function'){f.requestSubmit();}
-      else if(f.dispatchEvent){f.dispatchEvent(new Event('submit',{cancelable:true}));}
-    }
+    if(f){handleFormSubmit(f);}
+    return;
+  }
+  if(ev.key==='Enter'&&!ev.ctrlKey&&!ev.altKey&&!ev.metaKey&&ev.target&&((' '+String(ev.target.className||'')+' ').indexOf(' ac-inp ')>=0)){
+    ev.preventDefault();
+    var acBtnE=null;
+    try{var acBoxE=ev.target.parentNode;acBtnE=acBoxE?acBoxE.querySelector('.ac-item'):null;}catch(eAcK){}
+    if(acBtnE&&acBtnE.click)acBtnE.click();
     return;
   }
   if(ev.key==='Enter'&&!ev.ctrlKey&&!ev.altKey&&!ev.metaKey&&ev.target&&ev.target.id==='nl-new'){
