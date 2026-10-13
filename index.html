@@ -91,7 +91,7 @@ h2.sec-title{font-size:15px;margin:22px 0 10px;color:#334155}
 .row-title:hover{color:var(--accent)}
 .row.done .row-title{text-decoration:line-through;color:var(--muted)}
 .chk{width:22px;height:22px;flex:0 0 22px;border-radius:6px;border:1.5px solid #94a3b8;background:#fff;color:var(--ok);font-size:14px;line-height:1;padding:0}
-.mini-btn{border:none;background:none;cursor:pointer;padding:2px 5px;font-size:12px;line-height:1.3;color:var(--muted);border-radius:4px;flex:0 0 auto}
+.mini-btn{border:none;background:none;cursor:pointer;padding:2px 6px;font-size:13.5px;line-height:1.4;color:#64748b;border-radius:4px;flex:0 0 auto}
 .mini-btn:hover{background:var(--accent-soft);color:var(--ink)}
 .ac-box{position:relative;display:flex;gap:6px;align-items:center}
 .ac-list{position:absolute;top:calc(100% + 4px);left:0;right:44px;background:#fff;border:1px solid var(--line);border-radius:8px;box-shadow:0 8px 22px rgba(15,23,42,.14);z-index:30;max-height:220px;overflow:auto}
@@ -216,8 +216,8 @@ input[type=file]{padding:5px;font-size:12px}
 .qk:hover{outline:2px dashed #94a3b8;outline-offset:1px;border-radius:6px}
 .kpi.kclick{cursor:pointer;transition:transform .08s ease}
 .kpi.kclick:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(15,23,42,.12)}
-.pinband{background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:3px 10px;margin-bottom:10px}
-.pinband-line{display:flex;flex-wrap:wrap;gap:2px 14px;align-items:center;padding:2px 0;font-size:12.5px}
+.pinband{background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:1px 8px;margin-bottom:8px}
+.pinband-line{display:flex;flex-wrap:wrap;gap:1px 12px;align-items:center;padding:1px 0;font-size:12px;line-height:1.35}
 .pinband-line .t{font-weight:600;cursor:pointer;white-space:nowrap;max-width:360px;overflow:hidden;text-overflow:ellipsis}
 .crumbs{display:flex;flex-wrap:wrap;gap:4px;align-items:center;font-size:12px;color:var(--muted);margin-bottom:10px}
 .crumbs a{color:var(--accent);cursor:pointer}
@@ -284,7 +284,7 @@ input[type=file]{padding:5px;font-size:12px}
     <a class="snav" data-act="open-listes">⚙️ Mes listes</a>
     <a class="snav" data-act="open-export">💾 Export &amp; sauvegarde</a>
     <a class="snav" data-act="open-help">❓ Aide &amp; confidentialité</a>
-    <div class="side-note">Mon Espace v5.11 — 100 % local par défaut. Connexion Outlook et synchro chiffrée (page ☁️) optionnelles — vous décidez.</div>
+    <div class="side-note">Mon Espace v5.12 — 100 % local par défaut. Connexion Outlook et synchro chiffrée (page ☁️) optionnelles — vous décidez.</div>
   </div>
 </aside>
 <aside id="qa-root" class="off"></aside>
@@ -1116,10 +1116,12 @@ function pageDash(){
   function dashItemRow(it){
     var act=it.kind==='tache'?'open-tache':((it.kind==='note'||it.kind==='capture')?'open-note':(it.kind==='crm'?'crm-open':'open-dossier'));
     var ico=it.kind==='tache'?'✅':(it.kind==='capture'?'⚡':(it.kind==='note'?'📝':(it.kind==='crm'?'🤝':'📁')));
+    var tD=it.kind==='tache'?findTache(it.id):null;
     return '<div class="row"><span class="row-title" data-act="'+act+'" data-id="'+it.id+'"'+(it.kind==='crm'?' data-hash="'+esc(it.crmHash)+'" title="Ouvrir dans le CRM"':'')+'>'+ico+' '+esc(it.titre)+'</span>'
      +(it.heure?'<span class="chip">🕒 '+esc(it.heure)+'</span>':'')
      +'<span class="chip">'+esc(relEch(it.date,false,''))+'</span>'
      +(it.prio&&it.kind!=='dossier'?badgePrio(it.prio):'')
+     +(tD?'<button type="button" class="mini-btn" style="margin-left:auto" data-act="tac-pin" data-id="'+tD.id+'" title="'+(tD.epingle?'Détacher du panneau ⭐ Accès rapide':'Épingler — visible dans le panneau ⭐ Accès rapide')+'">'+(tD.epingle?'📌':'📍')+'</button>':'')
      +'</div>';
   }
   var lateAll=dashEchItems(-9999,-1);
@@ -2428,7 +2430,7 @@ function modalHelp(){
    +'<p style="margin-top:8px"><b>Listes à cocher (v5.9)</b> — Dans une note, cochez « 🛒 Ajouter une liste à cocher » : un espace Liste apparaît sous le contenu, façon liste de courses — ajoutez des lignes, cochez-les, elles se barrent.</p>'
    +'<p style="margin-top:8px"><b>Glisser-déposer façon Explorateur (v5.9)</b> — Sur les listes Dossiers, Documents, Tâches et Notes, déplacez un élément : le haut d’une carte le place <b>avant</b>, le bas <b>après</b> (l’ordre devient « Personnalisé » automatiquement), le centre le range <b>dedans</b> (dossier) ou le déplace. L’onglet Dossiers n’affiche que les dossiers racine, comme l’Explorateur Windows.</p>'
    +'<p style="margin-top:8px"><b>Accès rapide (v5.9)</b> — Le panneau ⭐ est désormais fixe à gauche, juste après le menu. Réduisez-le avec « – », rouvrez-le avec le bouton ⭐ vertical : il liste vos dossiers, tâches et notes épinglés et vos derniers consultés.</p>'
-   +'<p style="margin-top:8px"><b>Nouveautés v5.11</b> — bouton Enregistrer fiabilisé (appel direct, le clic fonctionne quel que soit le navigateur) · boutons ✂ couper / ⧉ copier / 📥 coller directement dans l’arborescence des dossiers (plus le bouton « Coller à la racine ») · accueil allégé : épinglées regroupées en une seule boîte compacte, sélecteur d’anticipation plus discret à côté des boutons « + », sections En retard / Proches / À venir regroupant TOUS les types d’éléments avec leur picto (✅ tâches, 📝 notes, ⚡ captures, 📁 dossiers), « Toutes les échéances » devient un simple lien vers le calendrier, nouveau compteur « Tâches aujourd’hui » (cliquable) · bouton d’épinglage 📍 plus discret, aligné à droite des lignes · « Dossier lié » / « Tâche liée » / « Document lié » : barre de recherche avec autocomplétion à la place du déroulant.</p>'
+   +'<p style="margin-top:8px"><b>Nouveautés v5.12</b> — correctif définitif du bouton Enregistrer (identification du formulaire réparée — un champ caché « id » perturbait Firefox) · clic sur une suggestion de l’autocomplétion réparé · épinglage 📍 visible aussi sur les lignes de l’accueil · cases jaunes des épinglées encore plus compactes · bouton Enregistrer fiabilisé (appel direct, le clic fonctionne quel que soit le navigateur) · boutons ✂ couper / ⧉ copier / 📥 coller directement dans l’arborescence des dossiers (plus le bouton « Coller à la racine ») · accueil allégé : épinglées regroupées en une seule boîte compacte, sélecteur d’anticipation plus discret à côté des boutons « + », sections En retard / Proches / À venir regroupant TOUS les types d’éléments avec leur picto (✅ tâches, 📝 notes, ⚡ captures, 📁 dossiers), « Toutes les échéances » devient un simple lien vers le calendrier, nouveau compteur « Tâches aujourd’hui » (cliquable) · bouton d’épinglage 📍 plus discret, aligné à droite des lignes · « Dossier lié » / « Tâche liée » / « Document lié » : barre de recherche avec autocomplétion à la place du déroulant.</p>'
    +'</div>'
    +'<div class="modal-foot" style="margin-top:12px"><button class="btn ghost" data-act="modal-close">Fermer</button></div>';
   openModal(h);
@@ -2832,7 +2834,7 @@ function pageSynchro(){
   var h='<div class="content"><div class="page-head"><h1 class="page-title">☁️ Synchro multi-appareils</h1></div>';
   h+='<div class="banner info">Vos données sont <b>chiffrées de bout en bout</b> (AES-GCM 256 bits, clé dérivée de votre passphrase) avant tout envoi. Le serveur ne voit jamais le contenu, ni la passphrase — uniquement un email de compte.</div>';
   h+='<h2 class="sec-title">État</h2><div class="step">';
-  h+='<p>Version de l’appli : <b>v5.11</b></p>';
+  h+='<p>Version de l’appli : <b>v5.12</b></p>';
   h+='<p>Configuration : '+(sbReady()?'<b style="color:var(--ok)">complète ✓</b>':'<b>incomplète</b> — il manque : <b>'+sbMissing()+'</b>')+(c.email?' — compte : <b>'+esc(c.email)+'</b>':'')+'</p>';
   h+='<p>Dernière synchro : <b>'+(state.sb.last||'jamais')+'</b>'+(state.sb.busy?' (en cours…)':'')+(state.sb.err?' <span style="color:var(--danger)">⚠️ '+esc(state.sb.err)+'</span>':'')+'</p>';
   h+='<div class="toolbar" style="margin-top:8px">'
@@ -3147,7 +3149,7 @@ function pageOutlook(){
 
 // ===== PWA (installation en tant qu'application) =====
 var SW_SRC=[
-'var C="espace-cache-v14";',
+'var C="espace-cache-v15";',
 'self.addEventListener("install",function(e){self.skipWaiting();});',
 'self.addEventListener("activate",function(e){e.waitUntil(self.clients.claim());});',
 'self.addEventListener("fetch",function(e){',
@@ -4101,10 +4103,17 @@ document.addEventListener('click',function(ev){
 // v5.11 : le parcours « Enregistrer » ne dépend plus de requestSubmit() ni de l’événement submit du navigateur —
 // le clic sur le bouton appelle DIRECTEMENT handleFormSubmit() (le listener submit reste pour la touche Entrée dans un champ).
 function handleFormSubmit(f){
-  if(!f||!f.id)return false;
+  // v5.12 : ⚠️ form.id est ÉCRASÉ par le champ caché <input name="id"> dans Firefox (il renvoie l’input, pas l’identifiant)
+  // → toujours passer par getAttribute('id') pour identifier le formulaire
+  var fid='';
+  if(f){
+    if(f.getAttribute){try{fid=String(f.getAttribute('id')||'');}catch(eFid){fid='';}}
+    if(!fid&&typeof f.id==='string'){fid=f.id;}
+  }
+  if(!fid)return false;
   var wrap={'f-dossier':saveDossierForm,'f-tache':saveTacheForm,'f-note':saveNoteForm,'f-doc':saveDocForm,'f-capture':saveCaptureForm,'f-qedit':saveQeditForm,'f-ech':saveEchForm,'f-synchro':saveSynchroForm};
-  var fn=wrap[f.id];
-  if(!fn){toast('⚠️ Formulaire inconnu : '+(f.id||'?'));return false;}
+  var fn=wrap[fid];
+  if(!fn){toast('⚠️ Formulaire inconnu : '+(fid||'?'));return false;}
   // v5.10 : plus jamais un « Enregistrer » silencieux — les champs obligatoires vides sont signalés explicitement
   var reqs=null;
   try{reqs=f.querySelectorAll('[required]');}catch(eReq){reqs=null;}
@@ -4136,7 +4145,8 @@ function handleFormSubmit(f){
 }
 document.addEventListener('submit',function(ev){
   var f=ev.target;
-  if(!f||!f.id)return;
+  if(!f||!f.getAttribute)return;
+  if(!f.getAttribute('id'))return;
   ev.preventDefault();
   handleFormSubmit(f);
 });
@@ -4186,7 +4196,9 @@ document.addEventListener('focusin',function(ev){
   var el=ev.target;
   if(!el||!el.getAttribute)return;
   var acnF=el.getAttribute('data-ac');
-  if(acnF){acRender(acnF,el.getAttribute('data-ackind')||'dossier',el.value);return;}
+  // v5.12 : uniquement le champ de saisie (data-ackind) — PAS les boutons de suggestion, sinon le mousedown
+  // détruisait le bouton avant le click et la suggestion n’était jamais choisie
+  if(acnF&&el.getAttribute('data-ackind')){acRender(acnF,el.getAttribute('data-ackind'),el.value);return;}
   if(el.getAttribute('data-ph')!=='1')return;
   el.innerHTML='';
   el.removeAttribute('data-ph');
