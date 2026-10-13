@@ -215,7 +215,7 @@ input[type=file]{padding:5px;font-size:12px}
 .crumbs a{color:var(--accent);cursor:pointer}
 #remind-root{position:fixed;top:64px;right:16px;z-index:40;display:flex;flex-direction:column;align-items:flex-end;gap:8px;pointer-events:none}
 .remind-toggle{pointer-events:auto}
-.remind{pointer-events:auto;width:min(320px,26vw);max-height:26vh;overflow:auto;background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:0 6px 18px rgba(15,23,42,.16);padding:10px 12px;font-size:12.5px}
+.remind{pointer-events:auto;width:min(340px,28vw);max-height:42vh;overflow:auto;background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:0 6px 18px rgba(15,23,42,.16);padding:10px 12px;font-size:12.5px}
 .remind h4{margin:0 0 6px;font-size:13px;display:flex;justify-content:space-between;align-items:center}
 .remind .rr{display:flex;gap:8px;align-items:center;padding:5px 8px;border-left:3px solid var(--line);border-radius:6px;margin-bottom:5px;cursor:pointer;background:#f8fafc}
 .remind .rr:hover{background:var(--accent-soft)}
@@ -276,7 +276,7 @@ input[type=file]{padding:5px;font-size:12px}
     <a class="snav" data-act="open-listes">⚙️ Mes listes</a>
     <a class="snav" data-act="open-export">💾 Export &amp; sauvegarde</a>
     <a class="snav" data-act="open-help">❓ Aide &amp; confidentialité</a>
-    <div class="side-note">Mon Espace v5.9 — 100 % local par défaut. Connexion Outlook et synchro chiffrée (page ☁️) optionnelles — vous décidez.</div>
+    <div class="side-note">Mon Espace v5.10 — 100 % local par défaut. Connexion Outlook et synchro chiffrée (page ☁️) optionnelles — vous décidez.</div>
   </div>
 </aside>
 <aside id="qa-root" class="off"></aside>
@@ -374,8 +374,8 @@ function applyCustomLists(){
 // ===== État =====
 var state={
   dossiers:[],taches:[],notes:[],docs:[],exemple:false,
-  page:'dash',detailId:'',tacheVue:'liste',calY:0,calM:0,calVue:'mois',calSel:'',
-  searchQ:'',_drag:'',_capImg:'',_noteImg:'',
+  page:'dash',detailId:'',tacheVue:'liste',vue:{dos:'liste',doc:'liste',not:'liste',cap:'liste'},calY:0,calM:0,calVue:'mois',calSel:'',
+  searchQ:'',_drag:'',_capImg:'',_noteImg:'',_capImgs:[],_noteImgs:[],_clip:null,
   ms:{connected:false,nom:'',events:[],mails:[],err:'',busy:false,token:'',exp:0},
   sb:{busy:false,last:'',err:''},
   _kpiRetard:false,_sbOffer:null,
@@ -466,6 +466,12 @@ function nListe(v){
   for(i=0;i<v.length;i++){var r=v[i];out.push({txt:String((r&&r.txt)||''),fait:!!(r&&r.fait)});}
   return out;
 }
+function nImages(v){
+  if(!v||typeof v!=='object'||!v.length)return [];
+  var out=[],i;
+  for(i=0;i<v.length;i++){if(v[i])out.push(String(v[i]));}
+  return out;
+}
 function normalize(src){
   var d=(src&&typeof src==='object')?src:{};
   var out={version:VERSION,exemple:!!d.exemple,dossiers:[],taches:[],notes:[],docs:[]};
@@ -480,7 +486,7 @@ function normalize(src){
     for(i=0;i<d.taches.length;i++){
       x=d.taches[i];if(!x||!x.id)continue;
       var st=x.statut;if(!st){st=(x.fait?'fait':'a-faire');}
-      out.taches.push({id:String(x.id),titre:String(x.titre||'Sans titre'),statut:validK(TACHE_STATUTS,st,'a-faire'),priorite:validK(PRIORITES,x.priorite,'normale'),contexte:validK(CONTEXTES,x.contexte,'pro'),echeance:String(x.echeance||''),heure:String(x.heure||''),dossierId:String(x.dossierId||''),description:String(x.description||''),ordre:nNum(x.ordre),ouvertLe:nNum(x.ouvertLe),cree:String(x.cree||today()),maj:String(x.maj||today())});
+      out.taches.push({id:String(x.id),titre:String(x.titre||'Sans titre'),statut:validK(TACHE_STATUTS,st,'a-faire'),priorite:validK(PRIORITES,x.priorite,'normale'),contexte:validK(CONTEXTES,x.contexte,'pro'),echeance:String(x.echeance||''),heure:String(x.heure||''),dossierId:String(x.dossierId||''),description:String(x.description||''),epingle:!!x.epingle,faitLe:String(x.faitLe||''),ordre:nNum(x.ordre),ouvertLe:nNum(x.ouvertLe),cree:String(x.cree||today()),maj:String(x.maj||today())});
     }
   }
   if(d.notes){
@@ -489,7 +495,7 @@ function normalize(src){
       var tags=[];
       if(Array.isArray(x.tags)){var j;for(j=0;j<x.tags.length;j++){if(x.tags[j])tags.push(String(x.tags[j]));}}
       else if(typeof x.tags==='string'&&x.tags){var parts=x.tags.split(',');for(var k=0;k<parts.length;k++){if(parts[k].trim())tags.push(parts[k].trim());}}
-      out.notes.push({id:String(x.id),titre:String(x.titre||'Sans titre'),contenu:String(x.contenu||''),tags:tags,contexte:validK(CONTEXTES,x.contexte,'pro'),dossierId:String(x.dossierId||''),tacheId:String(x.tacheId||''),docId:String(x.docId||''),epinglee:!!x.epinglee,echeance:String(x.echeance||''),heure:String(x.heure||''),traitee:!!x.traitee,capture:!!x.capture,image:String(x.image||''),prio:validK(PRIORITES,x.prio,'normale'),origine:String(x.origine||''),autoFloat:!!x.autoFloat,trieeLe:String(x.trieeLe||''),ordre:nNum(x.ordre),ouvertLe:nNum(x.ouvertLe),liste:nListe(x.liste),listeOn:!!x.listeOn,maj:String(x.maj||today())});
+      out.notes.push({id:String(x.id),titre:String(x.titre||'Sans titre'),contenu:String(x.contenu||''),tags:tags,contexte:validK(CONTEXTES,x.contexte,'pro'),dossierId:String(x.dossierId||''),tacheId:String(x.tacheId||''),docId:String(x.docId||''),epinglee:!!x.epinglee,echeance:String(x.echeance||''),heure:String(x.heure||''),traitee:!!x.traitee,traiteeLe:String(x.traiteeLe||''),capture:!!x.capture,image:String(x.image||''),images:nImages(x.images),prio:validK(PRIORITES,x.prio,'normale'),origine:String(x.origine||''),autoFloat:!!x.autoFloat,trieeLe:String(x.trieeLe||''),ordre:nNum(x.ordre),ouvertLe:nNum(x.ouvertLe),liste:nListe(x.liste),listeOn:!!x.listeOn,maj:String(x.maj||today())});
     }
   }
   if(d.docs){
@@ -623,6 +629,222 @@ function prioAff(t){
   if(p==='urgente'&&!isUrgente(t))return 'haute';
   return p;
 }
+// ===== v5.10 : épinglage des tâches + copier/couper-coller + images multiples =====
+function noteImgList(n){
+  if(!n)return [];
+  if(n.images&&n.images.length)return n.images;
+  if(n.image)return [n.image];
+  return [];
+}
+function noteImgCount(n){return noteImgList(n).length;}
+function clipBtnsHtml(kind,id){
+  return '<span style="display:inline-flex;gap:2px">'
+   +'<button class="btn sm ghost" data-act="clip-copy" data-kind="'+kind+'" data-id="'+id+'" title="Copier — puis ouvrez un dossier et cliquez 📥 Coller ici">⧉</button>'
+   +'<button class="btn sm ghost" data-act="clip-cut" data-kind="'+kind+'" data-id="'+id+'" title="Couper / déplacer — puis ouvrez un dossier et cliquez 📥 Coller ici">✂</button>'
+   +'</span>';
+}
+function clipLabel(){
+  var cl=state._clip;
+  if(!cl)return '';
+  var lab='';
+  if(cl.kind==='dossier'){var d=findDossier(cl.id);lab=d?d.nom:'';}
+  else if(cl.kind==='tache'){var t=findTache(cl.id);lab=t?t.titre:'';}
+  else if(cl.kind==='note'){var n=findNote(cl.id);lab=n?n.titre:'';}
+  else if(cl.kind==='doc'){var x=findDoc(cl.id);lab=x?x.nom:'';}
+  return lab;
+}
+function clipPaste(targetId){
+  var cl=state._clip;
+  if(!cl){toast('Rien à coller — utilisez d’abord ⧉ (copier) ou ✂ (couper) sur un élément.');return;}
+  var lab=clipLabel();
+  if(!lab){state._clip=null;toast('L’élément à coller n’existe plus.');render();return;}
+  if(cl.kind==='dossier'){
+    var d=findDossier(cl.id);if(!d)return;
+    if(cl.mode==='cut'){
+      if(targetId){
+        if(targetId===d.id){return;}
+        if(isDescendantOf(d.id,targetId)){toast('Impossible : un dossier ne peut pas être déplacé dans son propre sous-dossier.');return;}
+        d.parentId=targetId;d.maj=today();
+        var cib=findDossier(targetId);
+        toast('Dossier « '+d.nom+' » déplacé dans « '+(cib?cib.nom:'?')+' »');
+      }else{
+        d.parentId='';d.maj=today();
+        toast('Dossier « '+d.nom+' » remonté à la racine');
+      }
+      state._clip=null;
+    }else{
+      var cp={id:uid(),parentId:(targetId||''),nom:d.nom+' (copie)',statut:d.statut,contexte:d.contexte,categorie:d.categorie,echeance:d.echeance,description:d.description,epingle:false,ordre:0,ouvertLe:0,cree:today(),maj:today()};
+      state.dossiers.push(cp);
+      toast('Copie du dossier créée : « '+cp.nom+' »');
+    }
+  }
+  else if(cl.kind==='tache'){
+    var t=findTache(cl.id);if(!t)return;
+    if(cl.mode==='cut'){t.dossierId=(targetId||'');t.maj=today();toast('Tâche « '+t.titre+' » déplacée'+(targetId?' ✓':' à la racine'));state._clip=null;}
+    else{
+      var ct={id:uid(),titre:t.titre,statut:t.statut,priorite:t.priorite,contexte:t.contexte,echeance:t.echeance,heure:t.heure,dossierId:(targetId||''),description:t.description,epingle:false,faitLe:'',ordre:0,ouvertLe:0,cree:today(),maj:today()};
+      state.taches.push(ct);
+      toast('Copie de la tâche créée : « '+ct.titre+' »');
+    }
+  }
+  else if(cl.kind==='note'){
+    var n=findNote(cl.id);if(!n)return;
+    if(cl.mode==='cut'){n.dossierId=(targetId||'');n.maj=today();toast((n.capture?'Post-it':'Note')+' « '+n.titre+' » déplacé'+(targetId?' ✓':' à la racine'));state._clip=null;}
+    else{
+      var cn={id:uid(),titre:n.titre+' (copie)',contenu:n.contenu,tags:(n.tags||[]).slice(),contexte:n.contexte,dossierId:(targetId||''),tacheId:'',docId:'',epinglee:false,echeance:n.echeance,heure:n.heure,traitee:n.traitee,traiteeLe:n.traiteeLe,capture:n.capture,image:n.image,images:(n.images||[]).slice(),prio:n.prio,origine:'',autoFloat:false,trieeLe:'',ordre:0,ouvertLe:0,liste:(n.liste||[]).slice(),listeOn:n.listeOn,maj:today()};
+      state.notes.push(cn);
+      toast('Copie de la note créée : « '+cn.titre+' »');
+    }
+  }
+  else if(cl.kind==='doc'){
+    var x=findDoc(cl.id);if(!x)return;
+    if(cl.mode==='cut'){x.dossiers=targetId?[targetId]:[];x.maj=today();toast('Document « '+x.nom+' » déplacé'+(targetId?' ✓':' (sans dossier)'));state._clip=null;}
+    else{
+      var cx={id:uid(),nom:x.nom+' (copie)',type:x.type,role:x.role,localisation:x.localisation,description:x.description,dossiers:targetId?[targetId]:[],stocke:false,ordre:0,ouvertLe:0,cree:today(),maj:today()};
+      state.docs.push(cx);
+      toast('Copie du document créée : « '+cx.nom+' »');
+      if(x.stocke){
+        idbGet(x.id).then(function(blob){if(blob)return idbPut(cx.id,blob);throw new Error('no');})['then'](function(){cx.stocke=true;save();render();})['catch'](function(){});
+      }
+    }
+  }
+  save();render();renderRemind();renderQa();
+}
+// ===== v5.10 : vues Liste / Kanban / Calendrier pour toutes les pages =====
+function vueSwitchHtml(kind){
+  var v=state.vue[kind]||'liste';
+  return '<div class="viewswitch">'
+   +'<button class="btn sm'+(v==='liste'?' on':'')+'" data-act="vue-switch" data-kind="'+kind+'" data-vue="liste">Liste</button>'
+   +'<button class="btn sm'+(v==='kanban'?' on':'')+'" data-act="vue-switch" data-kind="'+kind+'" data-vue="kanban">Kanban</button>'
+   +'<button class="btn sm'+(v==='cal'?' on':'')+'" data-act="vue-switch" data-kind="'+kind+'" data-vue="cal">Calendrier</button>'
+   +'</div>';
+}
+function vueCalGrid(kind){
+  var y=state.calY,m=state.calM;
+  if(!y){var nd=new Date();y=nd.getFullYear();m=nd.getMonth();state.calY=y;state.calM=m;}
+  var h='<div class="cal-head">'
+   +'<button class="btn ghost sm" data-act="cal-prev" title="Mois précédent">‹</button>'
+   +'<div class="cal-title">'+MOIS_NOMS[m]+' '+y+'</div>'
+   +'<button class="btn ghost sm" data-act="cal-next" title="Mois suivant">›</button>'
+   +'<button class="btn sm" data-act="cal-today">Aujourd’hui</button></div>';
+  h+='<div class="cal-grid">';
+  var dows=['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];var i;
+  for(i=0;i<7;i++){h+='<div class="cal-dow">'+dows[i]+'</div>';}
+  var first=new Date(y,m,1);
+  var start=(first.getDay()+6)%7;
+  var dim=new Date(y,m+1,0).getDate();
+  var prevDim=new Date(y,m,0).getDate();
+  var t2=today();
+  for(i=0;i<42;i++){
+    var dn=i-start+1;
+    if(dn<1){h+='<div class="cal-cell other"><div class="cal-lbl">'+(prevDim+dn)+'</div></div>';}
+    else if(dn>dim){h+='<div class="cal-cell other"><div class="cal-lbl">'+(dn-dim)+'</div></div>';}
+    else{
+      var dstr=y+'-'+pad(m+1)+'-'+pad(dn);
+      h+='<div class="cal-cell'+(dstr===t2?' today':'')+'"><div class="cal-lbl">'+dn+'</div>'+vueCalChips(kind,dstr)+'</div>';
+    }
+  }
+  h+='</div>';
+  return h;
+}
+function vueCalChips(kind,dstr){
+  var items=vueCalItems(kind);
+  var h='';var n=0,more=0;var i;
+  for(i=0;i<items.length;i++){
+    if(items[i].date!==dstr)continue;
+    n++;
+    if(n<=3){h+='<span class="cal-chip '+items[i].cls+'" data-act="'+items[i].act+'" data-id="'+items[i].id+'" title="'+esc(items[i].titre)+'">'+items[i].ico+' '+esc(items[i].titre)+'</span>';}
+    else{more++;}
+  }
+  if(more>0)h+='<div class="tiny muted">+'+more+' autre(s)</div>';
+  return h;
+}
+function vueCalItems(kind){
+  var out=[],i;
+  if(kind==='dos'){
+    for(i=0;i<state.dossiers.length;i++){var d=state.dossiers[i];if(d.echeance)out.push({date:d.echeance,id:d.id,titre:d.nom,act:'open-dossier',ico:'📁',cls:'dos'});}
+  }else if(kind==='doc'){
+    for(i=0;i<state.docs.length;i++){var x=state.docs[i];if(x.maj)out.push({date:x.maj,id:x.id,titre:x.nom,act:'open-doc',ico:'📄',cls:'not'});}
+  }else{
+    for(i=0;i<state.notes.length;i++){
+      var n=state.notes[i];
+      if(kind==='not'&&n.capture)continue;
+      if(kind==='cap'&&!n.capture)continue;
+      if(n.echeance)out.push({date:n.echeance,id:n.id,titre:n.titre,act:'open-note',ico:(n.capture?'⚡':'📝'),cls:(n.traitee?'cal-chip':'cal-chip not')});
+    }
+  }
+  out.sort(function(a,b){return a.date<b.date?-1:1;});
+  return out;
+}
+function vueKanbanHtml(kind){
+  var cols=[],i;
+  if(kind==='dos'){
+    for(i=0;i<DOS_STATUTS.length;i++)cols.push({k:DOS_STATUTS[i].k,l:DOS_STATUTS[i].l});
+  }else if(kind==='doc'){
+    for(i=0;i<DOC_ROLES.length;i++)cols.push({k:DOC_ROLES[i].k,l:DOC_ROLES[i].l});
+  }else{
+    cols=[{k:'todo',l:'À traiter'},{k:'done',l:'Traitées ✓'}];
+  }
+  var h='<div class="kboard">';
+  for(i=0;i<cols.length;i++){
+    var list=vueKanbanCards(kind,cols[i].k);
+    h+='<div class="kcol" data-kkind="'+kind+'" data-kval="'+cols[i].k+'"><h3><span>'+cols[i].l+'</span><span>'+list.count+'</span></h3>'+list.h+'</div>';
+  }
+  h+='</div>';
+  h+='<p class="tiny muted" style="margin-top:10px">Astuce : glissez-déposez une carte d’une colonne à l’autre pour changer '+(kind==='dos'?'son statut':(kind==='doc'?'son rôle':'son état'))+'.</p>';
+  return h;
+}
+function vueKanbanCards(kind,val){
+  var h='',count=0,i;
+  if(kind==='dos'){
+    var list=dossiersOrderList();
+    for(i=0;i<list.length;i++){
+      if(val!=='*'&&!matchKanbanVal(kind,list[i],val))continue;
+      count++;
+      var d=list[i];
+      h+='<div class="kcard" draggable="true" data-id="kv:dos:'+d.id+'"><span class="row-title" data-act="open-dossier" data-id="'+d.id+'">'+esc(d.nom)+'</span><div class="sub">'+qw('dossier',d.id,'statut',badgeDossier(d.statut))+qw('dossier',d.id,'ctx',badgeCtx(d.contexte))+(d.echeance?qw('dossier',d.id,'ech',echLabel(d.echeance,d.statut==='termine')):'')+'</div></div>';
+    }
+  }else if(kind==='doc'){
+    var dl=docsFilteredList();
+    for(i=0;i<dl.length;i++){
+      if(val!=='*'&&!matchKanbanVal(kind,dl[i],val))continue;
+      count++;
+      var x=dl[i];
+      h+='<div class="kcard" draggable="true" data-id="kv:doc:'+x.id+'"><span class="row-title" data-act="open-doc" data-id="'+x.id+'">'+esc(x.nom)+'</span><div class="sub">'+badgeDocType(x.type)+badgeDocRole(x.role)+(x.dossiers.length?'<span class="chip">📁 '+esc((findDossier(x.dossiers[0])||{nom:''}).nom)+'</span>':'')+'</div></div>';
+    }
+  }else{
+    var nl=notesKanbanList(kind);
+    for(i=0;i<nl.length;i++){
+      if(val!=='*'&&!matchKanbanVal(kind,nl[i],val))continue;
+      count++;
+      var n=nl[i];
+      h+='<div class="kcard" draggable="true" data-id="kv:not:'+n.id+'"><span class="row-title" data-act="open-note" data-id="'+n.id+'">'+esc(n.titre)+'</span><div class="sub">'+badgeCtx(n.contexte)+(n.echeance?qw('note',n.id,'ech',echLabel(n.echeance,n.traitee,'Traitée',n.heure||'')):'')+(n.traitee?'<span class="badge" style="background:#d1fae5;color:#065f46">✓</span>':'')+'</div></div>';
+    }
+  }
+  return {h:h,count:count};
+}
+function matchKanbanVal(kind,item,val){
+  if(kind==='dos')return item.statut===val;
+  if(kind==='doc')return item.role===val;
+  return (val==='done')===!!item.traitee;
+}
+function notesKanbanList(kind){
+  return state.notes.filter(function(n){
+    if(kind==='cap')return n.capture;
+    return !n.capture;
+  }).sort(function(a,b){return a.maj>b.maj?-1:1;});
+}
+function docsFilteredList(){
+  var f=state.filtres.dc;
+  var q=f.q.trim().toLowerCase();
+  return state.docs.filter(function(x){
+    if(f.type&&x.type!==f.type)return false;
+    if(f.role&&x.role!==f.role)return false;
+    if(f.dos&&x.dossiers.indexOf(f.dos)<0)return false;
+    if(q){var hay=(x.nom+' '+x.localisation+' '+x.description).toLowerCase();if(hay.indexOf(q)<0)return false;}
+    return true;
+  });
+}
 function badgeCtx(k){var s=infoOf(CONTEXTES,k);return '<span class="badge" style="background:'+s.c+'1a;color:'+s.c+'">'+s.l+'</span>';}
 function badgeDocType(k){var s=infoOf(DOC_TYPES,k);return '<span class="badge" style="background:'+s.c+'1a;color:'+s.c+'">'+s.l+'</span>';}
 function badgeDocRole(k){var s=infoOf(DOC_ROLES,k);return '<span class="badge" style="background:'+s.c+'1a;color:'+s.c+'">'+s.l+'</span>';}
@@ -721,6 +943,7 @@ function renderPageBody(){
   else if(state.page==='taches')el.innerHTML=tachesBody();
   else if(state.page==='notes')el.innerHTML=notesBody();
   else if(state.page==='docs')el.innerHTML=docsBody();
+  else if(state.page==='capture')el.innerHTML=captureBody();
 }
 function updateSidebar(){
   var map={dash:'sn-dash',dossiers:'sn-dossiers',dossier:'sn-dossiers',taches:'sn-taches',notes:'sn-notes',note:'sn-notes',docs:'sn-docs',doc:'sn-docs',capture:'sn-capture',cal:'sn-cal',outlook:'sn-outlook',synchro:'sn-synchro',crm:'sn-crm'};
@@ -826,11 +1049,19 @@ function pageDash(){
       h+='<div class="row"><span class="row-title" data-act="open-dossier" data-id="'+d.id+'">📁 '+esc(d.nom)+'</span>'+badgeDossier(d.statut)+qw('dossier',d.id,'ech',echLabel(d.echeance,false))+'</div>';
     }
   }
-  // J-1 & jour J (v5.9)
-  var j1=ouverts.filter(function(t){var n=daysUntil(t.echeance);return n!==null&&n>=0&&n<=1;}).sort(function(a,b){return a.echeance<b.echeance?-1:1;});
+  // Proches : deadlines orange jusqu’au seuil réglable (v5.10 — défaut J+2)
+  var s2=echSeuil2();
+  var j1=ouverts.filter(function(t){var n=daysUntil(t.echeance);return n!==null&&n>=0&&n<=s2;}).sort(function(a,b){return a.echeance<b.echeance?-1:1;});
   if(j1.length){
-    h+='<h2 class="sec-title">🔥 J-1 &amp; jour J ('+j1.length+')</h2>';
+    h+='<h2 class="sec-title">🟠 Proches — orange jusqu’à J+'+s2+' ('+j1.length+')</h2>';
     var j1i;for(j1i=0;j1i<j1.length;j1i++){h+=tacheRow(j1[j1i]);}
+  }
+  // Toutes les échéances, tous types (v5.10 — façon Relance, avec pictos)
+  var tousEch=allDated().filter(function(it){return !it.done;});
+  if(tousEch.length){
+    h+='<h2 class="sec-title">📅 Toutes les échéances ('+tousEch.length+')</h2>';
+    var tei;for(tei=0;tei<Math.min(tousEch.length,12);tei++){h+=calItemRow(tousEch[tei]);}
+    if(tousEch.length>12)h+='<div class="small muted" style="padding:4px 4px 0">+'+(tousEch.length-12)+' autres — <a class="chip" data-act="go" data-page="cal">ouvrir le calendrier</a></div>';
   }
   // À venir sous djp jours (v5.9 — délai réglable)
   var av=ouverts.filter(function(t){var n=daysUntil(t.echeance);return n!==null&&n>1&&n<=djp;}).sort(function(a,b){return a.echeance<b.echeance?-1:1;});
@@ -887,12 +1118,15 @@ function tacheRow(t){
   var done=(t.statut==='fait');
   var h='<div class="row tache-row'+(done?' done':'')+'" draggable="true" data-drag="tac:'+t.id+'" title="Ouvrir — ou glissez-la sur un dossier pour la déplacer">'
    +'<button class="chk" title="Marquer fait / à faire" data-act="tache-toggle" data-id="'+t.id+'">'+(done?'✓':'')+'</button>'
-   +'<span class="row-title" data-act="open-tache" data-id="'+t.id+'">'+esc(t.titre)+'</span>';
+   +'<button class="btn sm ghost" data-act="tac-pin" data-id="'+t.id+'" title="'+(t.epingle?'Détacher du panneau ⭐ Accès rapide':'Épingler — visible dans le panneau ⭐ Accès rapide')+'">'+(t.epingle?'📌':'📍')+'</button>'
+   +'<span class="row-title" data-act="open-tache" data-id="'+t.id+'">'+(t.epingle?'📌 ':'')+esc(t.titre)+'</span>';
   if(!done&&t.statut!=='a-faire')h+=qw('tache',t.id,'statut',badgeTache(t.statut));
   if(!done)h+=qw('tache',t.id,'prio',badgePrio(prioAff(t)))+(isUrgente(t)&&t.priorite!=='urgente'?'<span class="badge" style="background:#fee2e2;color:#b91c1c" title="Échéance J-1, jour J ou dépassée">🔥 J-1</span>':'');
   h+=qw('tache',t.id,'ctx',badgeCtx(t.contexte));
   if(d)h+='<span class="chip" data-act="open-dossier" data-id="'+d.id+'">📁 '+esc(d.nom)+'</span>';
   h+=(t.echeance&&!done?qw('tache',t.id,'ech',echLabel(t.echeance,done,'',t.heure||'')):echLabel(t.echeance,done,'',t.heure||''));
+  if(done&&t.faitLe)h+='<span class="badge" style="background:#d1fae5;color:#065f46" title="Date de passage en « fait »">✓ fait le '+fmtDate(t.faitLe)+'</span>';
+  h+=clipBtnsHtml('tache',t.id);
   if(state.filtres.ta.tri==='perso')h+=ordBtns('tache',t.id);
   h+='</div>';
   return h;
@@ -904,11 +1138,14 @@ function captureRow(n){
   var h='<div class="row inbox-row">'
    +'<button class="chk" title="Marquer traitée / à traiter" data-act="note-traitee" data-id="'+n.id+'">'+(n.traitee?'✓':'')+'</button>'
    +'<span class="row-title" data-act="open-note" data-id="'+n.id+'">'+esc(n.titre)+'</span>';
-  if(n.image)h+='<span class="chip">🖼 image jointe</span>';
+  var nImgs=noteImgCount(n);
+  if(nImgs)h+='<span class="chip">🖼 '+nImgs+' image'+(nImgs>1?'s':'')+'</span>';
   if(d)h+='<span class="chip" data-act="open-dossier" data-id="'+d.id+'">📁 '+esc(d.nom)+'</span>';
   if(doc)h+='<span class="chip" data-act="open-doc" data-id="'+doc.id+'">📄 '+esc(doc.nom)+'</span>';
   h+=(n.echeance&&!n.traitee?qw('note',n.id,'ech',echLabel(n.echeance,n.traitee,'Traitée',n.heure||'')):echLabel(n.echeance,n.traitee,'Traitée',n.heure||''))
+   +(n.traitee?'<span class="badge" style="background:#d1fae5;color:#065f46">✓ traitée'+(n.traiteeLe?' le '+fmtDate(n.traiteeLe):'')+'</span>':'')
    +(n.traitee?'':'<button class="btn sm ghost" data-act="edit-note" data-id="'+n.id+'" title="Relier à un projet, une échéance…">Trier</button>')
+   +clipBtnsHtml('note',n.id)
    +'</div>';
   return h;
 }
@@ -975,8 +1212,8 @@ function dropZone(ev,tgt){
     var r=tgt.getBoundingClientRect();
     var ry=(ev.clientY||0)-r.top;
     var rh=r.height||1;
-    if(ry<rh*0.3)return 'before';
-    if(ry>rh*0.7)return 'after';
+    if(ry<rh*0.4)return 'before';
+    if(ry>rh*0.6)return 'after';
   }catch(e){}
   return 'into';
 }
@@ -1040,6 +1277,7 @@ function renderQa(){
   if(p.qaOff){root.className='off';root.innerHTML='<button class="btn sm ghost qa-strip" data-act="qa-toggle" title="Ouvrir le panneau ⭐ Accès rapide">⭐</button>';return;}
   root.className='';
   var dosP=state.dossiers.filter(function(d){return d.epingle;});
+  var tacP=state.taches.filter(function(t){return t.epingle;});
   var notP=state.notes.filter(function(n){return n.epinglee&&!n.capture;});
   var qa=p.qa||[];
   var i;
@@ -1049,6 +1287,9 @@ function renderQa(){
   if(dosP.length){h+='<div class="qsec">📌 Dossiers épinglés</div>';
     for(i=0;i<Math.min(dosP.length,6);i++){h+='<div class="rr" data-act="open-dossier" data-id="'+dosP[i].id+'" title="Ouvrir"><span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">📁 '+esc(dosP[i].nom)+'</span></div>';}
   }
+  if(tacP.length){h+='<div class="qsec">📌 Tâches épinglées</div>';
+    for(i=0;i<Math.min(tacP.length,8);i++){h+='<div class="rr" data-act="qa-go" data-k="tache" data-id="'+tacP[i].id+'" title="Ouvrir"><span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">✅ '+esc(tacP[i].titre)+'</span></div>';}
+  }
   if(notP.length){h+='<div class="qsec">📌 Notes épinglées</div>';
     for(i=0;i<Math.min(notP.length,6);i++){h+='<div class="rr" data-act="open-note" data-id="'+notP[i].id+'" title="Ouvrir"><span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">📝 '+esc(notP[i].titre)+'</span></div>';}
   }
@@ -1056,7 +1297,7 @@ function renderQa(){
     for(i=0;i<Math.min(qa.length,8);i++){var qk=qa[i].k;var ico=qk==='dossier'?'📁':(qk==='doc'?'📄':(qk==='note'?'📝':'✅'));var act=qk==='tache'?'qa-go':'open-'+qk;
       h+='<div class="rr" data-act="'+act+'" data-k="'+qk+'" data-id="'+qa[i].i+'" title="Ouvrir"><span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+ico+' '+esc(qaLabel(qk,qa[i]))+'</span></div>';}
   }
-  if(!dosP.length&&!notP.length&&!qa.length){h+='<div class="tiny muted" style="line-height:1.5">Épinglez des dossiers (📍) ou des notes (📌) : ils apparaîtront ici, avec vos derniers consultés.</div>';}
+  if(!dosP.length&&!tacP.length&&!notP.length&&!qa.length){h+='<div class="tiny muted" style="line-height:1.5">Épinglez des dossiers (📍), des tâches (📍 sur chaque ligne) ou des notes (📌) : ils apparaîtront ici, avec vos derniers consultés.</div>';}
   h+='</div>';
   root.innerHTML=h;
 }
@@ -1080,7 +1321,7 @@ function docFloatFor(did){
   var flt=dns.filter(function(nn){return nn.autoFloat;});
   var cible=flt.length?flt[0]:(dns.length?dns[0]:null);
   if(!cible){
-    cible={id:uid(),titre:'Notes — '+dfl.nom,contenu:'',tags:[],contexte:'pro',dossierId:'',tacheId:'',docId:dfl.id,epinglee:false,echeance:'',heure:'',traitee:false,capture:false,image:'',prio:'normale',origine:'',autoFloat:true,trieeLe:'',maj:today()};
+    cible={id:uid(),titre:'Notes — '+dfl.nom,contenu:'',tags:[],contexte:'pro',dossierId:'',tacheId:'',docId:dfl.id,epinglee:false,echeance:'',heure:'',traitee:false,traiteeLe:'',capture:false,image:'',images:[],prio:'normale',origine:'',autoFloat:true,trieeLe:'',liste:[],listeOn:false,maj:today()};
     state.notes.push(cible);
     save();
     if(state.page==='notes')render();
@@ -1089,7 +1330,10 @@ function docFloatFor(did){
 }
 function pageDossiers(){
   var f=state.filtres.dos;
-  var h='<div class="content"><div class="page-head"><h1 class="page-title">📁 Dossiers</h1><div class="toolbar"><button class="btn primary" data-act="new-dossier">+ Nouveau dossier</button></div></div>';
+  var h='<div class="content"><div class="page-head"><h1 class="page-title">📁 Dossiers</h1><div class="toolbar">'
+   +vueSwitchHtml('dos')
+   +(state._clip?'<button class="btn" data-act="clip-paste" data-id="" title="Coller l’élément '+(state._clip.mode==='cut'?'coupé':'copié')+' : '+esc(clipLabel())+' — à la racine">📥 Coller à la racine</button>':'')
+   +'<button class="btn primary" data-act="new-dossier">+ Nouveau dossier</button></div></div>';
   h+=filtersDossiers();
   h+='<div id="page-body">'+dossiersBody()+'</div></div>';
   return h;
@@ -1104,6 +1348,11 @@ function filtersDossiers(){
    +'</div>';
 }
 function dossiersBody(){
+  if(state.vue.dos==='kanban')return vueKanbanHtml('dos');
+  if(state.vue.dos==='cal'){
+    var hc='<p class="tiny muted" style="margin-bottom:10px">Calendrier des <b>échéances de dossiers</b> — cliquez sur un dossier pour l’ouvrir.</p>'+vueCalGrid('dos');
+    return hc;
+  }
   var list=dossiersOrderList();
   if(!list.length)return '<div class="empty">Aucun dossier ne correspond. <button class="btn sm" data-act="new-dossier">Créer un dossier</button></div>';
   var nbSous=0,z1;
@@ -1132,18 +1381,35 @@ function dossierCard(d){
    +'<div class="card-title">'+(d.epingle?'📌 ':'')+esc(d.nom)+'</div>'
    +'<div class="card-meta">'+meta.join(' · ')+'</div>'
    +(d.echeance?qw('dossier',d.id,'ech',echLabel(d.echeance,done)):'')
+   +clipBtnsHtml('dossier',d.id)
    +(state.filtres.dos.tri==='perso'?ordBtns('dossier',d.id):'')
    +'</div>';
 }
 
 // ===== Fiche dossier =====
+function dossierTreeHtml(id,depth,curId){
+  var enf=dossierEnfants(id);
+  var h='',e;
+  for(e=0;e<enf.length;e++){
+    var d=enf[e];
+    var nb=dossierEnfants(d.id).length;
+    var isCur=(d.id===curId);
+    h+='<div style="margin-left:'+(depth*20)+'px;padding:2px 0">'
+     +'<a class="chip"'+(isCur?' style="font-weight:700;background:var(--accent-soft)"':'')+' data-act="open-dossier" data-id="'+d.id+'" data-drop="'+d.id+'" draggable="true" data-drag="dos:'+d.id+'" title="Ouvrir — ou glissez-y un élément pour le déplacer dedans">'+(isCur?'📍 ':'')+'📁 '+esc(d.nom)+(nb?' <span class="tiny muted">('+nb+')</span>':'')+' <span class="tiny muted">('+infoOf(DOS_STATUTS,d.statut).l+')</span></a>'
+     +(d.echeance?'<span class="tiny muted" style="margin-left:6px">'+esc(relEch(d.echeance,false,''))+'</span>':'')
+     +'</div>';
+    if(nb)h+=dossierTreeHtml(d.id,depth+1,curId);
+  }
+  return h;
+}
 function pageDossier(id){
   var d=findDossier(id);if(!d)return page404();
   var ts=dossierTaches(id),ns=dossierNotes(id);
   var h='<div class="content">';
   var chemin=dossierChemin(id);
   h+='<div class="crumbs"><a class="chip" data-act="go" data-page="dossiers">← Dossiers</a>';
-  var ci;for(ci=0;ci<chemin.length-1;ci++){h+=' <a class="chip" data-act="open-dossier" data-id="'+chemin[ci].id+'" data-drop="'+chemin[ci].id+'" title="Ouvrir — ou déposez-y un élément pour le déplacer dans ce dossier">📁 '+esc(chemin[ci].nom)+'</a>';}
+  var ci;for(ci=0;ci<chemin.length;ci++){var dernier=(ci===chemin.length-1);
+    h+=' <a class="chip"'+(dernier?' style="font-weight:700;background:var(--accent-soft)"':'')+' data-act="open-dossier" data-id="'+chemin[ci].id+'" data-drop="'+chemin[ci].id+'" title="Ouvrir — ou déposez-y un élément pour le déplacer dans ce dossier">📁 '+esc(chemin[ci].nom)+'</a>';}
   h+='</div>';
   h+='<div class="page-head"><div><h1 class="page-title">'+esc(d.nom)+'</h1><div class="badges">'+qw('dossier',d.id,'statut',badgeDossier(d.statut))+qw('dossier',d.id,'ctx',badgeCtx(d.contexte))
    +(d.categorie?'<span class="badge gray">'+esc(d.categorie)+'</span>':'')+(d.echeance?qw('dossier',d.id,'ech',echLabel(d.echeance,d.statut==='termine')):'')+'</div></div>'
@@ -1151,15 +1417,19 @@ function pageDossier(id){
    +'<button class="btn" data-act="new-tache" data-dos="'+d.id+'">+ Tâche</button>'
    +'<button class="btn" data-act="new-note" data-dos="'+d.id+'">+ Note</button>'
    +'<button class="btn" data-act="new-sousdos" data-id="'+d.id+'" title="Créer un sous-dossier rattaché à ce dossier">+ Sous-dossier</button>'
+   +(state._clip?'<button class="btn" data-act="clip-paste" data-id="'+d.id+'" title="Coller ici l’élément '+(state._clip.mode==='cut'?'coupé':'copié')+' : '+esc(clipLabel())+'">📥 Coller ici</button>':'')
    +'<button class="btn ghost" data-act="edit-dossier" data-id="'+d.id+'">✎ Modifier</button>'
    +'<button class="btn danger ghost" data-act="del-dossier" data-id="'+d.id+'" title="Supprimer">🗑</button>'
    +'</div></div>';
   h+='<div class="desc-inline"'+(d.description?'':' data-ph="1"')+' data-kind="dossier" data-id="'+d.id+'" contenteditable="true">'+(d.description?esc(d.description).replace(/\n/g,'<br/>'):'<span class="muted">Ajoutez ici contexte, démarches, références… (enregistrement automatique en cliquant ailleurs)</span>')+'</div>';
   var enf2=dossierEnfants(id);
   h+=alertesHtml(alertesDossier(id));
-  if(enf2.length){
-    h+='<h2 class="sec-title">📁 Sous-dossiers ('+enf2.length+')</h2><div class="tags-row">';
-    var e2;for(e2=0;e2<enf2.length;e2++){h+='<a class="chip" data-act="open-dossier" data-id="'+enf2[e2].id+'" data-drop="'+enf2[e2].id+'" draggable="true" data-drag="dos:'+enf2[e2].id+'" title="Ouvrir — ou glissez-y un élément pour le déplacer dedans">📁 '+esc(enf2[e2].nom)+' <span class="tiny muted">('+infoOf(DOS_STATUTS,enf2[e2].statut).l+')</span></a>';}
+  // v5.10 : arborescence TOUJOURS visible depuis le dossier racine, même au plus profond de l’arborescence
+  var racineArb=chemin.length?chemin[0]:d;
+  var sousArb=dossierEnfants(racineArb.id);
+  if(sousArb.length){
+    h+='<h2 class="sec-title">📁 Arborescence complète — depuis « '+esc(racineArb.nom)+' »</h2><div style="border:1px solid var(--line);border-radius:10px;background:#fff;padding:8px 10px">';
+    h+=dossierTreeHtml(racineArb.id,0,id);
     h+='</div>';
   }
   h+='<h2 class="sec-title">✅ Tâches ('+ts.length+')</h2>';
@@ -1366,7 +1636,7 @@ function crmDated(){
 function allDated(){
   var out=[],i;
   for(i=0;i<state.taches.length;i++){var t=state.taches[i];if(t.echeance)out.push({kind:'tache',id:t.id,date:t.echeance,heure:t.heure||'',titre:t.titre,prio:t.priorite,done:t.statut==='fait'});}
-  for(i=0;i<state.notes.length;i++){var n=state.notes[i];if(n.echeance)out.push({kind:'note',id:n.id,date:n.echeance,heure:n.heure||'',titre:n.titre,prio:n.prio||'',done:n.traitee});}
+  for(i=0;i<state.notes.length;i++){var n=state.notes[i];if(n.echeance)out.push({kind:(n.capture?'capture':'note'),id:n.id,date:n.echeance,heure:n.heure||'',titre:n.titre,prio:n.prio||'',done:n.traitee});}
   for(i=0;i<state.dossiers.length;i++){var d=state.dossiers[i];if(d.echeance)out.push({kind:'dossier',id:d.id,date:d.echeance,heure:'',titre:d.nom,prio:'',done:(d.statut==='termine'||d.statut==='archive')});}
   var crm=crmDated();
   for(i=0;i<crm.length;i++)out.push(crm[i]);
@@ -1374,8 +1644,8 @@ function allDated(){
   return out;
 }
 function calItemRow(it){
-  var act=it.kind==='tache'?'open-tache':(it.kind==='note'?'open-note':(it.kind==='crm'?'crm-open':'open-dossier'));
-  var ico=it.kind==='tache'?'✅':(it.kind==='note'?'📝':(it.kind==='crm'?'🤝':'📁'));
+  var act=it.kind==='tache'?'open-tache':((it.kind==='note'||it.kind==='capture')?'open-note':(it.kind==='crm'?'crm-open':'open-dossier'));
+  var ico=it.kind==='tache'?'✅':(it.kind==='capture'?'⚡':(it.kind==='note'?'📝':(it.kind==='crm'?'🤝':'📁')));
   var h='<div class="row'+(it.done?' done':'')+'">'
    +'<span class="row-title" data-act="'+act+'" data-id="'+it.id+'"'+(it.kind==='crm'?' data-hash="'+esc(it.crmHash)+'" title="Ouvrir dans le CRM"':'')+'>'+ico+' '+esc(it.titre)+'</span>';
   if(it.heure)h+='<span class="chip">🕒 '+esc(it.heure)+'</span>';
@@ -1501,7 +1771,7 @@ function dropzoneHtml(dosId){
    +'</div>';
 }
 function pageDocs(){
-  var h='<div class="content"><div class="page-head"><h1 class="page-title">📄 Documents</h1><div class="toolbar"><button class="btn primary" data-act="new-doc">+ Référencer un document</button><button class="btn" data-act="new-doc-link" title="Ajouter un lien web ou SharePoint">+ Lien</button></div></div>';
+  var h='<div class="content"><div class="page-head"><h1 class="page-title">📄 Documents</h1><div class="toolbar">'+vueSwitchHtml('doc')+'<button class="btn primary" data-act="new-doc">+ Référencer un document</button><button class="btn" data-act="new-doc-link" title="Ajouter un lien web ou SharePoint">+ Lien</button></div></div>';
   h+='<p class="small muted" style="margin-bottom:12px">Vos fichiers Word, Excel, PowerPoint, PDF, liens… rangés et liés à vos dossiers. Un même document peut servir plusieurs projets. Rôle « Source » = vos documents à piocher ; « Base évolutive » = vos fichiers que vous modifiez au fil de l’eau.</p>';
   h+=dropzoneHtml('');
   h+=filtersDocs();
@@ -1518,6 +1788,8 @@ function filtersDocs(){
    +'</div>';
 }
 function docsBody(){
+  if(state.vue.doc==='kanban')return vueKanbanHtml('doc');
+  if(state.vue.doc==='cal')return '<p class="tiny muted" style="margin-bottom:10px">Les documents n’ont pas d’échéance propre : ce calendrier les place à leur <b>dernière modification</b> — pratique pour retrouver ce que vous avez touché récemment.</p>'+vueCalGrid('doc');
   var f=state.filtres.dc;
   var q=f.q.trim().toLowerCase();
   var list=state.docs.filter(function(x){
@@ -1546,11 +1818,11 @@ function docCard(x){
   var titre=desc?desc.split('\n')[0]:String(x.nom||'');
   var sub=desc?String(x.nom||''):'';
   var h='<div class="doc-card" data-act="open-doc" data-id="'+x.id+'" draggable="true" data-drag="doc:'+x.id+'" title="Ouvrir la fiche — ou glissez-la sur un dossier pour la déplacer">'
-   +'<div class="card-top">'+badgeDocType(x.type)+badgeDocRole(x.role)+(x.stocke?'<span class="badge" style="background:#ecfdf5;color:#065f46">💾 copie</span>':'')+(state.filtres.dc.tri==='perso'?ordBtns('doc',x.id):'')+'</div>'
+   +'<div class="card-top">'+badgeDocType(x.type)+badgeDocRole(x.role)+(x.stocke?'<span class="badge" style="background:#ecfdf5;color:#065f46">💾 copie</span>':'')+(state.filtres.dc.tri==='perso'?ordBtns('doc',x.id):'')+'<button class="btn sm ghost" data-act="doc-quickopen" data-id="'+x.id+'" title="Ouverture rapide : ouvre le lien, télécharge la copie, ou copie le chemin (sans passer par la fiche)">⚡ Ouvrir</button></div>'
    +'<div class="card-title" title="'+esc(titre)+'">'+esc(titre)+'</div>'
    +(sub?'<div class="card-sub" title="'+esc(sub)+'">📄 '+esc(sub)+'</div>':'')
    +'<div class="card-meta">'+x.dossiers.length+' dossier(s) · '+docNotes(x.id).length+' note(s)</div>'
-   +lienk+'</div>';
+   +lienk+clipBtnsHtml('doc',x.id)+'</div>';
   return h;
 }
 function pageDoc(id){
@@ -1563,6 +1835,7 @@ function pageDoc(id){
    +'<div class="toolbar">'
    +(x.localisation&&/^https?:\/\//i.test(x.localisation)?'<button class="btn" data-act="doc-openlink" data-id="'+x.id+'" title="Ouvrir dans un nouvel onglet (les liens SharePoint s’éditent en ligne et se réenregistrent côté serveur)">🔗 Ouvrir le lien</button>':'')
    +(x.localisation&&!/^https?:\/\//i.test(x.localisation)?'<button class="btn" data-act="doc-copy" data-id="'+x.id+'" title="Copier le chemin dans le presse-papier, puis collez-le dans l’Explorateur pour ouvrir le fichier">📋 Copier le chemin</button>':'')
+   +(x.localisation&&!/^https?:\/\//i.test(x.localisation)?'<button class="btn ghost" data-act="doc-url" data-id="'+x.id+'" title="Télécharger un raccourci .url : double-cliquez-le, l’Explorateur s’ouvre directement sur le dossier du document">📁 Ouvrir le dossier (.url)</button>':'')
    +(x.stocke?'<button class="btn" data-act="doc-open" data-id="'+x.id+'" title="Ouvrir la copie enregistrée dans un nouvel onglet">⬇️ Ouvrir la copie</button>':'')
    +'<button class="btn" data-act="new-note" data-doc="'+x.id+'">+ Note sur ce document</button>'
    +'<button class="btn ghost" data-act="doc-float" data-id="'+x.id+'" title="Ouvrir la note compagnon de ce document en fenêtre flottante (créée automatiquement si besoin)">🪟 Note flottante</button>'
@@ -1595,7 +1868,7 @@ function modalDoc(id,presetDos,presetType){
     var sel=x?(x.dossiers.indexOf(dos[i].id)>=0):(presetDos===dos[i].id);
     checks+='<label style="display:block;margin:3px 0"><input type="checkbox" name="dos" value="'+dos[i].id+'"'+(sel?' checked':'')+'/> '+esc(dos[i].nom)+'</label>';
   }
-  var h='<h3>'+(x?'Modifier le document':'Référencer un document')+'</h3><form id="f-doc">'
+  var h='<h3>'+(x?'Modifier le document':'Référencer un document')+'</h3><form id="f-doc" novalidate>'
    +'<input type="hidden" name="id" value="'+(x?x.id:'')+'"/>'
    +'<div class="form-row"><label>Nom *</label><input name="n" required maxlength="160" value="'+(x?esc(x.nom):'')+'" placeholder="Ex. : Base chiffres 2026.xlsx"/></div>'
    +'<div class="form-row two">'
@@ -1605,7 +1878,7 @@ function modalDoc(id,presetDos,presetType){
    +'<div class="form-row"><label>Localisation (chemin ou URL — pour retrouver le fichier)</label><input name="loc" maxlength="400" value="'+(x?esc(x.localisation):'')+'" placeholder="Ex. : Bureau\\Projets\\rapport.docx ou https://…"/></div>'
    +'<div class="form-row"><label>Dossiers utilisant ce document</label>'+(checks||'<span class="small muted">Aucun dossier existant — créez-en un d’abord.</span>')+'</div>'
    +'<div class="form-row"><label>Description</label><textarea name="desc" rows="3">'+(x?esc(x.description):'')+'</textarea></div>'
-   +'<div class="modal-foot"><button type="button" class="btn ghost" data-act="modal-close">Annuler</button><button type="submit" class="btn primary">Enregistrer</button></div>'
+   +'<div class="modal-foot"><button type="button" class="btn ghost" data-act="modal-close">Annuler</button><button type="submit" class="btn primary" data-act="form-submit">Enregistrer</button></div>'
    +'</form>';
   openModal(h);
 }
@@ -1632,6 +1905,7 @@ function pageCapture(){
   var atrier=caps.filter(function(n){return !n.traitee;});
   var historique=state.notes.filter(function(n){return n.origine==='capture';}).sort(function(a,b){return (a.trieeLe||'')<(b.trieeLe||'')?1:-1;});
   var h='<div class="content"><div class="page-head"><h1 class="page-title">⚡ Capture</h1><div class="toolbar">'
+   +vueSwitchHtml('cap')
    +'<button class="btn primary capbtn" data-act="quick-capture">⚡ Capturer une idée</button>'
    +'<button class="btn" data-act="quick-capture" data-cam="1" title="Ouvrir l’appareil photo / la capture d’écran sur mobile">📷 Depuis l’appareil</button>'
    +'</div></div>';
@@ -1640,22 +1914,37 @@ function pageCapture(){
     h+='<div class="empty">Aucune idée capturée pour l’instant.<br/><br/><button class="btn capbtn" data-act="quick-capture">⚡ Capturer une idée</button></div></div>';
     return h;
   }
+  h+='<div id="page-body">'+captureBody()+'</div>';
+  h+='</div>';
+  return h;
+}
+function captureBody(){
+  var caps=state.notes.filter(function(n){return n.capture;});
+  var atrier=caps.filter(function(n){return !n.traitee;});
+  var historique=state.notes.filter(function(n){return n.origine==='capture';}).sort(function(a,b){return (a.trieeLe||'')<(b.trieeLe||'')?1:-1;});
+  var h='';
   if(!atrier.length){
     h+='<div class="banner info">🎉 Tout est trié — les nouvelles idées arrivent ici.</div>';
   }
-  h+='<h2 class="sec-title">🧠 À trier ('+atrier.length+')</h2>';
-  var i;
-  if(atrier.length){
-    for(i=0;i<atrier.length;i++){h+=captureRow(atrier[i]);}
+  if(state.vue.cap==='kanban'){
+    h+='<h2 class="sec-title">🧠 Kanban des post-its</h2>'+vueKanbanHtml('cap');
+  }else if(state.vue.cap==='cal'){
+    h+='<h2 class="sec-title">📅 Calendrier des post-its (par échéance)</h2>'+vueCalGrid('cap')+'<p class="tiny muted" style="margin-top:10px">Seuls les post-its avec une échéance apparaissent ici.</p>';
   }else{
-    h+='<div class="empty small">Rien à trier pour l’instant.</div>';
-  }
-  // v5.9 : post-its cochés « traités » — visibles en historique déroulant
-  var capFaites=caps.filter(function(n){return n.traitee;}).sort(function(a,b){return a.maj>b.maj?-1:1;});
-  if(capFaites.length){
-    h+='<h2 class="sec-title">✓ Post-its traités ('+capFaites.length+') <button class="btn sm ghost" data-act="voir-capfaites" title="Dérouler / réduire les post-its cochés comme traités">'+(state._voirCapFaites?'Réduire −':'Dérouler ▾')+'</button></h2>';
-    if(state._voirCapFaites){var cf;for(cf=0;cf<capFaites.length;cf++){h+=captureRow(capFaites[cf]);}}
-    else{h+='<div class="small muted" style="padding:2px 4px 6px">Post-its cochés ✓ masqués — cliquez « Dérouler » pour les retrouver.</div>';}
+    h+='<h2 class="sec-title">🧠 À trier ('+atrier.length+')</h2>';
+    var i;
+    if(atrier.length){
+      for(i=0;i<atrier.length;i++){h+=captureRow(atrier[i]);}
+    }else{
+      h+='<div class="empty small">Rien à trier pour l’instant.</div>';
+    }
+    // v5.9 : post-its cochés « traités » — visibles en historique déroulant
+    var capFaites=caps.filter(function(n){return n.traitee;}).sort(function(a,b){return a.maj>b.maj?-1:1;});
+    if(capFaites.length){
+      h+='<h2 class="sec-title">✓ Post-its traités ('+capFaites.length+') <button class="btn sm ghost" data-act="voir-capfaites" title="Dérouler / réduire les post-its cochés comme traités">'+(state._voirCapFaites?'Réduire −':'Dérouler ▾')+'</button></h2>';
+      if(state._voirCapFaites){var cf;for(cf=0;cf<capFaites.length;cf++){h+=captureRow(capFaites[cf]);}}
+      else{h+='<div class="small muted" style="padding:2px 4px 6px">Post-its cochés ✓ masqués — cliquez « Dérouler » pour les retrouver.</div>';}
+    }
   }
   h+='<h2 class="sec-title">📚 Historique — post-its devenus notes ('+historique.length+')'+(historique.length>12?' <button class="btn sm ghost" data-act="voir-caphist">'+(state._voirCapHist?'Réduire −':'Tout dérouler ▾')+'</button>':'')+'</h2>';
   if(historique.length){
@@ -1665,20 +1954,20 @@ function pageCapture(){
   }else{
     h+='<div class="empty small">Aucun post-it trié pour l’instant.</div>';
   }
-  h+='</div>';
   return h;
 }
 function modalCapture(){
-  var h='<h3>⚡ Capturer une idée</h3><form id="f-capture">'
+  var h='<h3>⚡ Capturer une idée</h3><form id="f-capture" novalidate>'
    +'<div class="form-row"><label>L’idée *</label><textarea name="tit" rows="3" required placeholder="Notez vite, vous trierez plus tard… (Ctrl+Entrée pour enregistrer)"></textarea></div>'
    +'<div class="form-row two">'
    +'<div><label>Échéance (optionnel)</label><input type="date" name="ech"/></div>'
    +'<div><label>Dossier (optionnel)</label><select name="dos">'+dossierOptions('')+'</select></div>'
    +'</div>'
-   +'<div class="form-row img-pick"><label>Joindre une image / capture d’écran (optionnel)</label><input type="file" id="cap-img" accept="image/*"/></div>'
+   +'<div class="form-row img-pick"><label>Joindre des images / captures d’écran (optionnel — plusieurs possibles)</label><input type="file" id="cap-img" accept="image/*" multiple/></div>'
    +'<div class="form-row img-pick"><label>📷 Depuis la caméra de l’appareil (pratique sur téléphone)</label><input type="file" id="cap-cam" accept="image/*" capture="environment"/></div>'
-   +'<p class="tiny muted">Vous pouvez aussi coller une image avec Ctrl+V dans cette fenêtre. <span id="cap-img-info" class="tiny muted"></span></p>'
-   +'<div class="modal-foot"><button type="button" class="btn ghost" data-act="modal-close">Annuler</button><button type="submit" class="btn primary">⚡ Capturer</button></div>'
+   +'<div class="dropzone" id="cap-drop" style="padding:10px">🖼 <b>Glissez-déposez ici une ou plusieurs images</b>, ou <button type="button" class="btn sm" data-act="cap-pasteimg" title="Lire l’image du presse-papier (faites d’abord Ctrl+C ou ⛯ de la capture d’écran)">📋 Coller l’image</button></div>'
+   +'<p class="tiny muted">Vous pouvez aussi coller une image avec Ctrl+V directement dans cette fenêtre. <span id="cap-img-info" class="tiny muted"></span></p>'
+   +'<div class="modal-foot"><button type="button" class="btn ghost" data-act="modal-close">Annuler</button><button type="submit" class="btn primary" data-act="form-submit">⚡ Capturer</button></div>'
    +'</form>';
   openModal(h);
   var ta=null;
@@ -1688,7 +1977,7 @@ function modalCapture(){
 
 // ===== Page Notes =====
 function pageNotes(){
-  var h='<div class="content"><div class="page-head"><h1 class="page-title">📝 Notes</h1><div class="toolbar"><button class="btn primary" data-act="new-note">+ Nouvelle note</button></div></div>';
+  var h='<div class="content"><div class="page-head"><h1 class="page-title">📝 Notes</h1><div class="toolbar">'+vueSwitchHtml('not')+'<button class="btn primary" data-act="new-note">+ Nouvelle note</button></div></div>';
   var nbCap=state.notes.filter(function(n){return n.capture&&!n.traitee;}).length;
   if(nbCap){h+='<div class="banner warn">⚡ '+nbCap+' idée(s) à trier — elles restent dans la boîte <a class="chip" data-act="go" data-page="capture">⚡ Capture</a> jusqu’à leur tri, puis deviennent des notes.</div>';}
   h+=filtersNotes();
@@ -1718,6 +2007,8 @@ function filtersNotes(){
   return h;
 }
 function notesBody(){
+  if(state.vue.not==='kanban')return vueKanbanHtml('not');
+  if(state.vue.not==='cal')return '<p class="tiny muted" style="margin-bottom:10px">Calendrier des <b>échéances de traitement</b> des notes — cliquez sur une note pour l’ouvrir.</p>'+vueCalGrid('not');
   var f=state.filtres.no;
   var q=f.q.trim().toLowerCase();
   var list=state.notes.filter(function(n){
@@ -1761,13 +2052,14 @@ function noteCard(n,extra){
    +(n.epinglee?'<span class="pin">📌</span>':'')
    +'<div class="card-title">'+esc(n.titre)+'</div>'
    +'<div class="note-extrait">'+esc(ex)+'</div>'
-   +'<div class="badges">'+qw('note',n.id,'ctx',badgeCtx(n.contexte))+(n.capture?'<span class="badge" style="background:#fffbeb;color:#b45309">⚡</span>':'')+(n.image?'<span class="badge" style="background:#f5f3ff;color:#6d28d9">🖼</span>':'')+((n.liste&&n.liste.length)?'<span class="badge" style="background:#f0fdf4;color:#166534">🛒 '+n.liste.length+'</span>':'')+(n.traitee?'<span class="badge" style="background:#d1fae5;color:#065f46">✓ traitée</span>':'')
+   +'<div class="badges">'+qw('note',n.id,'ctx',badgeCtx(n.contexte))+(n.capture?'<span class="badge" style="background:#fffbeb;color:#b45309">⚡</span>':'')+(noteImgCount(n)?'<span class="badge" style="background:#f5f3ff;color:#6d28d9">🖼 '+noteImgCount(n)+'</span>':'')+((n.liste&&n.liste.length)?'<span class="badge" style="background:#f0fdf4;color:#166534">🛒 '+n.liste.length+'</span>':'')+(n.traitee?'<span class="badge" style="background:#d1fae5;color:#065f46">✓ traitée'+(n.traiteeLe?' le '+fmtDate(n.traiteeLe):'')+'</span>':'')
    +((n.prio&&n.prio!=='normale')?qw('note',n.id,'prio',badgePrio(n.prio)):'')
    +(n.echeance&&!n.traitee?qw('note',n.id,'ech',echLabel(n.echeance,n.traitee,'Traitée',n.heure||'')):echLabel(n.echeance,n.traitee,'Traitée',n.heure||''));
   var i;var tg=n.tags||[];
   for(i=0;i<tg.length;i++){h+='<span class="badge gray">#'+esc(tg[i])+'</span>';}
   if(d)h+='<span class="chip">📁 '+esc(d.nom)+'</span>';
   if(state.filtres.no.tri==='perso')h+=ordBtns('note',n.id);
+  h+=clipBtnsHtml('note',n.id);
   if(extra)h+=extra;
   h+='</div></div>';
   return h;
@@ -1779,7 +2071,7 @@ function pageNote(id){
   var h='<div class="content note-view">';
   h+='<div class="crumbs"><a class="chip" data-act="go" data-page="notes">← Notes</a></div>';
   h+='<div class="page-head"><div><h1 class="page-title">'+(n.epinglee?'📌 ':'')+esc(n.titre)+'</h1><div class="badges">'+qw('note',n.id,'ctx',badgeCtx(n.contexte))
-   +(n.traitee?'<span class="badge" style="background:#d1fae5;color:#065f46">✓ traitée</span>':((n.echeance||n.capture)?qw('note',n.id,'tr','<span class="badge" style="background:#fef3c7;color:#92400e">à traiter</span>','Marquer traitée d’un clic'):''))+(n.echeance&&!n.traitee?qw('note',n.id,'ech',echLabel(n.echeance,n.traitee,'Traitée',n.heure||'')):echLabel(n.echeance,n.traitee,'Traitée',n.heure||''))
+   +(n.traitee?'<span class="badge" style="background:#d1fae5;color:#065f46">✓ traitée'+(n.traiteeLe?' le '+fmtDate(n.traiteeLe):'')+'</span>':((n.echeance||n.capture)?qw('note',n.id,'tr','<span class="badge" style="background:#fef3c7;color:#92400e">à traiter</span>','Marquer traitée d’un clic'):''))+(n.echeance&&!n.traitee?qw('note',n.id,'ech',echLabel(n.echeance,n.traitee,'Traitée',n.heure||'')):echLabel(n.echeance,n.traitee,'Traitée',n.heure||''))
    +(n.maj?'<span class="badge gray">modifiée le '+fmtDate(n.maj)+'</span>':'')+'</div></div>'
    +'<div class="toolbar">'
    +'<button class="btn ghost" data-act="pin-note" data-id="'+n.id+'">'+(n.epinglee?'Détacher 📌':'Épingler 📌')+'</button>'
@@ -1803,7 +2095,16 @@ function pageNote(id){
     if(t)h+='<span class="chip" data-act="open-tache" data-id="'+t.id+'">✅ '+esc(t.titre)+'</span>';
     h+='</div>';
   }
-  if(n.image)h+='<img class="note-img" data-act="img-view" src="'+n.image+'" alt="image jointe"/>';
+  var imgs=noteImgList(n);
+  if(imgs.length){
+    var ii;
+    for(ii=0;ii<imgs.length;ii++){
+      h+='<div style="display:inline-block;position:relative;margin:10px 8px 0 0">'
+       +'<img class="note-img" data-act="img-view" data-src="'+esc(imgs[ii])+'" src="'+imgs[ii]+'" alt="image jointe '+(ii+1)+'"/>'
+       +'<button class="btn sm ghost" style="position:absolute;top:4px;right:4px;background:#fff" data-act="note-imgdel" data-id="'+n.id+'" data-i="'+ii+'" title="Retirer cette image">✕</button>'
+       +'</div>';
+    }
+  }
   h+='<div class="rtbar">'
    +'<button class="btn ghost sm" data-cmd="bold" title="Gras (Ctrl+B)"><b>G</b></button>'
    +'<button class="btn ghost sm" data-cmd="italic" title="Italique (Ctrl+I)"><i>I</i></button>'
@@ -1813,6 +2114,10 @@ function pageNote(id){
    +'<span class="tiny muted">Le contenu se modifie directement — enregistré automatiquement.</span>'
    +'</div>';
   h+='<div class="content-pre" id="note-cont"'+(String(n.contenu||'').length?'':' data-ph="1"')+' data-id="'+n.id+'" contenteditable="true" style="min-height:130px">'+(String(n.contenu||'').length?contenuHtml(n.contenu):'<span class="muted">Note vide — écrivez ici…</span>')+'</div>';
+  // v5.10 : option « liste à cocher » visible directement sous le contenu
+  if(!n.listeOn){
+    h+='<div style="margin-top:10px"><button class="btn sm" data-act="note-liste-on" data-id="'+n.id+'" title="Ajouter une liste à cocher sous le contenu de cette note (façon liste de courses)">＋ Ajouter une liste à cocher</button></div>';
+  }
   // v5.9 : liste à cocher (façon liste de courses)
   if(n.listeOn){
     var li=(n.liste||[]);
@@ -1895,7 +2200,7 @@ function closeModal(){
 }
 function modalDossier(id,presetParent){
   var d=id?findDossier(id):null;
-  var h='<h3>'+(d?'Modifier le dossier':'Nouveau dossier')+'</h3><form id="f-dossier">'
+  var h='<h3>'+(d?'Modifier le dossier':'Nouveau dossier')+'</h3><form id="f-dossier" novalidate>'
    +'<input type="hidden" name="id" value="'+(d?d.id:'')+'"/>'
    +'<div class="form-row"><label>Nom *</label><input name="n" required maxlength="120" value="'+(d?esc(d.nom):'')+'" placeholder="Ex. : Renouvellement passeport"/></div>'
    +'<div class="form-row"><label>Dossier parent (pour une arborescence générale → sous-dossiers)</label><select name="parent">'+dossierParentOptions(d?d.parentId:(presetParent||''),d?d.id:'')+'</select></div>'
@@ -1908,7 +2213,7 @@ function modalDossier(id,presetParent){
    +'<div><label>Échéance</label><input type="date" name="ech" value="'+(d?d.echeance:'')+'"/></div>'
    +'</div>'
    +'<div class="form-row"><label>Description / notes</label><textarea name="desc" rows="4" placeholder="Contexte, démarches, références…">'+(d?esc(d.description):'')+'</textarea></div>'
-   +'<div class="modal-foot"><button type="button" class="btn ghost" data-act="modal-close">Annuler</button><button type="submit" class="btn primary">Enregistrer</button></div>'
+   +'<div class="modal-foot"><button type="button" class="btn ghost" data-act="modal-close">Annuler</button><button type="submit" class="btn primary" data-act="form-submit">Enregistrer</button></div>'
    +'</form>';
   openModal(h);
 }
@@ -1917,7 +2222,7 @@ function modalTache(id,presetDos){
   var dos=(t?t.dossierId:(presetDos||''));
   var h='<h3>'+(t?'Modifier la tâche':'Nouvelle tâche')+'</h3>';
   if(dos){h+=alertesHtml(alertesDossier(dos,t?t.id:''));}
-  h+='<form id="f-tache">'
+  h+='<form id="f-tache" novalidate>'
    +'<input type="hidden" name="id" value="'+(t?t.id:'')+'"/>'
    +'<div class="form-row"><label>Titre *</label><input name="tit" required maxlength="160" value="'+(t?esc(t.titre):'')+'" placeholder="Que faut-il faire ?"/></div>'
    +'<div class="form-row two">'
@@ -1933,14 +2238,14 @@ function modalTache(id,presetDos){
    +'<div><label>Dossier lié</label><select name="dos">'+dossierOptions(dos)+'</select></div>'
    +'</div>'
    +'<div class="form-row"><label>Description</label><textarea name="desc" rows="3">'+(t?esc(t.description):'')+'</textarea></div>'
-   +'<div class="modal-foot"><button type="button" class="btn ghost" data-act="modal-close">Annuler</button><button type="submit" class="btn primary">Enregistrer</button></div>'
+   +'<div class="modal-foot"><button type="button" class="btn ghost" data-act="modal-close">Annuler</button><button type="submit" class="btn primary" data-act="form-submit">Enregistrer</button></div>'
    +'</form>';
   openModal(h);
 }
 function modalNote(id,presetDos,presetDoc){
   var n=id?findNote(id):null;
   var dos=(n?n.dossierId:(presetDos||''));
-  var h='<h3>'+(n?'Modifier la note':'Nouvelle note')+'</h3><form id="f-note">'
+  var h='<h3>'+(n?'Modifier la note':'Nouvelle note')+'</h3><form id="f-note" novalidate>'
    +'<input type="hidden" name="id" value="'+(n?n.id:'')+'"/>'
    +'<div class="form-row"><label>Titre *</label><input name="tit" required maxlength="160" value="'+(n?esc(n.titre):'')+'"/></div>'
    +'<div class="form-row"><label>Contenu</label><textarea name="cont" rows="6" placeholder="Écrivez librement…">'+(n?esc(n.contenu):'')+'</textarea></div>'
@@ -1965,10 +2270,10 @@ function modalNote(id,presetDos,presetDoc){
    +'<div class="form-row"><label>Dossier lié</label><select name="dos">'+dossierOptions(dos)+'</select></div>'
    +'<div class="form-row"><label>Tâche liée</label><select name="ta">'+tacheOptions(n?n.tacheId:'')+'</select></div>'
    +'<div class="form-row"><label>Document lié</label><select name="doc">'+docOptions(n?n.docId:(presetDoc||''))+'</select></div>'
-   +'<div class="form-row img-pick"><label>Image jointe (optionnel)</label>'
-   +(n&&n.image?'<div class="small muted" style="margin-bottom:4px">🖼 une image est déjà jointe — en importer une autre la remplacera (<button type="button" class="btn sm ghost" data-act="note-delimg" data-id="'+n.id+'">retirer</button>)</div>':'')
-   +'<input type="file" id="note-img" accept="image/*"/> <span id="note-img-info" class="tiny muted"></span></div>'
-   +'<div class="modal-foot"><button type="button" class="btn ghost" data-act="modal-close">Annuler</button><button type="submit" class="btn primary">Enregistrer</button></div>'
+   +'<div class="form-row img-pick"><label>Images jointes (optionnel — plusieurs possibles)</label>'
+   +(n&&noteImgCount(n)?'<div class="small muted" style="margin-bottom:4px">🖼 '+noteImgCount(n)+' image(s) déjà jointe(s) — les nouvelles s’ajoutent (visibles et supprimables une par une dans la fiche). (<button type="button" class="btn sm ghost" data-act="note-delimg" data-id="'+n.id+'">tout retirer</button>)</div>':'')
+   +'<input type="file" id="note-img" accept="image/*" multiple/> <span id="note-img-info" class="tiny muted"></span></div>'
+   +'<div class="modal-foot"><button type="button" class="btn ghost" data-act="modal-close">Annuler</button><button type="submit" class="btn primary" data-act="form-submit">Enregistrer</button></div>'
    +'</form>';
   openModal(h);
 }
@@ -2037,7 +2342,8 @@ function modalHelp(){
    +'<p style="margin-top:8px"><b>Synchro chiffrée multi-appareils (v5)</b> — Page ☁️ : après une configuration unique (projet Supabase, compte, passphrase), vos données sont chiffrées de bout en bout sur l’appareil puis envoyées dans le cloud ; l’autre appareil les récupère automatiquement au chargement ou au retour sur l’onglet. Conflit ? Un choix vous est proposé, avec export de sauvegarde avant remplacement.</p>'
    +'<p style="margin-top:8px"><b>Listes à cocher (v5.9)</b> — Dans une note, cochez « 🛒 Ajouter une liste à cocher » : un espace Liste apparaît sous le contenu, façon liste de courses — ajoutez des lignes, cochez-les, elles se barrent.</p>'
    +'<p style="margin-top:8px"><b>Glisser-déposer façon Explorateur (v5.9)</b> — Sur les listes Dossiers, Documents, Tâches et Notes, déplacez un élément : le haut d’une carte le place <b>avant</b>, le bas <b>après</b> (l’ordre devient « Personnalisé » automatiquement), le centre le range <b>dedans</b> (dossier) ou le déplace. L’onglet Dossiers n’affiche que les dossiers racine, comme l’Explorateur Windows.</p>'
-   +'<p style="margin-top:8px"><b>Accès rapide (v5.9)</b> — Le panneau ⭐ est désormais fixe à gauche, juste après le menu. Réduisez-le avec « – », rouvrez-le avec le bouton ⭐ vertical : il liste vos dossiers et notes épinglés et vos derniers consultés.</p>'
+   +'<p style="margin-top:8px"><b>Accès rapide (v5.9)</b> — Le panneau ⭐ est désormais fixe à gauche, juste après le menu. Réduisez-le avec « – », rouvrez-le avec le bouton ⭐ vertical : il liste vos dossiers, tâches et notes épinglés et vos derniers consultés.</p>'
+   +'<p style="margin-top:8px"><b>Nouveautés v5.10</b> — Tâches épinglables (📍) dans ⭐ Accès rapide · vues Liste/Kanban/Calendrier sur Dossiers, Documents, Notes et Capture · bouton Enregistrer qui ne reste jamais silencieux (champ obligatoire signalé explicitement) · 📋 Copier le chemin ne télécharge plus rien (le raccourci .url devient un bouton séparé) et bouton ⚡ Ouvrir pour ouvrir un document en un clic · accueil : deadlines orange jusqu’à J+2 et section « Toutes les échéances » (tâches ✅, notes 📝, captures ⚡, dossiers 📁) · date de passage en « fait / traitée » en bout de ligne · relances séparées En retard / Aujourd’hui / À venir, triables par échéance ou par type, captures incluses · arborescence complète visible dans la fiche dossier · glisser-déposer qui s’intercale (haut/bas de carte) au lieu de rentrer dedans · copier ⧉ / couper ✂ / coller 📥 pour tout (dossiers, tâches, notes, captures, documents) · plusieurs images par note/capture (Ctrl+V, glisser-déposer, bouton 📋) · option liste à cocher directement sous le contenu d’une note.</p>'
    +'</div>'
    +'<div class="modal-foot" style="margin-top:12px"><button class="btn ghost" data-act="modal-close">Fermer</button></div>';
   openModal(h);
@@ -2077,7 +2383,7 @@ function modalQedit(kind,id,field){
   else{return;
   }
   var fieldLbl={statut:'Statut',prio:'Priorité / importance',ctx:'Contexte',ech:'Échéance',tr:'État'}[field]||field;
-  var h='<h3>Modifier — '+esc(titre)+'</h3><form id="f-qedit">'
+  var h='<h3>Modifier — '+esc(titre)+'</h3><form id="f-qedit" novalidate>'
    +'<input type="hidden" name="kind" value="'+kind+'"/><input type="hidden" name="id" value="'+id+'"/><input type="hidden" name="field" value="'+field+'"/>';
   if(field==='ech'){
     h+='<div class="form-row two"><div><label>Nouvelle échéance</label><input type="date" name="val" value="'+esc(cur)+'"/></div>'
@@ -2088,7 +2394,7 @@ function modalQedit(kind,id,field){
     var list=(field==='statut')?(kind==='tache'?TACHE_STATUTS:DOS_STATUTS):(field==='prio'?PRIORITES:CONTEXTES);
     h+='<div class="form-row"><label>'+esc(fieldLbl)+'</label><select name="val">'+optsHtml(list,cur)+'</select></div>';
   }
-  h+='<div class="modal-foot"><button type="button" class="btn ghost" data-act="modal-close">Annuler</button><button type="submit" class="btn primary">Enregistrer</button></div></form>';
+  h+='<div class="modal-foot"><button type="button" class="btn ghost" data-act="modal-close">Annuler</button><button type="submit" class="btn primary" data-act="form-submit">Enregistrer</button></div></form>';
   openModal(h);
 }
 function saveQeditForm(f){
@@ -2118,7 +2424,7 @@ function saveQeditForm(f){
 // ===== Paramétrage des échéances (couleurs & seuils, v5) =====
 function modalEchances(){
   var e=echPrefs();
-  var h='<h3>🎯 Couleurs &amp; seuils des échéances</h3><form id="f-ech">'
+  var h='<h3>🎯 Couleurs &amp; seuils des échéances</h3><form id="f-ech" novalidate>'
    +'<p class="small muted">Règle l’affichage des badges d’échéance partout dans l’appli (retard = rouge, bientôt = orange…).</p>'
    +'<div class="form-row two">'
    +'<div><label>Seuil « très proche » (jours, orange foncé)</label><input type="number" name="s2" min="0" max="30" value="'+esc(e.s2!==undefined?e.s2:'2')+'"/></div>'
@@ -2140,7 +2446,7 @@ function modalEchances(){
    +'<div><label>Fait / traité — fond</label><input type="color" name="bgOk" value="'+esc(e.bgOk||'#d1fae5')+'"/></div>'
    +'<div><label>Fait / traité — texte</label><input type="color" name="cOk" value="'+esc(e.cOk||'#065f46')+'"/></div>'
    +'</div>'
-   +'<div class="modal-foot"><button type="button" class="btn ghost" data-act="modal-close">Annuler</button><button type="submit" class="btn primary">Enregistrer</button></div></form>';
+   +'<div class="modal-foot"><button type="button" class="btn ghost" data-act="modal-close">Annuler</button><button type="submit" class="btn primary" data-act="form-submit">Enregistrer</button></div></form>';
   openModal(h);
 }
 function saveEchForm(f){
@@ -2154,36 +2460,64 @@ function saveEchForm(f){
 // ===== Panneau de relances (haut droite, v5) =====
 function remindItems(){
   var items=[];var i;
+  function grp(n){if(n<0)return 'late';if(n===0)return 'today';return 'soon';}
   var rd=retards();
-  for(i=0;i<rd.length;i++)items.push({cls:'late',kind:'tache',id:rd[i].id,lab:'✅ '+rd[i].titre,sub:relEch(rd[i].echeance,false,'')});
+  for(i=0;i<rd.length;i++)items.push({grp:'late',kind:'tache',id:rd[i].id,lab:'✅ '+rd[i].titre,sub:relEch(rd[i].echeance,false,''),date:rd[i].echeance});
   var dosRd=dossiersActifs().filter(function(d){return d.echeance&&daysUntil(d.echeance)<0;});
-  for(i=0;i<dosRd.length;i++)items.push({cls:'late',kind:'dossier',id:dosRd[i].id,lab:'📁 '+dosRd[i].nom,sub:relEch(dosRd[i].echeance,false,'')});
+  for(i=0;i<dosRd.length;i++)items.push({grp:'late',kind:'dossier',id:dosRd[i].id,lab:'📁 '+dosRd[i].nom,sub:relEch(dosRd[i].echeance,false,''),date:dosRd[i].echeance});
   var noRd=state.notes.filter(function(n){return !n.traitee&&n.echeance&&daysUntil(n.echeance)<0;});
-  for(i=0;i<noRd.length;i++)items.push({cls:'late',kind:'note',id:noRd[i].id,lab:'📝 '+noRd[i].titre,sub:relEch(noRd[i].echeance,false,'')});
-  var se=semaine();
-  for(i=0;i<se.length;i++)items.push({cls:'soon',kind:'tache',id:se[i].id,lab:'✅ '+se[i].titre,sub:relEch(se[i].echeance,false,'')});
+  for(i=0;i<noRd.length;i++)items.push({grp:'late',kind:'note',id:noRd[i].id,lab:(noRd[i].capture?'⚡ ':'📝 ')+noRd[i].titre,sub:relEch(noRd[i].echeance,false,''),date:noRd[i].echeance});
+  var tSe=semaine();
+  for(i=0;i<tSe.length;i++)items.push({grp:grp(daysUntil(tSe[i].echeance)),kind:'tache',id:tSe[i].id,lab:'✅ '+tSe[i].titre,sub:relEch(tSe[i].echeance,false,''),date:tSe[i].echeance});
   var dosSe=dossiersActifs().filter(function(d){return d.echeance&&daysUntil(d.echeance)>=0&&daysUntil(d.echeance)<=echSeuil7();});
-  for(i=0;i<dosSe.length;i++)items.push({cls:'soon',kind:'dossier',id:dosSe[i].id,lab:'📁 '+dosSe[i].nom,sub:relEch(dosSe[i].echeance,false,'')});
+  for(i=0;i<dosSe.length;i++)items.push({grp:grp(daysUntil(dosSe[i].echeance)),kind:'dossier',id:dosSe[i].id,lab:'📁 '+dosSe[i].nom,sub:relEch(dosSe[i].echeance,false,''),date:dosSe[i].echeance});
   var noSe=state.notes.filter(function(n){return !n.traitee&&n.echeance&&daysUntil(n.echeance)>=0&&daysUntil(n.echeance)<=echSeuil7();});
-  for(i=0;i<noSe.length;i++)items.push({cls:'soon',kind:'note',id:noSe[i].id,lab:'📝 '+noSe[i].titre,sub:relEch(noSe[i].echeance,false,'')});
+  for(i=0;i<noSe.length;i++)items.push({grp:grp(daysUntil(noSe[i].echeance)),kind:'note',id:noSe[i].id,lab:(noSe[i].capture?'⚡ ':'📝 ')+noSe[i].titre,sub:relEch(noSe[i].echeance,false,''),date:noSe[i].echeance});
   return items;
 }
+function remindSortPref(){var p=getPrefs();return (p.remindSort==='type')?'type':'date';}
 function renderRemind(){
   var root=document.getElementById('remind-root');
   if(!root)return;
   var p=getPrefs();
   var items=remindItems();
   if(p.remindOff||!items.length){root.innerHTML=(items.length?'<button class="btn sm remind-toggle" data-act="remind-toggle" title="Afficher le panneau des relances">🔔 '+items.length+'</button>':'');return;}
-  var lat=[],son=[],i;
-  for(i=0;i<items.length;i++){if(items[i].cls==='late')lat.push(items[i]);else son.push(items[i]);}
+  var sortMode=remindSortPref();
+  var ord={late:0,today:1,soon:2};
+  var kord={tache:0,dossier:1,note:2};
+  items.sort(function(a,b){
+    if(sortMode==='type'){
+      if(kord[a.kind]!==kord[b.kind])return kord[a.kind]-kord[b.kind];
+      if(a.date<b.date)return -1;
+      if(a.date>b.date)return 1;
+      return 0;
+    }
+    if(ord[a.grp]!==ord[b.grp])return ord[a.grp]-ord[b.grp];
+    if(a.date<b.date)return -1;
+    if(a.date>b.date)return 1;
+    if(kord[a.kind]!==kord[b.kind])return kord[a.kind]-kord[b.kind];
+    return 0;
+  });
+  var lat=[],tdy=[],son=[],i;
+  for(i=0;i<items.length;i++){
+    if(items[i].grp==='late')lat.push(items[i]);
+    else if(items[i].grp==='today')tdy.push(items[i]);
+    else son.push(items[i]);
+  }
+  function rrList(list){
+    var h2='',j;
+    for(j=0;j<Math.min(list.length,15);j++){
+      var cls=(list[j].grp==='late')?'late':'soon';
+      h2+='<div class="rr '+cls+'" data-act="open-'+list[j].kind+'" data-id="'+list[j].id+'" title="Ouvrir"><span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(list[j].lab)+'</span><span class="tiny muted" style="flex:0 0 auto">'+esc(list[j].sub)+'</span></div>';
+    }
+    if(list.length>15)h2+='<div class="tiny muted" style="padding:2px 4px">+'+(list.length-15)+' autre(s)</div>';
+    return h2;
+  }
   var h='<div class="remind">';
-  h+='<h4>🔔 Relances ('+items.length+')<button class="btn sm ghost" data-act="remind-toggle" title="Réduire le panneau">✕</button></h4>';
-  if(lat.length){h+='<div class="small" style="color:var(--danger);font-weight:600;margin-bottom:4px">🚨 En retard ('+lat.length+')</div>';
-    for(i=0;i<Math.min(lat.length,15);i++){h+='<div class="rr late" data-act="open-'+lat[i].kind+'" data-id="'+lat[i].id+'" title="Ouvrir"><span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(lat[i].lab)+'</span><span class="tiny muted" style="flex:0 0 auto">'+esc(lat[i].sub)+'</span></div>';}
-  }
-  if(son.length){h+='<div class="small" style="color:var(--warn);font-weight:600;margin:6px 0 4px">🟠 À venir ('+son.length+')</div>';
-    for(i=0;i<Math.min(son.length,15);i++){h+='<div class="rr soon" data-act="open-'+son[i].kind+'" data-id="'+son[i].id+'" title="Ouvrir"><span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(son[i].lab)+'</span><span class="tiny muted" style="flex:0 0 auto">'+esc(son[i].sub)+'</span></div>';}
-  }
+  h+='<h4>🔔 Relances ('+items.length+')<button class="btn sm ghost" data-act="remind-sort" title="Changer le tri : par échéance (chronologique) ou par type (tâches, dossiers, notes/captures)">'+(sortMode==='date'?'⇅ échéance':'⇅ type')+'</button><button class="btn sm ghost" data-act="remind-toggle" title="Réduire le panneau">✕</button></h4>';
+  if(lat.length){h+='<div class="small" style="color:var(--danger);font-weight:600;margin-bottom:4px">🚨 En retard ('+lat.length+')</div>'+rrList(lat);}
+  if(tdy.length){h+='<div class="small" style="color:#b45309;font-weight:600;margin:6px 0 4px">📅 Aujourd’hui ('+tdy.length+')</div>'+rrList(tdy);}
+  if(son.length){h+='<div class="small" style="color:var(--warn);font-weight:600;margin:6px 0 4px">🟠 À venir ('+son.length+')</div>'+rrList(son);}
   h+='</div>';
   root.innerHTML=h;
 }
@@ -2413,7 +2747,7 @@ function pageSynchro(){
   var h='<div class="content"><div class="page-head"><h1 class="page-title">☁️ Synchro multi-appareils</h1></div>';
   h+='<div class="banner info">Vos données sont <b>chiffrées de bout en bout</b> (AES-GCM 256 bits, clé dérivée de votre passphrase) avant tout envoi. Le serveur ne voit jamais le contenu, ni la passphrase — uniquement un email de compte.</div>';
   h+='<h2 class="sec-title">État</h2><div class="step">';
-  h+='<p>Version de l’appli : <b>v5.9</b></p>';
+  h+='<p>Version de l’appli : <b>v5.10</b></p>';
   h+='<p>Configuration : '+(sbReady()?'<b style="color:var(--ok)">complète ✓</b>':'<b>incomplète</b> — il manque : <b>'+sbMissing()+'</b>')+(c.email?' — compte : <b>'+esc(c.email)+'</b>':'')+'</p>';
   h+='<p>Dernière synchro : <b>'+(state.sb.last||'jamais')+'</b>'+(state.sb.busy?' (en cours…)':'')+(state.sb.err?' <span style="color:var(--danger)">⚠️ '+esc(state.sb.err)+'</span>':'')+'</p>';
   h+='<div class="toolbar" style="margin-top:8px">'
@@ -2938,7 +3272,10 @@ function saveTacheForm(f){
   var t=id?findTache(id):null;
   if(!t){t={id:uid(),cree:today()};state.taches.push(t);}
   t.titre=el.tit.value.trim()||'Sans titre';
-  t.statut=el.st.value;
+  var stNv=el.st.value;
+  if(stNv==='fait'&&t.statut!=='fait')t.faitLe=today();
+  if(stNv!=='fait')t.faitLe='';
+  t.statut=stNv;
   t.priorite=el.prio.value;
   t.contexte=el.ctx.value;
   t.echeance=el.ech.value;
@@ -2968,14 +3305,21 @@ function saveNoteForm(f){
   n.echeance=el.ech.value;
   n.heure=el.heur.value;
   n.prio=el.prio.value;
-  n.traitee=(el.tr.value==='oui');
+  var trNv=(el.tr.value==='oui');
+  if(trNv&&!n.traitee)n.traiteeLe=today();
+  if(!trNv)n.traiteeLe='';
+  n.traitee=trNv;
   if(n.capture&&el.capdo){
     if(el.capdo.value==='conv'){n.capture=false;n.origine='capture';n.trieeLe=today();}
   }
   n.dossierId=el.dos.value;
   n.tacheId=el.ta.value;
   n.docId=el.doc.value;
-  if(state._noteImg){n.image=state._noteImg;state._noteImg='';}
+  if(state._noteImgs&&state._noteImgs.length){
+    n.images=(n.images||[]).concat(state._noteImgs);
+    n.image=n.images[0]||'';
+    state._noteImgs=[];state._noteImg='';
+  }
   n.maj=today();
   save();closeModal();toast('Note enregistrée');
   if(nouveau){navGo('note',n.id);}
@@ -3006,28 +3350,33 @@ function saveDocForm(f){
 }
 function saveCaptureForm(f){
   var el=f.elements;
-  var n={id:uid(),titre:el.tit.value.trim()||'Idée',contenu:'',tags:[],contexte:'pro',dossierId:el.dos.value,tacheId:'',docId:'',epinglee:false,echeance:el.ech.value,traitee:false,capture:true,image:state._capImg||'',maj:today()};
+  var imgs=(state._capImgs||[]).slice();
+  var n={id:uid(),titre:el.tit.value.trim()||'Idée',contenu:'',tags:[],contexte:'pro',dossierId:el.dos.value,tacheId:'',docId:'',epinglee:false,echeance:el.ech.value,traitee:false,traiteeLe:'',capture:true,image:(imgs.length?imgs[0]:''),images:imgs,prio:'normale',origine:'',autoFloat:false,trieeLe:'',liste:[],listeOn:false,maj:today()};
   state.notes.push(n);
-  state._capImg='';
-  save();closeModal();toast('Idée capturée ⚡');
+  state._capImgs=[];state._capImg='';
+  save();closeModal();toast('Idée capturée ⚡'+(imgs.length?' ('+imgs.length+' image(s))':''));
   render();
 }
 function readImage(file,dest){
+  if(!file)return;
   var rd=new FileReader();
   rd.onload=function(){
     var s=String(rd.result);
     if(s.length>1500000){alert('Image trop lourde (plus d’1 Mo après conversion) — recadrez-la ou compressez-la avant.');return;}
-    if(dest==='cap'){
-      state._capImg=s;
-      var info=document.getElementById('cap-img-info');
-      if(info)info.innerHTML='🖼 Image jointe ('+Math.round(s.length/1365)+' Ko)';
-    }else{
-      state._noteImg=s;
-      var info2=document.getElementById('note-img-info');
-      if(info2)info2.innerHTML='🖼 Image jointe ('+Math.round(s.length/1365)+' Ko)';
-    }
+    var arr,infoId;
+    if(dest==='cap'){arr=state._capImgs=state._capImgs||[];infoId='cap-img-info';}
+    else{arr=state._noteImgs=state._noteImgs||[];infoId='note-img-info';}
+    arr.push(s);
+    var info=document.getElementById(infoId);
+    if(info)info.innerHTML='🖼 '+arr.length+' image(s) jointe(s)';
   };
   rd.readAsDataURL(file);
+}
+function readImageFiles(files,dest){
+  var i;
+  for(i=0;i<(files||[]).length;i++){
+    if(files[i]&&String(files[i].type||'').indexOf('image')===0)readImage(files[i],dest);
+  }
 }
 
 // ===== Fichiers importés (copies en IndexedDB, ≤ 10 Mo) =====
@@ -3183,7 +3532,7 @@ document.addEventListener('click',function(ev){
   else if(a==='edit-dossier'){modalDossier(id);}
   else if(a==='edit-note'){modalNote(id,'');}
   else if(a==='tache-toggle'){
-    var t=findTache(id);if(t){t.statut=(t.statut==='fait')?'a-faire':'fait';t.maj=today();save();render();}
+    var t=findTache(id);if(t){t.statut=(t.statut==='fait')?'a-faire':'fait';if(t.statut==='fait'){t.faitLe=today();}else{t.faitLe='';}t.maj=today();save();render();renderQa();}
   }
   else if(a==='del-dossier'){
     var d=findDossier(id);
@@ -3371,10 +3720,10 @@ document.addEventListener('click',function(ev){
   }
   else if(a==='quick-capture'){modalCapture();}
   else if(a==='note-traitee'){
-    var n3=findNote(id);if(n3){n3.traitee=!n3.traitee;save();render();}
+    var n3=findNote(id);if(n3){n3.traitee=!n3.traitee;n3.traiteeLe=(n3.traitee?today():'');n3.maj=today();save();render();renderRemind();}
   }
   else if(a==='note-delimg'){
-    var n4=findNote(id);if(n4){n4.image='';save();modalNote(id,'','');render();}
+    var n4=findNote(id);if(n4){n4.image='';n4.images=[];n4.maj=today();save();modalNote(id,'','');render();}
   }
   else if(a==='img-view'){
     var src=el.getAttribute('src');
@@ -3407,8 +3756,43 @@ document.addEventListener('click',function(ev){
   else if(a==='new-doc-link'){modalDoc('','','lien');}
   else if(a==='doc-copy'){
     var x5=findDoc(id);
-    if(x5&&x5.localisation){copyText(x5.localisation);docFloatFor(id);urlShortcutFor(x5);}
+    if(x5&&x5.localisation){copyText(x5.localisation);docFloatFor(id);}
     else{toast('Aucune localisation enregistrée pour ce document.');}
+  }
+  else if(a==='doc-url'){
+    var xU=findDoc(id);
+    if(xU)urlShortcutFor(xU);
+  }
+  else if(a==='doc-quickopen'){
+    var xq=findDoc(id);
+    if(!xq){return;}
+    if(/^https?:\/\//i.test(String(xq.localisation||''))){
+      try{window.open(xq.localisation,'_blank');}catch(eQo){}
+      toast('Lien ouvert dans un nouvel onglet ✓');
+      return;
+    }
+    if(xq.stocke){
+      idbGet(id).then(function(blob){
+        if(!blob){toast('Copie introuvable — réimportez le fichier.');return;}
+        var u=URL.createObjectURL(blob);
+        var nmQ=String(xq.nom||'document');
+        var extQ=(nmQ.indexOf('.')>=0?nmQ.split('.').pop():'').toLowerCase();
+        var burQ=['doc','docx','xls','xlsx','ppt','pptx','odt','ods','odp','rtf','txt','csv'];
+        if(burQ.indexOf(extQ)>=0){
+          var aQ=document.createElement('a');aQ.href=u;aQ.download=nmQ;
+          document.body.appendChild(aQ);aQ.click();
+          try{aQ.remove();}catch(eQ2){}
+          toast('« '+esc(nmQ)+' » téléchargé — il s’ouvre avec votre application (Word, Excel…).');
+        }else{
+          var wQ=null;
+          try{wQ=window.open(u,'_blank');}catch(eQ3){}
+          if(!wQ)toast('Ouverture bloquée — autorisez les fenêtres surgissantes.');
+        }
+      })['catch'](function(){toast('Impossible d’ouvrir la copie.');});
+      return;
+    }
+    if(xq.localisation){copyText(xq.localisation,'Chemin copié ✓ — collez-le dans l’Explorateur (Ctrl+V) pour ouvrir le fichier.');return;}
+    toast('Ce document n’a ni lien, ni copie, ni chemin — ouvrez sa fiche pour le compléter.');
   }
   else if(a==='doc-openlink'){
     var x6=findDoc(id);
@@ -3431,6 +3815,80 @@ document.addEventListener('click',function(ev){
     else if(qk2==='note'){var qn2=findNote(id);if(qn2){qn2.ouvertLe=Date.now();qaTouch('note',id,qn2.titre);}navGo('note',id);render();renderRemind();}
   }
   else if(a==='remind-toggle'){var pr3=getPrefs();pr3.remindOff=!pr3.remindOff;setPrefs(pr3);renderRemind();}
+  // ===== v5.10 : épinglage tâches, presse-papiers, vues, relances, images, listes =====
+  else if(a==='remind-sort'){
+    var prs=getPrefs();
+    prs.remindSort=(remindSortPref()==='date')?'type':'date';
+    setPrefs(prs);
+    renderRemind();
+    toast('Relances triées par '+(prs.remindSort==='date'?'échéance (chronologique)':'type (tâches, dossiers, notes, captures)'));
+  }
+  else if(a==='tac-pin'){
+    var tp=findTache(id);
+    if(tp){tp.epingle=!tp.epingle;tp.maj=today();save();render();renderQa();toast(tp.epingle?'Tâche épinglée ✓ — visible dans le panneau ⭐ Accès rapide':'Tâche détachée du panneau ⭐');}
+  }
+  else if(a==='vue-switch'){
+    var vk=el.getAttribute('data-kind')||'';
+    if(state.vue[vk]){state.vue[vk]=el.getAttribute('data-vue')||'liste';render();}
+  }
+  else if(a==='clip-copy'){
+    state._clip={mode:'copy',kind:el.getAttribute('data-kind')||'',id:id};
+    toast('Copié ✓ : « '+clipLabel()+' » — ouvrez un dossier puis cliquez 📥 Coller ici');
+    render();
+  }
+  else if(a==='clip-cut'){
+    state._clip={mode:'cut',kind:el.getAttribute('data-kind')||'',id:id};
+    toast('Coupé ✂ : « '+clipLabel()+' » — ouvrez le dossier de destination puis cliquez 📥 Coller ici');
+    render();
+  }
+  else if(a==='clip-paste'){
+    clipPaste(id||'');
+  }
+  else if(a==='cap-pasteimg'){
+    var clipApi=null;
+    try{clipApi=navigator.clipboard;}catch(eCp){}
+    if(!clipApi||!clipApi.read){
+      toast('Ce navigateur ne peut pas lire l’image du presse-papier automatiquement — utilisez Ctrl+V dans cette fenêtre, le bouton 📷, ou glissez l’image dans la zone prévue.');
+      return;
+    }
+    clipApi.read().then(function(items){
+      var iCp;
+      for(iCp=0;iCp<items.length;iCp++){
+        var tp2=items[iCp]&&items[iCp].types?items[iCp].types:[];
+        var jCp;
+        for(jCp=0;jCp<tp2.length;jCp++){
+          if(String(tp2[jCp]).indexOf('image')===0){
+            return items[iCp].getType(tp2[jCp]).then(function(blob){readImage(blob,'cap');toast('Image collée ✓');});
+          }
+        }
+      }
+      toast('Aucune image dans le presse-papier — copiez d’abord une image (Imp écran / Ctrl+C), puis réessayez.');
+    })['catch'](function(){toast('Lecture du presse-papier refusée par le navigateur — utilisez Ctrl+V directement dans cette fenêtre.');});
+  }
+  else if(a==='note-imgdel'){
+    var nd=findNote(id);
+    var attrI=el.getAttribute('data-i');
+    if(nd){
+      var lst=noteImgList(nd);
+      if(attrI===null){lst=[];}
+      else{var ixImg=nNum(attrI);if(ixImg>=0&&ixImg<lst.length){lst.splice(ixImg,1);}}
+      nd.images=lst;
+      nd.image=(lst.length?lst[0]:'');
+      nd.maj=today();save();render();
+    }
+  }
+  else if(a==='note-liste-on'){
+    var nl0=findNote(id);
+    if(nl0){nl0.listeOn=true;if(!nl0.liste)nl0.liste=[];nl0.maj=today();save();render();toast('Liste ajoutée sous le contenu ✓ — ajoutez vos articles, cochez-les, ils se barrent.');}
+  }
+  else if(a==='form-submit'){
+    var fS=null;
+    try{fS=el.closest?el.closest('form'):null;}catch(eFs){}
+    if(fS){
+      if(typeof fS.requestSubmit==='function'){fS.requestSubmit();}
+      else if(fS.dispatchEvent){fS.dispatchEvent(new Event('submit',{cancelable:true}));}
+    }
+  }
   // ===== v5.9 : historiques déroulants, listes à cocher, exemples fusionnés =====
   else if(a==='voir-faites'){state._voirFaites=!state._voirFaites;renderPageBody();}
   else if(a==='voir-capfaites'){state._voirCapFaites=!state._voirCapFaites;render();}
@@ -3526,6 +3984,27 @@ document.addEventListener('submit',function(ev){
   var wrap={'f-dossier':saveDossierForm,'f-tache':saveTacheForm,'f-note':saveNoteForm,'f-doc':saveDocForm,'f-capture':saveCaptureForm,'f-qedit':saveQeditForm,'f-ech':saveEchForm,'f-synchro':saveSynchroForm};
   var fn=wrap[f.id];
   if(!fn)return;
+  // v5.10 : plus jamais un « Enregistrer » silencieux — les champs obligatoires vides sont signalés explicitement
+  var reqs=null;
+  try{reqs=f.querySelectorAll('[required]');}catch(eReq){reqs=null;}
+  if(reqs&&reqs.length){
+    var rq;
+    for(rq=0;rq<reqs.length;rq++){
+      var elReq=reqs[rq];
+      var rv=String((elReq.value==null)?'':elReq.value);
+      if(!rv.trim()){
+        var lbl='ce champ';
+        try{
+          var prev=elReq.previousElementSibling;
+          while(prev&&prev.tagName!=='LABEL'){prev=prev.previousElementSibling;}
+          if(prev&&prev.textContent)lbl=String(prev.textContent).replace(/[*:：]\s*$/,'').replace(/\s*[*]\s*$/,'').trim();
+        }catch(eLab){}
+        toast('⚠️ Enregistrement impossible : « '+lbl+' » est obligatoire et vide — il est surligné dans la fenêtre.');
+        try{elReq.style.outline='2px solid #dc2626';elReq.focus();}catch(eFoc){}
+        return;
+      }
+    }
+  }
   try{fn(f);}
   catch(eSave){
     try{console.error(eSave);}catch(eC){}
@@ -3554,9 +4033,9 @@ document.addEventListener('change',function(ev){
   var el=ev.target;
   if(!el||!el.getAttribute)return;
   if(el.id==='imp-json'){if(el.files&&el.files[0])importJson(el.files[0]);return;}
-  if(el.id==='cap-img'){if(el.files&&el.files[0])readImage(el.files[0],'cap');return;}
-  if(el.id==='cap-cam'){if(el.files&&el.files[0])readImage(el.files[0],'cap');return;}
-  if(el.id==='note-img'){if(el.files&&el.files[0])readImage(el.files[0],'note');return;}
+  if(el.id==='cap-img'){if(el.files)readImageFiles(el.files,'cap');return;}
+  if(el.id==='cap-cam'){if(el.files)readImageFiles(el.files,'cap');return;}
+  if(el.id==='note-img'){if(el.files)readImageFiles(el.files,'note');return;}
   if(el.id==='doc-file'){if(el.files)importFiles(el.files,el.getAttribute('data-dos')||'');return;}
   if(el.id==='cal-pick'){state.calSel=el.value||today();render();return;}
   if(el.id==='rt-color'){try{document.execCommand('foreColor',false,el.value||'');}catch(e){}el.value='';return;}
@@ -3618,7 +4097,10 @@ document.addEventListener('keydown',function(ev){
   if(ev.key==='c'||ev.key==='C'){modalCapture();}
   else if(ev.key==='/'){var g=document.getElementById('gsearch');if(g&&g.focus){ev.preventDefault();g.focus();}}
 });
-document.addEventListener('paste',function(ev){
+// v5.10 : coller une image dans la capture — triple chemin : listener document + listener window + bouton 📋
+function capPasteImgHandler(ev){
+  if(ev&&ev.__capImgDone)return; // le même événement bulle jusqu’à window : ne pas ajouter l’image deux fois
+  if(ev)ev.__capImgDone=true;
   var inCap=false;
   try{inCap=!!document.querySelector('#f-capture');}catch(e){}
   if(!inCap)return;
@@ -3628,20 +4110,14 @@ document.addEventListener('paste',function(ev){
     if(items[i].type&&items[i].type.indexOf('image')===0){
       var blob=items[i].getAsFile();
       if(!blob)continue;
-      var rd=new FileReader();
-      rd.onload=function(){
-        var s=String(rd.result);
-        if(s.length>1500000){alert('Image trop lourde (plus d’1 Mo) — recadrez-la ou compressez-la avant.');return;}
-        state._capImg=s;
-        var info=document.getElementById('cap-img-info');
-        if(info)info.innerHTML='🖼 Image jointe ('+Math.round(s.length/1365)+' Ko)';
-      };
-      rd.readAsDataURL(blob);
+      readImage(blob,'cap');
       ev.preventDefault();
       break;
     }
   }
-});
+}
+document.addEventListener('paste',capPasteImgHandler);
+try{window.addEventListener('paste',capPasteImgHandler);}catch(eWin){}
 // Glisser-déposer : kanban + déplacements « explorateur » (v5.8)
 document.addEventListener('dragstart',function(ev){
   var c=ev.target.closest?ev.target.closest('.kcard'):null;
@@ -3664,6 +4140,14 @@ document.addEventListener('dragleave',function(ev){
   if(dg&&dg.classList&&dg.classList.remove)dg.classList.remove('drop-on');
 });
 document.addEventListener('drop',function(ev){
+  var capDrop=ev.target.closest?ev.target.closest('#cap-drop'):null;
+  if(capDrop){
+    ev.preventDefault();
+    var filesDrop=ev.dataTransfer.files;
+    if(filesDrop&&filesDrop.length){readImageFiles(filesDrop,'cap');toast('Image(s) ajoutée(s) à la capture ✓');}
+    else{toast('Déposez un fichier image (PNG, JPG…) — aucun fichier image détecté.');}
+    return;
+  }
   var dz=ev.target.closest?ev.target.closest('#dz-docs'):null;
   if(dz){ev.preventDefault();dz.className='dropzone';importFiles(ev.dataTransfer.files,dz.getAttribute('data-dos')||'');return;}
   var tgt=ev.target.closest?ev.target.closest('[data-drop]'):null;
@@ -3722,12 +4206,28 @@ document.addEventListener('drop',function(ev){
   var c=ev.target.closest?ev.target.closest('.kcol'):null;
   if(!c)return;
   ev.preventDefault();
-  var id=state._drag;
-  try{var dt=ev.dataTransfer.getData('text/plain');if(dt)id=dt;}catch(e){}
+  var pl=state._drag;
+  try{var dt=ev.dataTransfer.getData('text/plain');if(dt)pl=dt;}catch(e){}
+  state._drag='';
+  // v5.10 : payload kv:<kind>:<id> = kanban générique (dossiers / documents / notes-captures)
+  if(pl.indexOf('kv:')===0){
+    var kvParts=pl.split(':');
+    if(kvParts.length>=3){
+      var kvKind=kvParts[1],kvId=kvParts.slice(2).join(':');
+      var kvField=c.getAttribute('data-kkind'),kvVal=c.getAttribute('data-kval');
+      if(kvField===kvKind||(kvKind==='not'&&kvField==='not')){
+        if(kvKind==='dos'){var kd=findDossier(kvId);if(kd){kd.statut=kvVal;kd.maj=today();save();}}
+        else if(kvKind==='doc'){var kx=findDoc(kvId);if(kx){kx.role=kvVal;kx.maj=today();save();}}
+        else if(kvKind==='not'){var kn=findNote(kvId);if(kn){var nvTr=(kvVal==='done');if(nvTr&&!kn.traitee)kn.traiteeLe=today();if(!nvTr)kn.traiteeLe='';kn.traitee=nvTr;kn.maj=today();save();}}
+      }
+    }
+    render();
+    return;
+  }
+  var id=pl;
   if(id&&id.indexOf(':')>=0)id=id.split(':')[1];
   var t=findTache(id);
   if(t){t.statut=c.getAttribute('data-statut');t.maj=today();save();}
-  state._drag='';
   render();
 });
 
