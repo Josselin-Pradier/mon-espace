@@ -148,6 +148,11 @@ h2.sec-title{font-size:15px;margin:22px 0 10px;color:#334155}
 .doc-card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;cursor:pointer}
 .doc-card:hover{box-shadow:0 4px 14px rgba(30,41,59,.09)}
 .doc-path{font-size:11px;color:#475569;background:#f8fafc;border:1px solid var(--line);border-radius:6px;padding:2px 6px;display:inline-block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:6px;text-decoration:none}
+.card .card-title,.doc-card .card-title{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.doc-card .card-sub{font-size:11px;color:#64748b;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.drop-on{outline:2px dashed var(--accent);outline-offset:2px}
+[draggable="true"]{cursor:grab}
+.remind h4 .btn{margin-left:6px}
 .capbtn{background:#f59e0b;border-color:#f59e0b;color:#fff;font-weight:600}
 .capbtn:hover{background:#d97706;border-color:#d97706}
 .eco.s2{background:#ffedd5;color:#c2410c}
@@ -208,7 +213,7 @@ input[type=file]{padding:5px;font-size:12px}
 .pinband-line .t{font-weight:600;cursor:pointer;white-space:nowrap;max-width:360px;overflow:hidden;text-overflow:ellipsis}
 .crumbs{display:flex;flex-wrap:wrap;gap:4px;align-items:center;font-size:12px;color:var(--muted);margin-bottom:10px}
 .crumbs a{color:var(--accent);cursor:pointer}
-#remind-root{position:fixed;top:64px;right:16px;z-index:40;display:flex;justify-content:flex-end;pointer-events:none}
+#remind-root{position:fixed;top:64px;right:16px;z-index:40;display:flex;flex-direction:column;align-items:flex-end;gap:8px;pointer-events:none}
 .remind-toggle{pointer-events:auto}
 .remind{pointer-events:auto;width:min(320px,26vw);max-height:26vh;overflow:auto;background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:0 6px 18px rgba(15,23,42,.16);padding:10px 12px;font-size:12.5px}
 .remind h4{margin:0 0 6px;font-size:13px;display:flex;justify-content:space-between;align-items:center}
@@ -253,7 +258,7 @@ input[type=file]{padding:5px;font-size:12px}
     <a class="snav" data-act="open-listes">⚙️ Mes listes</a>
     <a class="snav" data-act="open-export">💾 Export &amp; sauvegarde</a>
     <a class="snav" data-act="open-help">❓ Aide &amp; confidentialité</a>
-    <div class="side-note">Mon Espace v5.7 — 100 % local par défaut. Connexion Outlook et synchro chiffrée (page ☁️) optionnelles — vous décidez.</div>
+    <div class="side-note">Mon Espace v5.8 — 100 % local par défaut. Connexion Outlook et synchro chiffrée (page ☁️) optionnelles — vous décidez.</div>
   </div>
 </aside>
 <div class="wrap">
@@ -433,6 +438,7 @@ function needBackup(){
 }
 
 // ===== Migration / normalisation (évolution sans casse) =====
+function nNum(v){var n=Number(v);return isFinite(n)?n:0;}
 function normalize(src){
   var d=(src&&typeof src==='object')?src:{};
   var out={version:VERSION,exemple:!!d.exemple,dossiers:[],taches:[],notes:[],docs:[]};
@@ -440,14 +446,14 @@ function normalize(src){
   if(d.dossiers){
     for(i=0;i<d.dossiers.length;i++){
       x=d.dossiers[i];if(!x||!x.id)continue;
-      out.dossiers.push({id:String(x.id),parentId:String(x.parentId||''),nom:String(x.nom||'Sans titre'),statut:validK(DOS_STATUTS,x.statut,'ouvert'),contexte:validK(CONTEXTES,x.contexte,'pro'),categorie:String(x.categorie||''),echeance:String(x.echeance||''),description:String(x.description||''),cree:String(x.cree||today()),maj:String(x.maj||today())});
+      out.dossiers.push({id:String(x.id),parentId:String(x.parentId||''),nom:String(x.nom||'Sans titre'),statut:validK(DOS_STATUTS,x.statut,'ouvert'),contexte:validK(CONTEXTES,x.contexte,'pro'),categorie:String(x.categorie||''),echeance:String(x.echeance||''),description:String(x.description||''),epingle:!!x.epingle,ordre:nNum(x.ordre),ouvertLe:nNum(x.ouvertLe),cree:String(x.cree||today()),maj:String(x.maj||today())});
     }
   }
   if(d.taches){
     for(i=0;i<d.taches.length;i++){
       x=d.taches[i];if(!x||!x.id)continue;
       var st=x.statut;if(!st){st=(x.fait?'fait':'a-faire');}
-      out.taches.push({id:String(x.id),titre:String(x.titre||'Sans titre'),statut:validK(TACHE_STATUTS,st,'a-faire'),priorite:validK(PRIORITES,x.priorite,'normale'),contexte:validK(CONTEXTES,x.contexte,'pro'),echeance:String(x.echeance||''),heure:String(x.heure||''),dossierId:String(x.dossierId||''),description:String(x.description||''),cree:String(x.cree||today()),maj:String(x.maj||today())});
+      out.taches.push({id:String(x.id),titre:String(x.titre||'Sans titre'),statut:validK(TACHE_STATUTS,st,'a-faire'),priorite:validK(PRIORITES,x.priorite,'normale'),contexte:validK(CONTEXTES,x.contexte,'pro'),echeance:String(x.echeance||''),heure:String(x.heure||''),dossierId:String(x.dossierId||''),description:String(x.description||''),ordre:nNum(x.ordre),ouvertLe:nNum(x.ouvertLe),cree:String(x.cree||today()),maj:String(x.maj||today())});
     }
   }
   if(d.notes){
@@ -456,7 +462,7 @@ function normalize(src){
       var tags=[];
       if(Array.isArray(x.tags)){var j;for(j=0;j<x.tags.length;j++){if(x.tags[j])tags.push(String(x.tags[j]));}}
       else if(typeof x.tags==='string'&&x.tags){var parts=x.tags.split(',');for(var k=0;k<parts.length;k++){if(parts[k].trim())tags.push(parts[k].trim());}}
-      out.notes.push({id:String(x.id),titre:String(x.titre||'Sans titre'),contenu:String(x.contenu||''),tags:tags,contexte:validK(CONTEXTES,x.contexte,'pro'),dossierId:String(x.dossierId||''),tacheId:String(x.tacheId||''),docId:String(x.docId||''),epinglee:!!x.epinglee,echeance:String(x.echeance||''),heure:String(x.heure||''),traitee:!!x.traitee,capture:!!x.capture,image:String(x.image||''),prio:validK(PRIORITES,x.prio,'normale'),origine:String(x.origine||''),autoFloat:!!x.autoFloat,trieeLe:String(x.trieeLe||''),maj:String(x.maj||today())});
+      out.notes.push({id:String(x.id),titre:String(x.titre||'Sans titre'),contenu:String(x.contenu||''),tags:tags,contexte:validK(CONTEXTES,x.contexte,'pro'),dossierId:String(x.dossierId||''),tacheId:String(x.tacheId||''),docId:String(x.docId||''),epinglee:!!x.epinglee,echeance:String(x.echeance||''),heure:String(x.heure||''),traitee:!!x.traitee,capture:!!x.capture,image:String(x.image||''),prio:validK(PRIORITES,x.prio,'normale'),origine:String(x.origine||''),autoFloat:!!x.autoFloat,trieeLe:String(x.trieeLe||''),ordre:nNum(x.ordre),ouvertLe:nNum(x.ouvertLe),maj:String(x.maj||today())});
     }
   }
   if(d.docs){
@@ -464,7 +470,7 @@ function normalize(src){
       x=d.docs[i];if(!x||!x.id)continue;
       var dIds=[];
       if(Array.isArray(x.dossiers)){var w2;for(w2=0;w2<x.dossiers.length;w2++){if(x.dossiers[w2])dIds.push(String(x.dossiers[w2]));}}
-      out.docs.push({id:String(x.id),nom:String(x.nom||'Sans nom'),type:validK(DOC_TYPES,x.type,'autre'),role:validK(DOC_ROLES,x.role,'livrable'),localisation:String(x.localisation||''),description:String(x.description||''),dossiers:dIds,stocke:!!x.stocke,cree:String(x.cree||today()),maj:String(x.maj||today())});
+      out.docs.push({id:String(x.id),nom:String(x.nom||'Sans nom'),type:validK(DOC_TYPES,x.type,'autre'),role:validK(DOC_ROLES,x.role,'livrable'),localisation:String(x.localisation||''),description:String(x.description||''),dossiers:dIds,stocke:!!x.stocke,ordre:nNum(x.ordre),ouvertLe:nNum(x.ouvertLe),cree:String(x.cree||today()),maj:String(x.maj||today())});
     }
   }
   return out;
@@ -472,12 +478,12 @@ function normalize(src){
 
 // ===== Données d’exemple (première ouverture / bouton « Charger les exemples ») =====
 function seedData(){
-  var d1=uid(),d2=uid(),d3=uid(),d4=uid(),d5=uid(),d6=uid(),d7=uid();
-  var t=new Array(16),n=new Array(13),c=new Array(7),g=new Array(7),i;
-  for(i=1;i<16;i++)t[i]=uid();
-  for(i=1;i<13;i++)n[i]=uid();
-  for(i=1;i<7;i++)c[i]=uid();
-  for(i=1;i<7;i++)g[i]=uid();
+  var d1=uid(),d2=uid(),d3=uid(),d4=uid(),d5=uid(),d6=uid(),d7=uid(),d8=uid(),d9=uid(),d10=uid(),d11=uid();
+  var t=new Array(19),n=new Array(16),c=new Array(9),g=new Array(10),i;
+  for(i=1;i<19;i++)t[i]=uid();
+  for(i=1;i<16;i++)n[i]=uid();
+  for(i=1;i<9;i++)c[i]=uid();
+  for(i=1;i<10;i++)g[i]=uid();
   var IMG='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
   var notes=[
       {id:n[1],titre:'Checklist documents passeport',contenu:'- Photo d’identité conforme\n- Justificatif de domicile < 3 mois\n- Ancien passeport\n- Timbre fiscal (montant sur le site ANTS)',tags:['administratif','checklist'],contexte:'perso',dossierId:d2,tacheId:t[3],docId:'',epinglee:false,echeance:plusJours(2),heure:'',traitee:false,capture:false,image:'',prio:'haute',origine:'',autoFloat:false,trieeLe:'',maj:today()},
@@ -491,7 +497,10 @@ function seedData(){
       {id:n[9],titre:'Rappel scellant photo',contenu:'Le scellant photo du passeport expire le mois prochain — voir avec la mairie.',tags:['administratif'],contexte:'perso',dossierId:d2,tacheId:'',docId:'',epinglee:false,echeance:plusJours(-1),heure:'',traitee:false,capture:false,image:'',prio:'urgente',origine:'',autoFloat:false,trieeLe:'',maj:today()},
       {id:n[10],titre:'Revue de presse à piocher',contenu:'Article Ouest-France sur les nichoirs urbains ; interview radio France Bleu sur la biodiversité urbaine.',tags:['presse','source'],contexte:'pro',dossierId:d7,tacheId:t[14],docId:'',epinglee:false,echeance:'',heure:'',traitee:true,capture:false,image:'',prio:'normale',origine:'',autoFloat:false,trieeLe:'',maj:today()},
       {id:n[11],titre:'Contact mairie — dépliant',contenu:'Marie (service communication) : marie.dupont@exemple.fr — a promis le dépliant 2025 dans la semaine.',tags:['contact'],contexte:'pro',dossierId:d6,tacheId:t[15],docId:'',epinglee:false,echeance:plusJours(3),heure:'',traitee:true,capture:false,image:'',prio:'normale',origine:'capture',autoFloat:false,trieeLe:today(),maj:today()},
-      {id:n[12],titre:'Note sur la base chiffres',contenu:'Attention : l’onglet « 2025 » de la base contient des doublons d’observations — nettoyer avant le salon.',tags:['base','qualité'],contexte:'pro',dossierId:d7,tacheId:t[13],docId:g[2],epinglee:false,echeance:plusJours(10),heure:'',traitee:false,capture:false,image:'',prio:'normale',origine:'',autoFloat:true,trieeLe:'',maj:today()}
+      {id:n[12],titre:'Note sur la base chiffres',contenu:'Attention : l’onglet « 2025 » de la base contient des doublons d’observations — nettoyer avant le salon.',tags:['base','qualité'],contexte:'pro',dossierId:d7,tacheId:t[13],docId:g[2],epinglee:false,echeance:plusJours(10),heure:'',traitee:false,capture:false,image:'',prio:'normale',origine:'',autoFloat:true,trieeLe:'',maj:today()},
+      {id:n[13],titre:'Appels mécénat — dernières prises de contact',contenu:'<b>Fondation de France :</b> dossier à déposer avant fin du mois.\n<b>Entreprise Vasco :</b> très intéressée par la biodiversité, rappel sous 15 jours.\n<b>Groupe Pellier :</b> demande le rapport d’impact 2025 avant de décider.',tags:['mécénat','relances'],contexte:'pro',dossierId:d8,tacheId:t[16],docId:'',epinglee:true,echeance:plusJours(3),heure:'',traitee:false,capture:false,image:'',prio:'haute',origine:'',autoFloat:false,trieeLe:'',maj:today()},
+      {id:n[14],titre:'Points de vigilance convention mécénat',contenu:'- Viser la convention signée en 2023 avant échéance décembre\n- Mettre à jour le logo et les mentions légales\n- Faire relire par le service juridique',tags:['mécénat','juridique'],contexte:'pro',dossierId:d9,tacheId:'',docId:g[8],epinglee:false,echeance:plusJours(8),heure:'',traitee:false,capture:false,image:'',prio:'normale',origine:'',autoFloat:true,trieeLe:'',maj:today()},
+      {id:n[15],titre:'Contenu intervention « oiseaux du jardin »',contenu:'Public : classe de 6e, séance d’1 h.\n- Diaporama 20 min (espèces communes, chants)\n- Jeu de reconnaissance des chants (10 min)\n- Fabrication de mangeoirs en bouteilles (20 min)',tags:['formation','pédagogie'],contexte:'pro',dossierId:d11,tacheId:t[18],docId:g[9],epinglee:false,echeance:plusJours(28),heure:'',traitee:false,capture:false,image:'',prio:'normale',origine:'',autoFloat:false,trieeLe:'',maj:today()}
   ];
   notes.push(
       {id:c[1],titre:'Capture d’écran — post-it du salon',contenu:'Vu sur le site du salon des exposants.',tags:[],contexte:'pro',dossierId:'',tacheId:'',docId:'',epinglee:false,echeance:'',heure:'',traitee:false,capture:true,image:IMG,prio:'normale',origine:'',autoFloat:false,trieeLe:'',maj:today()},
@@ -499,7 +508,9 @@ function seedData(){
       {id:c[3],titre:'Idée : quiz vocal pour les enfants',contenu:'Un haut-parleur joue des chants d’oiseaux, les enfants devinent.',tags:[],contexte:'perso',dossierId:'',tacheId:'',docId:'',epinglee:false,echeance:'',heure:'',traitee:false,capture:true,image:'',prio:'normale',origine:'',autoFloat:false,trieeLe:'',maj:today()},
       {id:c[4],titre:'Vérifier le statut associatif pour la subvention',contenu:'Rapprocher la subvention du dossier salon ?',tags:[],contexte:'pro',dossierId:'',tacheId:'',docId:'',epinglee:false,echeance:plusJours(-2),heure:'',traitee:false,capture:true,image:'',prio:'haute',origine:'',autoFloat:false,trieeLe:'',maj:today()},
       {id:c[5],titre:'Photo du panneau d’information du refuge',contenu:'',tags:[],contexte:'perso',dossierId:'',tacheId:'',docId:'',epinglee:false,echeance:'',heure:'',traitee:false,capture:true,image:IMG,prio:'normale',origine:'',autoFloat:false,trieeLe:'',maj:today()},
-      {id:c[6],titre:'Rappel : appeler l’imprimeur pour les délais',contenu:'Avant de commander la bâche.',tags:[],contexte:'pro',dossierId:'',tacheId:'',docId:'',epinglee:false,echeance:plusJours(1),heure:'10:00',traitee:false,capture:true,image:'',prio:'haute',origine:'',autoFloat:false,trieeLe:'',maj:today()}
+      {id:c[6],titre:'Rappel : appeler l’imprimeur pour les délais',contenu:'Avant de commander la bâche.',tags:[],contexte:'pro',dossierId:'',tacheId:'',docId:'',epinglee:false,echeance:plusJours(1),heure:'10:00',traitee:false,capture:true,image:'',prio:'haute',origine:'',autoFloat:false,trieeLe:'',maj:today()},
+      {id:c[7],titre:'Capture — page « devenir mécène » d’un concurrent',contenu:'S’inspirer de la grille de contreparties pour notre dossier.',tags:[],contexte:'pro',dossierId:'',tacheId:'',docId:'',epinglee:false,echeance:'',heure:'',traitee:false,capture:true,image:IMG,prio:'normale',origine:'',autoFloat:false,trieeLe:'',maj:today()},
+      {id:c[8],titre:'Vérifier l’éligibilité subvention Fondation de France',contenu:'Statut associatif, comptes certifiés, rapport d’activité — tout est réuni ? À trier dans Mécénat.',tags:[],contexte:'pro',dossierId:'',tacheId:'',docId:'',epinglee:false,echeance:plusJours(5),heure:'',traitee:false,capture:true,image:'',prio:'haute',origine:'',autoFloat:false,trieeLe:'',maj:today()}
   );
   return {version:VERSION,exemple:true,
     dossiers:[
@@ -509,7 +520,11 @@ function seedData(){
       {id:d4,parentId:'',nom:'Salon biodiversité 2026',statut:'ouvert',contexte:'pro',categorie:'Événement',echeance:plusJours(21),description:'Stand association au salon : réservation, brochure, planning des bénévoles et communication.',cree:today(),maj:today()},
       {id:d5,parentId:d4,nom:'Stand & logistique',statut:'en-cours',contexte:'pro',categorie:'Logistique',echeance:plusJours(14),description:'Réservation de l’emplacement, transport du matériel, planning de présence.',cree:today(),maj:today()},
       {id:d6,parentId:d4,nom:'Communication du salon',statut:'ouvert',contexte:'pro',categorie:'Communication',echeance:plusJours(18),description:'Flyers, réseaux sociaux, communiqué de presse locale.',cree:today(),maj:today()},
-      {id:d7,parentId:'',nom:'Veille naturaliste',statut:'ouvert',contexte:'pro',categorie:'Récurrent',echeance:'',description:'Dossier permanent : observations, articles scientifiques, données d’espèces à piocher pour les supports.',cree:today(),maj:today()}
+      {id:d7,parentId:'',nom:'Veille naturaliste',statut:'ouvert',contexte:'pro',categorie:'Récurrent',echeance:'',description:'Dossier permanent : observations, articles scientifiques, données d’espèces à piocher pour les supports.',cree:today(),maj:today()},
+      {id:d8,parentId:'',nom:'Mécénat & partenariats',statut:'en-cours',contexte:'pro',categorie:'Financement',echeance:plusJours(15),epingle:true,description:'Dossier de travail mécénat : fondations, entreprises partenaires, conventions à renouveler et contreparties.',cree:today(),maj:today()},
+      {id:d9,parentId:d8,nom:'Fondations',statut:'attente',contexte:'pro',categorie:'Financement',echeance:plusJours(12),description:'Candidatures et suivis des fondations : dossiers à déposer, rapports attendus, conventions.',cree:today(),maj:today()},
+      {id:d10,parentId:d8,nom:'Entreprises partenaires',statut:'ouvert',contexte:'pro',categorie:'Financement',echeance:plusJours(20),description:'Réseau d’entreprises mécènes : relances, contreparties, événements partenaires.',cree:today(),maj:today()},
+      {id:d11,parentId:'',nom:'Formations & interventions',statut:'ouvert',contexte:'pro',categorie:'Récurrent',echeance:plusJours(30),description:'Interventions scolaires et formations grand public : supports, planning, contenus pédagogiques.',cree:today(),maj:today()}
     ],
     taches:[
       {id:t[1],titre:'Prendre rendez-vous ANTS',statut:'a-faire',priorite:'urgente',contexte:'perso',echeance:plusJours(-1),heure:'',dossierId:d2,description:'Sans rendez-vous, tout le dossier est bloqué.',cree:today(),maj:today()},
@@ -526,7 +541,10 @@ function seedData(){
       {id:t[12],titre:'Photographier les nichoirs du refuge',statut:'a-faire',priorite:'basse',contexte:'pro',echeance:'',heure:'',dossierId:d7,description:'',cree:today(),maj:today()},
       {id:t[13],titre:'Saisir les observations de la semaine',statut:'en-cours',priorite:'normale',contexte:'pro',echeance:plusJours(1),heure:'',dossierId:d7,description:'Base Excel à mettre à jour au fil de l’eau.',cree:today(),maj:today()},
       {id:t[14],titre:'Lire le rapport MNHN sur les passereaux',statut:'a-faire',priorite:'basse',contexte:'pro',echeance:plusJours(25),heure:'',dossierId:d7,description:'',cree:today(),maj:today()},
-      {id:t[15],titre:'Penser à demander le dépliant 2025 à Marie',statut:'fait',priorite:'normale',contexte:'pro',echeance:plusJours(0),heure:'',dossierId:d6,description:'',cree:today(),maj:today()}
+      {id:t[15],titre:'Penser à demander le dépliant 2025 à Marie',statut:'fait',priorite:'normale',contexte:'pro',echeance:plusJours(0),heure:'',dossierId:d6,description:'',cree:today(),maj:today()},
+      {id:t[16],titre:'Finaliser le dossier Fondation de France',statut:'a-faire',priorite:'haute',contexte:'pro',echeance:plusJours(12),heure:'',dossierId:d9,description:'Rapport d’impact + budget prévisionnel + convention signée à joindre.',cree:today(),maj:today()},
+      {id:t[17],titre:'Relancer les 5 entreprises du réseau mécénat',statut:'en-cours',priorite:'normale',contexte:'pro',echeance:plusJours(4),heure:'',dossierId:d10,description:'Appel ou mail à chaque entreprise — liste dans la note « Appels mécénat ».',cree:today(),maj:today()},
+      {id:t[18],titre:'Préparer l’intervention au collège (classe de 6e)',statut:'a-faire',priorite:'basse',contexte:'pro',echeance:plusJours(28),heure:'09:00',dossierId:d11,description:'Diaporama + jeu des chants + mangeoirs à prévoir avec l’enseignante.',cree:today(),maj:today()}
     ],
     notes:notes,
     docs:[
@@ -535,7 +553,10 @@ function seedData(){
       {id:g[3],nom:'Rapport LPO 2025.pdf',type:'pdf',role:'source',localisation:'https://sharepoint.exemple.fr/Documents/Rapports/rapport-lpo-2025.pdf',description:'Lien SharePoint : s’ouvre dans le navigateur, se modifie en ligne et se réenregistre côté serveur.',dossiers:[d7],stocke:false,cree:today(),maj:today()},
       {id:g[4],nom:'Flyer salon (maquette).docx',type:'word',role:'livrable',localisation:'Bureau\\Salon2026\\flyer-maquette.docx',description:'Maquette à faire relire par Marie avant impression.',dossiers:[d6],stocke:false,cree:today(),maj:today()},
       {id:g[5],nom:'Planning bénévoles.xlsx',type:'excel',role:'livrable',localisation:'https://sharepoint.exemple.fr/Documents/Planning/benevoles-salon.xlsx',description:'Sur SharePoint : modification en ligne, réenregistrement automatique côté serveur.',dossiers:[d5],stocke:false,cree:today(),maj:today()},
-      {id:g[6],nom:'Diaporama stand 2025.pptx',type:'ppt',role:'modele',localisation:'Bureau\\Salon2026\\stand-2025.pptx',description:'Modèle de l’an dernier à adapter (gabarit de diapositives).',dossiers:[d4,d6],stocke:false,cree:today(),maj:today()}
+      {id:g[6],nom:'Diaporama stand 2025.pptx',type:'ppt',role:'modele',localisation:'Bureau\\Salon2026\\stand-2025.pptx',description:'Modèle de l’an dernier à adapter (gabarit de diapositives).',dossiers:[d4,d6],stocke:false,cree:today(),maj:today()},
+      {id:g[7],nom:'Convention mécénat (modèle).docx',type:'word',role:'modele',localisation:'Bureau\\Mecenat\\convention-mecenat-modele.docx',description:'Modèle de convention à personnaliser par entreprise mécène — à faire relire par le juridique.',dossiers:[d8,d10],stocke:false,cree:today(),maj:today()},
+      {id:g[8],nom:'Convention Fondation de France 2023',type:'lien',role:'contrat',localisation:'https://lpofrance.sharepoint.com/:w:/r/sites/Mecenat/Documents%20partages/Conventions/Fondation%20de%20France/convention-mecenat-lpo-fondation-de-france-2023-version-signe%C3%A9e-%C3%A0-renouveler-avant-decembre.docx?d=we11a2b3c4d5e6&csf=1&web=1&e=abc123',description:'Convention signée en 2023 — à renouveler avant décembre. SharePoint : s’édite en ligne et se réenregistre côté serveur.',dossiers:[d9],stocke:false,cree:today(),maj:today()},
+      {id:g[9],nom:'Support formation oiseaux du jardin.pptx',type:'ppt',role:'livrable',localisation:'https://sharepoint.exemple.fr/Formations/oiseaux-du-jardin-support.pptx',description:'Support pédagogique pour les interventions scolaires : espèces communes, chants, quiz, fabrication de mangeoirs.',dossiers:[d11],stocke:false,cree:today(),maj:today()}
     ]
   };
 }
@@ -811,7 +832,7 @@ function pageDash(){
 function tacheRow(t){
   var d=findDossier(t.dossierId);
   var done=(t.statut==='fait');
-  var h='<div class="row tache-row'+(done?' done':'')+'">'
+  var h='<div class="row tache-row'+(done?' done':'')+'" draggable="true" data-drag="tac:'+t.id+'" title="Ouvrir — ou glissez-la sur un dossier pour la déplacer">'
    +'<button class="chk" title="Marquer fait / à faire" data-act="tache-toggle" data-id="'+t.id+'">'+(done?'✓':'')+'</button>'
    +'<span class="row-title" data-act="open-tache" data-id="'+t.id+'">'+esc(t.titre)+'</span>';
   if(!done&&t.statut!=='a-faire')h+=qw('tache',t.id,'statut',badgeTache(t.statut));
@@ -819,6 +840,7 @@ function tacheRow(t){
   h+=qw('tache',t.id,'ctx',badgeCtx(t.contexte));
   if(d)h+='<span class="chip" data-act="open-dossier" data-id="'+d.id+'">📁 '+esc(d.nom)+'</span>';
   h+=(t.echeance&&!done?qw('tache',t.id,'ech',echLabel(t.echeance,done,'',t.heure||'')):echLabel(t.echeance,done,'',t.heure||''));
+  if(state.filtres.ta.tri==='perso')h+=ordBtns('tache',t.id);
   h+='</div>';
   return h;
 }
@@ -839,6 +861,102 @@ function captureRow(n){
 }
 
 // ===== Page Dossiers =====
+// ===== Tri / ordre / épinglage / accès rapide (v5.8) =====
+var PRIO_ORD={urgente:0,haute:1,normale:2,basse:3};
+function triNum(v){var n=Number(v);return isFinite(n)?n:0;}
+function triSel(key,cur){
+  return '<select data-chg="'+key+'" title="Ordre d’affichage de la liste">'
+   +'<option value=""'+(!cur?' selected':'')+'>Tri par défaut</option>'
+   +'<option value="az"'+(cur==='az'?' selected':'')+'>A → Z</option>'
+   +'<option value="ouvert"'+(cur==='ouvert'?' selected':'')+'>Dernière ouverture</option>'
+   +'<option value="deadline"'+(cur==='deadline'?' selected':'')+'>Deadline</option>'
+   +'<option value="prio"'+(cur==='prio'?' selected':'')+'>Priorité</option>'
+   +'<option value="perso"'+(cur==='perso'?' selected':'')+'>Personnalisé (⇅)</option>'
+   +'</select>';
+}
+function triApply(list,tri,tkey,ekey,pkey){
+  if(tri==='az')list.sort(function(a,b){return String(a[tkey]||'').toLowerCase()<String(b[tkey]||'').toLowerCase()?-1:1;});
+  else if(tri==='ouvert')list.sort(function(a,b){return triNum(b.ouvertLe)-triNum(a.ouvertLe);});
+  else if(tri==='deadline')list.sort(function(a,b){var ea=String(a[ekey]||'9999'),eb=String(b[ekey]||'9999');return ea<eb?-1:1;});
+  else if(tri==='prio')list.sort(function(a,b){return (PRIO_ORD[String(a[pkey]||'normale')]||9)-(PRIO_ORD[String(b[pkey]||'normale')]||9);});
+  else if(tri==='perso')list.sort(function(a,b){return triNum(a.ordre)-triNum(b.ordre);});
+}
+function ordList(kind){return kind==='dossier'?state.dossiers:(kind==='tache'?state.taches:(kind==='note'?state.notes:state.docs));}
+function ordBtns(kind,id){
+  return '<span style="display:inline-flex;gap:2px">'
+   +'<button class="btn sm ghost" data-act="ord-up" data-kind="'+kind+'" data-id="'+id+'" title="Monter (visible en tri « Personnalisé »)">⬆</button>'
+   +'<button class="btn sm ghost" data-act="ord-down" data-kind="'+kind+'" data-id="'+id+'" title="Descendre (visible en tri « Personnalisé »)">⬇</button>'
+   +'</span>';
+}
+function ordMove(kind,id,dir){
+  var list=ordList(kind).slice().sort(function(a,b){return triNum(a.ordre)-triNum(b.ordre);});
+  var i;for(i=0;i<list.length;i++){if(list[i].id===id)break;}
+  if(i>=list.length)return;
+  var j=i+dir;
+  if(j<0||j>=list.length)return;
+  if(!triNum(list[i].ordre)&&!triNum(list[j].ordre)){var w;for(w=0;w<list.length;w++){list[w].ordre=w+1;}}
+  var tmp=triNum(list[i].ordre);list[i].ordre=triNum(list[j].ordre);list[j].ordre=tmp;
+  if(triNum(list[i].ordre)===triNum(list[j].ordre)){list[j].ordre=triNum(list[i].ordre)+1;}
+  save();render();
+}
+function qaTouch(kind,id,label){
+  if(!kind||!id)return;
+  var p=getPrefs();
+  var qa=p.qa||[];
+  var i;
+  for(i=qa.length-1;i>=0;i--){if(qa[i].k===kind&&qa[i].i===id)qa.splice(i,1);}
+  qa.unshift({k:kind,i:id,t:String(label||''),ts:Date.now()});
+  while(qa.length>8)qa.pop();
+  p.qa=qa;
+  setPrefs(p);
+}
+function qaLabel(kind,item){
+  if(kind==='dossier'){var d=findDossier(item.i);return d?d.nom:'';}
+  if(kind==='doc'){var x=findDoc(item.i);return x?(x.description?String(x.description).split('\n')[0]:x.nom):'';}
+  if(kind==='note'){var n=findNote(item.i);return n?n.titre:'';}
+  if(kind==='tache'){var t=findTache(item.i);return t?t.titre:'';}
+  return item.t||'';
+}
+function renderQa(){
+  var root=document.getElementById('remind-root');
+  if(!root)return;
+  var p=getPrefs();
+  var dosP=state.dossiers.filter(function(d){return d.epingle;});
+  var notP=state.notes.filter(function(n){return n.epinglee&&!n.capture;});
+  var qa=p.qa||[];
+  var i;
+  for(i=qa.length-1;i>=0;i--){if(!qaLabel(qa[i].k,qa[i]))qa.splice(i,1);}
+  var hasAny=dosP.length||notP.length||qa.length;
+  if(p.qaOff||!hasAny)return '';
+  var h='<div class="remind qa-box">';
+  h+='<h4>⭐ Accès rapide<button class="btn sm ghost" data-act="qa-toggle" title="Réduire">✕</button></h4>';
+  if(dosP.length){h+='<div class="small" style="font-weight:600;margin-bottom:4px">📌 Dossiers épinglés</div>';
+    for(i=0;i<Math.min(dosP.length,5);i++){h+='<div class="rr" data-act="open-dossier" data-id="'+dosP[i].id+'" title="Ouvrir"><span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">📁 '+esc(dosP[i].nom)+'</span></div>';}
+  }
+  if(notP.length){h+='<div class="small" style="font-weight:600;margin:6px 0 4px">📌 Notes épinglées</div>';
+    for(i=0;i<Math.min(notP.length,5);i++){h+='<div class="rr" data-act="open-note" data-id="'+notP[i].id+'" title="Ouvrir"><span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">📝 '+esc(notP[i].titre)+'</span></div>';}
+  }
+  if(qa.length){h+='<div class="small" style="font-weight:600;margin:6px 0 4px">⏱ Derniers consultés</div>';
+    for(i=0;i<Math.min(qa.length,6);i++){var qk=qa[i].k;var ico=qk==='dossier'?'📁':(qk==='doc'?'📄':(qk==='note'?'📝':'✅'));var act=qk==='tache'?'qa-go':'open-'+qk;
+      h+='<div class="rr" data-act="'+act+'" data-k="'+qk+'" data-id="'+qa[i].i+'" title="Ouvrir"><span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+ico+' '+esc(qaLabel(qk,qa[i]))+'</span></div>';}
+  }
+  h+='</div>';
+  return h;
+}
+function docFloatFor(did){
+  var dfl=findDoc(did);
+  if(!dfl)return;
+  var dns=docNotes(did);
+  var flt=dns.filter(function(nn){return nn.autoFloat;});
+  var cible=flt.length?flt[0]:(dns.length?dns[0]:null);
+  if(!cible){
+    cible={id:uid(),titre:'Notes — '+dfl.nom,contenu:'',tags:[],contexte:'pro',dossierId:'',tacheId:'',docId:dfl.id,epinglee:false,echeance:'',heure:'',traitee:false,capture:false,image:'',prio:'normale',origine:'',autoFloat:true,trieeLe:'',maj:today()};
+    state.notes.push(cible);
+    save();
+    if(state.page==='notes')render();
+  }
+  openFloatNote(cible.id);
+}
 function pageDossiers(){
   var f=state.filtres.dos;
   var h='<div class="content"><div class="page-head"><h1 class="page-title">📁 Dossiers</h1><div class="toolbar"><button class="btn primary" data-act="new-dossier">+ Nouveau dossier</button></div></div>';
@@ -852,6 +970,7 @@ function filtersDossiers(){
    +'<input class="grow" data-inp="dos.q" placeholder="Rechercher un dossier…" value="'+esc(f.q)+'"/>'
    +'<select data-chg="dos.statut"><option value="">Tous statuts</option>'+optsHtml(DOS_STATUTS,f.statut)+'</select>'
    +'<select data-chg="dos.ctx"><option value="">Perso + Pro</option>'+optsHtml(CONTEXTES,f.ctx)+'</select>'
+   +triSel('dos.tri',f.tri)
    +'</div>';
 }
 function dossiersBody(){
@@ -868,6 +987,12 @@ function dossiersBody(){
   });
   var ordre={ouvert:0,'en-cours':1,attente:2,termine:3,archive:4};
   list.sort(function(a,b){var d=ordre[a.statut]-ordre[b.statut];return d!==0?d:(a.maj>b.maj?-1:1);});
+  triApply(list,f.tri,'nom','echeance','');
+  if(list.some(function(d){return d.epingle;})){
+    var pins=[],others=[],z;
+    for(z=0;z<list.length;z++){if(list[z].epingle)pins.push(list[z]);else others.push(list[z]);}
+    list=pins.concat(others);
+  }
   if(!list.length)return '<div class="empty">Aucun dossier ne correspond. <button class="btn sm" data-act="new-dossier">Créer un dossier</button></div>';
   var h='<div class="cards">';var i;
   for(i=0;i<list.length;i++){h+=dossierCard(list[i]);}
@@ -886,11 +1011,12 @@ function dossierCard(d){
   var enf=dossierEnfants(d.id).length;
   if(enf)meta.push(enf+' sous-dossier'+(enf>1?'s':''));
   var par=d.parentId?findDossier(d.parentId):null;
-  return '<div class="card" data-act="open-dossier" data-id="'+d.id+'">'
-   +'<div class="card-top">'+qw('dossier',d.id,'statut',badgeDossier(d.statut))+qw('dossier',d.id,'ctx',badgeCtx(d.contexte))+(par?'<span class="chip" data-act="open-dossier" data-id="'+par.id+'" title="Dossier parent">⬑ '+esc(par.nom)+'</span>':'')+'</div>'
-   +'<div class="card-title">'+esc(d.nom)+'</div>'
+  return '<div class="card" data-act="open-dossier" data-id="'+d.id+'" draggable="true" data-drag="dos:'+d.id+'" data-drop="'+d.id+'" title="Ouvrir — ou glissez-la sur un autre dossier pour la déplacer dedans">'
+   +'<div class="card-top">'+qw('dossier',d.id,'statut',badgeDossier(d.statut))+qw('dossier',d.id,'ctx',badgeCtx(d.contexte))+(par?'<span class="chip" data-act="open-dossier" data-id="'+par.id+'" title="Dossier parent">⬑ '+esc(par.nom)+'</span>':'')+'<button class="btn sm ghost" data-act="dos-pin" data-id="'+d.id+'" title="'+(d.epingle?'Détacher du haut de la liste':'Épingler en haut de la liste')+'">'+(d.epingle?'📌':'📍')+'</button></div>'
+   +'<div class="card-title">'+(d.epingle?'📌 ':'')+esc(d.nom)+'</div>'
    +'<div class="card-meta">'+meta.join(' · ')+'</div>'
    +(d.echeance?qw('dossier',d.id,'ech',echLabel(d.echeance,done)):'')
+   +(state.filtres.dos.tri==='perso'?ordBtns('dossier',d.id):'')
    +'</div>';
 }
 
@@ -901,7 +1027,7 @@ function pageDossier(id){
   var h='<div class="content">';
   var chemin=dossierChemin(id);
   h+='<div class="crumbs"><a class="chip" data-act="go" data-page="dossiers">← Dossiers</a>';
-  var ci;for(ci=0;ci<chemin.length-1;ci++){h+=' <a class="chip" data-act="open-dossier" data-id="'+chemin[ci].id+'">📁 '+esc(chemin[ci].nom)+'</a>';}
+  var ci;for(ci=0;ci<chemin.length-1;ci++){h+=' <a class="chip" data-act="open-dossier" data-id="'+chemin[ci].id+'" data-drop="'+chemin[ci].id+'" title="Ouvrir — ou déposez-y un élément pour le déplacer dans ce dossier">📁 '+esc(chemin[ci].nom)+'</a>';}
   h+='</div>';
   h+='<div class="page-head"><div><h1 class="page-title">'+esc(d.nom)+'</h1><div class="badges">'+qw('dossier',d.id,'statut',badgeDossier(d.statut))+qw('dossier',d.id,'ctx',badgeCtx(d.contexte))
    +(d.categorie?'<span class="badge gray">'+esc(d.categorie)+'</span>':'')+(d.echeance?qw('dossier',d.id,'ech',echLabel(d.echeance,d.statut==='termine')):'')+'</div></div>'
@@ -912,12 +1038,12 @@ function pageDossier(id){
    +'<button class="btn ghost" data-act="edit-dossier" data-id="'+d.id+'">✎ Modifier</button>'
    +'<button class="btn danger ghost" data-act="del-dossier" data-id="'+d.id+'" title="Supprimer">🗑</button>'
    +'</div></div>';
-  h+='<div class="desc-inline" data-kind="dossier" data-id="'+d.id+'" contenteditable="true">'+(d.description?esc(d.description).replace(/\n/g,'<br/>'):'<span class="muted">Ajoutez ici contexte, démarches, références… (enregistrement automatique en cliquant ailleurs)</span>')+'</div>';
+  h+='<div class="desc-inline"'+(d.description?'':' data-ph="1"')+' data-kind="dossier" data-id="'+d.id+'" contenteditable="true">'+(d.description?esc(d.description).replace(/\n/g,'<br/>'):'<span class="muted">Ajoutez ici contexte, démarches, références… (enregistrement automatique en cliquant ailleurs)</span>')+'</div>';
   var enf2=dossierEnfants(id);
   h+=alertesHtml(alertesDossier(id));
   if(enf2.length){
     h+='<h2 class="sec-title">📁 Sous-dossiers ('+enf2.length+')</h2><div class="tags-row">';
-    var e2;for(e2=0;e2<enf2.length;e2++){h+='<a class="chip" data-act="open-dossier" data-id="'+enf2[e2].id+'">📁 '+esc(enf2[e2].nom)+' <span class="tiny muted">('+infoOf(DOS_STATUTS,enf2[e2].statut).l+')</span></a>';}
+    var e2;for(e2=0;e2<enf2.length;e2++){h+='<a class="chip" data-act="open-dossier" data-id="'+enf2[e2].id+'" data-drop="'+enf2[e2].id+'" draggable="true" data-drag="dos:'+enf2[e2].id+'" title="Ouvrir — ou glissez-y un élément pour le déplacer dedans">📁 '+esc(enf2[e2].nom)+' <span class="tiny muted">('+infoOf(DOS_STATUTS,enf2[e2].statut).l+')</span></a>';}
     h+='</div>';
   }
   h+='<h2 class="sec-title">✅ Tâches ('+ts.length+')</h2>';
@@ -961,6 +1087,7 @@ function filtersTaches(){
    +'<select data-chg="ta.statut"><option value="">Tous statuts</option>'+optsHtml(TACHE_STATUTS,f.statut)+'</select>'
    +'<select data-chg="ta.prio"><option value="">Toutes priorités</option>'+optsHtml(PRIORITES,f.prio)+'</select>'
    +'<select data-chg="ta.ctx"><option value="">Perso + Pro</option>'+optsHtml(CONTEXTES,f.ctx)+'</select>'
+   +triSel('ta.tri',f.tri)
    +'</div>';
 }
 function filterTaches(){
@@ -1003,6 +1130,8 @@ function tachesListe(){
   var cmp=function(a,b){var ea=a.echeance||'9999',eb=b.echeance||'9999';return ea<eb?-1:1;};
   rd.sort(cmp);se.sort(cmp);plus.sort(cmp);
   faites.sort(function(a,b){return a.maj>b.maj?-1:1;});
+  var ftri=state.filtres.ta.tri||'';
+  if(ftri){triApply(rd,ftri,'titre','echeance','priorite');triApply(se,ftri,'titre','echeance','priorite');triApply(plus,ftri,'titre','echeance','priorite');triApply(sans,ftri,'titre','echeance','priorite');triApply(faites,ftri,'titre','echeance','priorite');}
   if(rd.length){h+='<h2 class="sec-title">🚨 En retard ('+rd.length+')</h2>';var a;for(a=0;a<rd.length;a++){h+=tacheRow(rd[a]);}}
   if(se.length){h+='<h2 class="sec-title">📅 Aujourd’hui &amp; 7 jours ('+se.length+')</h2>';var b;for(b=0;b<se.length;b++){h+=tacheRow(se[b]);}}
   if(plus.length){h+='<h2 class="sec-title">⏳ Plus tard ('+plus.length+')</h2>';var c;for(c=0;c<plus.length;c++){h+=tacheRow(plus[c]);}}
@@ -1285,6 +1414,7 @@ function docsBody(){
     return true;
   });
   list.sort(function(a,b){return a.nom.toLowerCase()<b.nom.toLowerCase()?-1:1;});
+  triApply(list,f.tri,'nom','echeance','');
   if(!list.length)return '<div class="empty">Aucun document. <button class="btn sm" data-act="new-doc">Référencer un document</button></div>';
   var h='<div class="doc-grid">';var i;
   for(i=0;i<list.length;i++){h+=docCard(list[i]);}
@@ -1293,11 +1423,15 @@ function docsBody(){
 }
 function docCard(x){
   var lienk='';
-  if(/^https?:\/\//i.test(x.localisation)){lienk='<a class="doc-path" href="'+esc(x.localisation)+'" target="_blank" rel="noopener noreferrer">🔗 '+esc(x.localisation)+'</a>';}
-  else if(x.localisation){lienk='<span class="doc-path" data-act="doc-copy" data-id="'+x.id+'" title="Copier le chemin (un navigateur ne peut pas ouvrir seul un fichier local : collez-le dans l’Explorateur)">📋 '+esc(x.localisation)+'</span>';}
-  var h='<div class="doc-card" data-act="open-doc" data-id="'+x.id+'">'
-   +'<div class="card-top">'+badgeDocType(x.type)+badgeDocRole(x.role)+(x.stocke?'<span class="badge" style="background:#ecfdf5;color:#065f46">💾 copie</span>':'')+'</div>'
-   +'<div class="card-title">'+esc(x.nom)+'</div>'
+  if(/^https?:\/\//i.test(x.localisation)){lienk='<a class="doc-path" href="'+esc(x.localisation)+'" target="_blank" rel="noopener noreferrer" data-act="doc-openlink" data-id="'+x.id+'" title="Ouvrir le lien (la note compagnon s’ouvre automatiquement)">🔗 '+esc(x.localisation)+'</a>';}
+  else if(x.localisation){lienk='<span class="doc-path" data-act="doc-copy" data-id="'+x.id+'" title="Copier le chemin (la note compagnon s’ouvre automatiquement, puis collez le chemin dans l’Explorateur)">📋 '+esc(x.localisation)+'</span>';}
+  var desc=String(x.description||'').trim();
+  var titre=desc?desc.split('\n')[0]:String(x.nom||'');
+  var sub=desc?String(x.nom||''):'';
+  var h='<div class="doc-card" data-act="open-doc" data-id="'+x.id+'" draggable="true" data-drag="doc:'+x.id+'" title="Ouvrir la fiche — ou glissez-la sur un dossier pour la déplacer">'
+   +'<div class="card-top">'+badgeDocType(x.type)+badgeDocRole(x.role)+(x.stocke?'<span class="badge" style="background:#ecfdf5;color:#065f46">💾 copie</span>':'')+(state.filtres.dc.tri==='perso'?ordBtns('doc',x.id):'')+'</div>'
+   +'<div class="card-title" title="'+esc(titre)+'">'+esc(titre)+'</div>'
+   +(sub?'<div class="card-sub" title="'+esc(sub)+'">📄 '+esc(sub)+'</div>':'')
    +'<div class="card-meta">'+x.dossiers.length+' dossier(s) · '+docNotes(x.id).length+' note(s)</div>'
    +lienk+'</div>';
   return h;
@@ -1318,7 +1452,7 @@ function pageDoc(id){
    +'<button class="btn ghost" data-act="edit-doc" data-id="'+x.id+'">✎ Modifier</button>'
    +'<button class="btn danger ghost" data-act="del-doc" data-id="'+x.id+'" title="Supprimer">🗑</button>'
    +'</div></div>';
-  h+='<div class="desc-inline" data-kind="doc" data-id="'+x.id+'" contenteditable="true">'+(x.description?esc(x.description).replace(/\n/g,'<br/>'):'<span class="muted">Décrivez ce document… (enregistrement automatique en cliquant ailleurs)</span>')+'</div>';
+  h+='<div class="desc-inline"'+(x.description?'':' data-ph="1"')+' data-kind="doc" data-id="'+x.id+'" contenteditable="true">'+(x.description?esc(x.description).replace(/\n/g,'<br/>'):'<span class="muted">Décrivez ce document… (enregistrement automatique en cliquant ailleurs)</span>')+'</div>';
   h+='<h2 class="sec-title">📁 Dossiers utilisant ce document ('+x.dossiers.length+')</h2>';
   if(x.dossiers.length){
     var i;for(i=0;i<x.dossiers.length;i++){var d=findDossier(x.dossiers[i]);
@@ -1445,6 +1579,7 @@ function filtersNotes(){
    +'<input class="grow" data-inp="no.q" placeholder="Rechercher dans les notes…" value="'+esc(f.q)+'"/>'
    +'<select data-chg="no.tr"><option value="">Toutes</option><option value="todo"'+(f.tr==='todo'?' selected':'')+'>À traiter</option><option value="done"'+(f.tr==='done'?' selected':'')+'>Traitées</option></select>'
    +'<select data-chg="no.ctx"><option value="">Perso + Pro</option>'+optsHtml(CONTEXTES,f.ctx)+'</select>'
+   +triSel('no.tri',f.tri)
    +'</div>';
   if(keys.length||f.tag){
     h+='<div class="filters" style="padding:8px 12px"><span class="small muted">Tags :</span><div class="tags-row">';
@@ -1480,6 +1615,13 @@ function notesBody(){
     if(a.epinglee!==b.epinglee)return a.epinglee?-1:1;
     return a.maj>b.maj?-1:1;
   });
+  if(f.tri){
+    var pinsN=[],othersN=[],z;
+    for(z=0;z<list.length;z++){if(list[z].epinglee)pinsN.push(list[z]);else othersN.push(list[z]);}
+    triApply(pinsN,f.tri,'titre','echeance','prio');
+    triApply(othersN,f.tri,'titre','echeance','prio');
+    list=pinsN.concat(othersN);
+  }
   if(!list.length)return '<div class="empty">Aucune note ne correspond. <button class="btn sm" data-act="new-note">Créer une note</button></div>';
   var h='<div class="notes-grid">';var i;
   for(i=0;i<list.length;i++){h+=noteCard(list[i]);}
@@ -1490,7 +1632,7 @@ function noteCard(n,extra){
   var d=findDossier(n.dossierId);
   var ex=stripTags(String(n.contenu||'')).replace(/\s+/g,' ');
   if(ex.length>140)ex=ex.slice(0,140)+'…';
-  var h='<div class="note-card" data-act="open-note" data-id="'+n.id+'">'
+  var h='<div class="note-card" data-act="open-note" data-id="'+n.id+'" draggable="true" data-drag="not:'+n.id+'" title="Ouvrir — ou glissez-la sur un dossier pour la déplacer">'
    +(n.epinglee?'<span class="pin">📌</span>':'')
    +'<div class="card-title">'+esc(n.titre)+'</div>'
    +'<div class="note-extrait">'+esc(ex)+'</div>'
@@ -1500,6 +1642,7 @@ function noteCard(n,extra){
   var i;var tg=n.tags||[];
   for(i=0;i<tg.length;i++){h+='<span class="badge gray">#'+esc(tg[i])+'</span>';}
   if(d)h+='<span class="chip">📁 '+esc(d.nom)+'</span>';
+  if(state.filtres.no.tri==='perso')h+=ordBtns('note',n.id);
   if(extra)h+=extra;
   h+='</div></div>';
   return h;
@@ -1544,7 +1687,7 @@ function pageNote(id){
    +'<select id="rt-size" title="Taille du texte"><option value="">Taille</option><option value="1">Petite</option><option value="3">Normale</option><option value="5">Grande</option><option value="6">Très grande</option></select>'
    +'<span class="tiny muted">Le contenu se modifie directement — enregistré automatiquement.</span>'
    +'</div>';
-  h+='<div class="content-pre" id="note-cont" data-id="'+n.id+'" contenteditable="true" style="min-height:130px">'+(String(n.contenu||'').length?contenuHtml(n.contenu):'<span class="muted">Note vide — écrivez ici…</span>')+'</div>';
+  h+='<div class="content-pre" id="note-cont"'+(String(n.contenu||'').length?'':' data-ph="1"')+' data-id="'+n.id+'" contenteditable="true" style="min-height:130px">'+(String(n.contenu||'').length?contenuHtml(n.contenu):'<span class="muted">Note vide — écrivez ici…</span>')+'</div>';
   h+='</div>';
   return h;
 }
@@ -1886,7 +2029,7 @@ function renderRemind(){
   if(!root)return;
   var p=getPrefs();
   var items=remindItems();
-  if(p.remindOff||!items.length){root.innerHTML=(items.length?'<button class="btn sm remind-toggle" data-act="remind-toggle" title="Afficher le panneau des relances">🔔 '+items.length+'</button>':'');return;}
+  if(p.remindOff||!items.length){root.innerHTML=(items.length?'<button class="btn sm remind-toggle" data-act="remind-toggle" title="Afficher le panneau des relances">🔔 '+items.length+'</button>':'')+renderQa();return;}
   var lat=[],son=[],i;
   for(i=0;i<items.length;i++){if(items[i].cls==='late')lat.push(items[i]);else son.push(items[i]);}
   var h='<div class="remind">';
@@ -1898,7 +2041,7 @@ function renderRemind(){
     for(i=0;i<Math.min(son.length,15);i++){h+='<div class="rr soon" data-act="open-'+son[i].kind+'" data-id="'+son[i].id+'" title="Ouvrir"><span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(son[i].lab)+'</span><span class="tiny muted" style="flex:0 0 auto">'+esc(son[i].sub)+'</span></div>';}
   }
   h+='</div>';
-  root.innerHTML=h;
+  root.innerHTML=h+renderQa();
 }
 
 // ===== Presse-papier (v5) =====
@@ -2126,7 +2269,7 @@ function pageSynchro(){
   var h='<div class="content"><div class="page-head"><h1 class="page-title">☁️ Synchro multi-appareils</h1></div>';
   h+='<div class="banner info">Vos données sont <b>chiffrées de bout en bout</b> (AES-GCM 256 bits, clé dérivée de votre passphrase) avant tout envoi. Le serveur ne voit jamais le contenu, ni la passphrase — uniquement un email de compte.</div>';
   h+='<h2 class="sec-title">État</h2><div class="step">';
-  h+='<p>Version de l’appli : <b>v5.7</b></p>';
+  h+='<p>Version de l’appli : <b>v5.8</b></p>';
   h+='<p>Configuration : '+(sbReady()?'<b style="color:var(--ok)">complète ✓</b>':'<b>incomplète</b> — il manque : <b>'+sbMissing()+'</b>')+(c.email?' — compte : <b>'+esc(c.email)+'</b>':'')+'</p>';
   h+='<p>Dernière synchro : <b>'+(state.sb.last||'jamais')+'</b>'+(state.sb.busy?' (en cours…)':'')+(state.sb.err?' <span style="color:var(--danger)">⚠️ '+esc(state.sb.err)+'</span>':'')+'</p>';
   h+='<div class="toolbar" style="margin-top:8px">'
@@ -2863,7 +3006,7 @@ function openFloatNote(nid){
 // ===== Écouteurs globaux =====
 document.addEventListener('click',function(ev){
   if(ev.target&&ev.target.classList&&ev.target.classList.contains('modal-back')){closeModal();return;}
-  if(ev.target.closest&&ev.target.closest('a[href]'))return;
+  if(ev.target.closest&&ev.target.closest('a[href]')&&!ev.target.closest('[data-act="doc-openlink"]'))return;
   var cmd=ev.target.closest?ev.target.closest('[data-cmd]'):null;
   if(cmd){
     try{document.execCommand(cmd.getAttribute('data-cmd'),false,null);}catch(e){}
@@ -2885,9 +3028,9 @@ document.addEventListener('click',function(ev){
   }
   else if(a==='nav-back'){navBack();render();}
   else if(a==='nav-fwd'){navFwd();render();}
-  else if(a==='open-dossier'){navGo('dossier',id);render();}
-  else if(a==='open-tache'){modalTache(id,'');}
-  else if(a==='open-note'){navGo('note',id);render();}
+  else if(a==='open-dossier'){var dd0=findDossier(id);if(dd0){dd0.ouvertLe=Date.now();qaTouch('dossier',id,dd0.nom);}navGo('dossier',id);render();renderRemind();}
+  else if(a==='open-tache'){var tt0=findTache(id);if(tt0){tt0.ouvertLe=Date.now();qaTouch('tache',id,tt0.titre);renderRemind();}modalTache(id,'');}
+  else if(a==='open-note'){var nn0=findNote(id);if(nn0){nn0.ouvertLe=Date.now();qaTouch('note',id,nn0.titre);}navGo('note',id);render();renderRemind();}
   else if(a==='new-tache'){modalTache('',el.getAttribute('data-dos')||'');}
   else if(a==='new-dossier'){modalDossier('');}
   else if(a==='new-note'){modalNote('',el.getAttribute('data-dos')||'',el.getAttribute('data-doc')||'');}
@@ -2996,7 +3139,7 @@ document.addEventListener('click',function(ev){
     render();
   }
   else if(a==='tag-clear'){state.filtres.no.tag='';render();}
-  else if(a==='open-doc'){navGo('doc',id);render();var af=docNotes(id).filter(function(nn){return nn.autoFloat;});var k;for(k=0;k<af.length;k++){try{openFloatNote(af[k].id);}catch(ef){}}}
+  else if(a==='open-doc'){var xd0=findDoc(id);if(xd0){xd0.ouvertLe=Date.now();qaTouch('doc',id,(xd0.description?String(xd0.description).split('\n')[0]:xd0.nom));}navGo('doc',id);render();renderRemind();}
   else if(a==='new-doc'){modalDoc('',el.getAttribute('data-dos')||'');}
   else if(a==='doc-from-path'){
     var inp=document.getElementById('dz-path');
@@ -3064,20 +3207,7 @@ document.addEventListener('click',function(ev){
     }
   }
   else if(a==='note-float'){openFloatNote(id);}
-  else if(a==='doc-float'){
-    var dfl=findDoc(id);
-    if(!dfl){render();return;}
-    var dns=docNotes(id);
-    var flt=dns.filter(function(nn){return nn.autoFloat;});
-    var cible=flt.length?flt[0]:(dns.length?dns[0]:null);
-    if(!cible){
-      cible={id:uid(),titre:'Notes — '+dfl.nom,contenu:'',tags:[],contexte:'pro',dossierId:'',tacheId:'',docId:dfl.id,epinglee:false,echeance:'',heure:'',traitee:false,capture:false,image:'',prio:'normale',origine:'',autoFloat:true,trieeLe:'',maj:today()};
-      state.notes.push(cible);
-      save();
-      if(state.page==='notes')render();
-    }
-    openFloatNote(cible.id);
-  }
+  else if(a==='doc-float'){docFloatFor(id);}
   else if(a==='crm-go'){
     if(state.page!=='crm')navGo('crm','');
     state.crmPage=el.getAttribute('data-crm')||'dash';
@@ -3131,13 +3261,28 @@ document.addEventListener('click',function(ev){
   else if(a==='new-doc-link'){modalDoc('','','lien');}
   else if(a==='doc-copy'){
     var x5=findDoc(id);
-    if(x5&&x5.localisation){copyText(x5.localisation);}
+    if(x5&&x5.localisation){copyText(x5.localisation);docFloatFor(id);}
     else{toast('Aucune localisation enregistrée pour ce document.');}
   }
   else if(a==='doc-openlink'){
     var x6=findDoc(id);
-    if(x6&&/^https?:\/\//i.test(String(x6.localisation||''))){try{window.open(x6.localisation,'_blank');}catch(e8){toast('Ouverture bloquée par le navigateur.');}}
+    if(x6&&/^https?:\/\//i.test(String(x6.localisation||''))){try{window.open(x6.localisation,'_blank');}catch(e8){toast('Ouverture bloquée par le navigateur.');}docFloatFor(id);}
     else{toast('Ce document pointe vers un fichier local : copiez le chemin (📋) et collez-le dans l’Explorateur.');}
+  }
+  else if(a==='dos-pin'){
+    var dpin=findDossier(id);
+    if(dpin){dpin.epingle=!dpin.epingle;dpin.maj=today();save();render();renderRemind();}
+  }
+  else if(a==='ord-up'){ordMove(el.getAttribute('data-kind')||'',id,-1);}
+  else if(a==='ord-down'){ordMove(el.getAttribute('data-kind')||'',id,1);}
+  else if(a==='qa-toggle'){var pqa=getPrefs();pqa.qaOff=!pqa.qaOff;setPrefs(pqa);renderRemind();}
+  else if(a==='qa-go'){
+    var qk2=el.getAttribute('data-k')||'tache';
+    var qi2=findTache(id);
+    if(qk2==='tache'&&qi2){qi2.ouvertLe=Date.now();qaTouch('tache',id,qi2.titre);renderRemind();modalTache(id,'');}
+    else if(qk2==='dossier'){var qd2=findDossier(id);if(qd2){qd2.ouvertLe=Date.now();qaTouch('dossier',id,qd2.nom);}navGo('dossier',id);render();renderRemind();}
+    else if(qk2==='doc'){var qx2=findDoc(id);if(qx2){qx2.ouvertLe=Date.now();qaTouch('doc',id,(qx2.description?String(qx2.description).split('\n')[0]:qx2.nom));}navGo('doc',id);render();renderRemind();}
+    else if(qk2==='note'){var qn2=findNote(id);if(qn2){qn2.ouvertLe=Date.now();qaTouch('note',id,qn2.titre);}navGo('note',id);render();renderRemind();}
   }
   else if(a==='remind-toggle'){var pr3=getPrefs();pr3.remindOff=!pr3.remindOff;setPrefs(pr3);renderRemind();}
   else if(a==='open-ech'){modalEchances();}
@@ -3243,6 +3388,12 @@ document.addEventListener('change',function(ev){
   setFilter(k,el.value);
   renderPageBody();
 });
+document.addEventListener('focusin',function(ev){
+  var el=ev.target;
+  if(!el||!el.getAttribute||el.getAttribute('data-ph')!=='1')return;
+  el.innerHTML='';
+  el.removeAttribute('data-ph');
+});
 document.addEventListener('focusout',function(ev){
   var el=ev.target;
   if(!el||!el.getAttribute||!el.id)return;
@@ -3305,25 +3456,57 @@ document.addEventListener('paste',function(ev){
     }
   }
 });
-// Kanban : glisser-déposer
+// Glisser-déposer : kanban + déplacements « explorateur » (v5.8)
 document.addEventListener('dragstart',function(ev){
   var c=ev.target.closest?ev.target.closest('.kcard'):null;
-  if(!c)return;
-  state._drag=c.getAttribute('data-id');
-  try{ev.dataTransfer.setData('text/plain',state._drag);ev.dataTransfer.effectAllowed='move';}catch(e){}
+  if(c){state._drag=c.getAttribute('data-id');try{ev.dataTransfer.setData('text/plain',state._drag);ev.dataTransfer.effectAllowed='move';}catch(e){}return;}
+  var dg=ev.target.closest?ev.target.closest('[data-drag]'):null;
+  if(dg){state._drag=dg.getAttribute('data-drag');try{ev.dataTransfer.setData('text/plain',state._drag);ev.dataTransfer.effectAllowed='move';}catch(e){}}
 });
 document.addEventListener('dragover',function(ev){
   var c=ev.target.closest?ev.target.closest('.kcol'):null;
-  if(c){ev.preventDefault();}
+  if(c){ev.preventDefault();return;}
+  var dp=ev.target.closest?ev.target.closest('[data-drop]'):null;
+  if(dp){ev.preventDefault();try{ev.dataTransfer.dropEffect='move';}catch(e){}if(dp.classList&&dp.classList.add)dp.classList.add('drop-on');}
+});
+document.addEventListener('dragleave',function(ev){
+  var dp=ev.target.closest?ev.target.closest('[data-drop]'):null;
+  if(dp&&dp.classList&&dp.classList.remove)dp.classList.remove('drop-on');
 });
 document.addEventListener('drop',function(ev){
   var dz=ev.target.closest?ev.target.closest('#dz-docs'):null;
   if(dz){ev.preventDefault();dz.className='dropzone';importFiles(ev.dataTransfer.files,dz.getAttribute('data-dos')||'');return;}
+  var tgt=ev.target.closest?ev.target.closest('[data-drop]'):null;
+  if(tgt){
+    ev.preventDefault();
+    if(tgt.classList&&tgt.classList.remove)tgt.classList.remove('drop-on');
+    var pl=state._drag||'';
+    try{var dtp=ev.dataTransfer.getData('text/plain');if(dtp&&dtp.indexOf(':')>0)pl=dtp;}catch(e){}
+    state._drag='';
+    if(pl.indexOf(':')<0)return;
+    var pk=pl.split(':');
+    var kind=pk[0],sid=pk[1];
+    var tid=tgt.getAttribute('data-drop');
+    if(kind==='dos'){
+      if(sid===tid)return;
+      var mvd=findDossier(sid);var cible=findDossier(tid);
+      if(!mvd||!cible)return;
+      if(tid===mvd.parentId)return;
+      if(isDescendantOf(sid,tid)){toast('Impossible : un dossier ne peut pas être déplacé dans son propre sous-dossier.');return;}
+      mvd.parentId=tid;mvd.maj=today();save();render();
+      toast('Dossier « '+mvd.nom+' » déplacé dans « '+cible.nom+' »');return;
+    }
+    if(kind==='doc'){var mvd2=findDoc(sid);if(mvd2){mvd2.dossiers=[tid];mvd2.maj=today();save();render();toast('Document déplacé dans le dossier ✓');}return;}
+    if(kind==='tac'){var mvd3=findTache(sid);if(mvd3){mvd3.dossierId=tid;mvd3.maj=today();save();render();toast('Tâche déplacée dans le dossier ✓');}return;}
+    if(kind==='not'){var mvd4=findNote(sid);if(mvd4){mvd4.dossierId=tid;mvd4.maj=today();save();render();toast('Note déplacée dans le dossier ✓');}return;}
+    return;
+  }
   var c=ev.target.closest?ev.target.closest('.kcol'):null;
   if(!c)return;
   ev.preventDefault();
   var id=state._drag;
   try{var dt=ev.dataTransfer.getData('text/plain');if(dt)id=dt;}catch(e){}
+  if(id&&id.indexOf(':')>=0)id=id.split(':')[1];
   var t=findTache(id);
   if(t){t.statut=c.getAttribute('data-statut');t.maj=today();save();}
   state._drag='';
