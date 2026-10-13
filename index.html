@@ -238,14 +238,22 @@ input[type=file]{padding:5px;font-size:12px}
     <a class="snav" id="sn-notes" data-act="go" data-page="notes">📝 Notes</a>
     <a class="snav" id="sn-outlook" data-act="go" data-page="outlook">📧 Outlook</a>
     <a class="snav" id="sn-synchro" data-act="go" data-page="synchro">☁️ Synchro <span id="sb-dot" class="ms-dot off"></span></a>
-    <a class="snav" id="sn-crm" data-act="go" data-page="crm">🤝 CRM Mécénat</a>
+    <a class="snav" id="sn-crm" data-act="go" data-page="crm">🤝 CRM Mécénat <span id="crm-caret">▾</span></a>
+    <div id="crm-subnav" style="display:none;padding-left:12px;border-left:2px solid var(--line);margin:2px 0 4px 12px">
+      <a class="snav" id="crm-sub-dash" data-act="crm-go" data-crm="dash">▦ Tableau de bord</a>
+      <a class="snav" id="crm-sub-orgs" data-act="crm-go" data-crm="orgs">🏢 Établissements</a>
+      <a class="snav" id="crm-sub-projets" data-act="crm-go" data-crm="projets">📁 Projets</a>
+      <a class="snav" id="crm-sub-aap" data-act="crm-go" data-crm="aap">📢 AAP</a>
+      <a class="snav" id="crm-sub-alerts" data-act="crm-go" data-crm="alerts">🔔 Alertes</a>
+      <a class="snav" id="crm-sub-stats" data-act="crm-go" data-crm="stats">📊 Stats</a>
+    </div>
   </nav>
   <div class="side-foot">
     <a class="snav" data-act="go" data-page="install">📱 Installer l’appli</a>
     <a class="snav" data-act="open-listes">⚙️ Mes listes</a>
     <a class="snav" data-act="open-export">💾 Export &amp; sauvegarde</a>
     <a class="snav" data-act="open-help">❓ Aide &amp; confidentialité</a>
-    <div class="side-note">Mon Espace v5.6 — 100 % local par défaut. Connexion Outlook et synchro chiffrée (page ☁️) optionnelles — vous décidez.</div>
+    <div class="side-note">Mon Espace v5.7 — 100 % local par défaut. Connexion Outlook et synchro chiffrée (page ☁️) optionnelles — vous décidez.</div>
   </div>
 </aside>
 <div class="wrap">
@@ -620,6 +628,10 @@ function allTags(){
 // ===== Rendu =====
 function render(){
   var main=document.getElementById('main');if(!main)return;
+  if(state.page==='crm'){
+    var exfr=document.getElementById('crm-frame');
+    if(exfr){updateSidebar();updateTopbar();crmSetHash(state.crmPage||'dash');return;}
+  }
   var h='';
   if(state.page==='dash')h=pageDash();
   else if(state.page==='dossiers')h=pageDossiers();
@@ -637,6 +649,9 @@ function render(){
   else if(state.page==='crm')h=pageCrm();
   else if(state.page==='search')h=pageSearch();
   else h=page404();
+  try{
+    if(location.protocol==='file:'){h='<div class="banner warn" style="margin:0 0 14px">⚠️ <b>Vous utilisez le fichier téléchargé</b> (adresse file://…). Les données enregistrées ici sont <b>séparées</b> de celles du site en ligne. Si un élément créé n’apparaît pas, il a probablement été créé dans l’autre version. Ouvrez plutôt le site : <a href="https://josselin-pradier.github.io/mon-espace/" rel="noopener">josselin-pradier.github.io/mon-espace</a>.</div>'+h;}
+  }catch(efile){}
   main.innerHTML=h;
   updateSidebar();updateTopbar();
   applyEchStyles();renderRemind();
@@ -652,6 +667,12 @@ function updateSidebar(){
   var map={dash:'sn-dash',dossiers:'sn-dossiers',dossier:'sn-dossiers',taches:'sn-taches',notes:'sn-notes',note:'sn-notes',docs:'sn-docs',doc:'sn-docs',capture:'sn-capture',cal:'sn-cal',outlook:'sn-outlook',synchro:'sn-synchro',crm:'sn-crm'};
   var key=map[state.page];var ids=['sn-dash','sn-dossiers','sn-docs','sn-taches','sn-capture','sn-cal','sn-notes','sn-outlook','sn-synchro','sn-crm'];var i;
   for(i=0;i<ids.length;i++){var el=document.getElementById(ids[i]);if(el){el.className='snav'+(ids[i]===key?' active':'');}}
+  var sub=document.getElementById('crm-subnav');
+  if(sub){sub.style.display=(state._crmOpen||state.page==='crm')?'block':'none';}
+  var caret=document.getElementById('crm-caret');
+  if(caret){caret.textContent=(state._crmOpen||state.page==='crm')?'▾':'▸';}
+  var cps=['dash','orgs','projets','aap','alerts','stats'];var j;
+  for(j=0;j<cps.length;j++){var se=document.getElementById('crm-sub-'+cps[j]);if(se){se.className='snav'+((state.page==='crm'&&(state.crmPage||'dash')===cps[j])?' active':'');}}
   sbRefreshBadge();
 }
 function updateTopbar(){
@@ -661,10 +682,16 @@ function updateTopbar(){
 }
 function pageCrm(){
   var h='<div class="content"><div class="page-head"><h1 class="page-title">🤝 CRM Mécénat LPO</h1></div>';
-  h+='<div class="banner info">Le CRM s’ouvre ci-dessous dans l’onglet. Ses données sont <b>locales à ce navigateur</b> (séparées du reste de Mon Espace) et disposent de leurs propres exports CSV à l’intérieur. Vous pouvez aussi l’ouvrir directement : <a href="crm/" target="_blank" rel="noopener">page plein écran</a>.</div>';
-  h+='<iframe src="crm/" title="CRM Mécénat LPO" style="width:100%;height:calc(100vh - 210px);min-height:480px;border:1px solid var(--line);border-radius:12px;background:#fff"></iframe>';
+  h+='<div class="banner info">Le CRM s’ouvre ci-dessous. Utilisez le <b>menu 🤝 à gauche</b> pour naviguer dans ses sections (Tableau de bord, Établissements, Projets, AAP, Alertes, Stats) — ou naviguez directement à l’intérieur. Ses données sont <b>locales à ce navigateur</b> (séparées du reste de Mon Espace) avec leurs propres exports à l’intérieur. Version pleine page : <a href="crm/" target="_blank" rel="noopener">ouvrir le CRM seul</a>.</div>';
+  h+='<iframe id="crm-frame" src="crm/#'+encodeURIComponent(state.crmPage||'dash')+'" title="CRM Mécénat LPO" style="width:100%;height:calc(100vh - 230px);min-height:480px;border:1px solid var(--line);border-radius:12px;background:#fff"></iframe>';
   h+='</div>';
   return h;
+}
+function crmSetHash(h){
+  var fr=document.getElementById('crm-frame');
+  if(!fr)return;
+  try{fr.contentWindow.location.replace(String(fr.contentWindow.location.pathname)+'#'+encodeURIComponent(h));return;}catch(e){}
+  try{fr.src='crm/#'+encodeURIComponent(h);}catch(e2){}
 }
 function page404(){
   return '<div class="content"><div class="empty">Élément introuvable (peut-être supprimé).<br/><br/><button class="btn" data-act="go" data-page="dash">Retour à l’accueil</button></div></div>';
@@ -1067,19 +1094,44 @@ function calChips(dstr){
 }
 
 // ===== Calendrier global (v4) =====
+function crmDated(){
+  var out=[];var raw='';
+  try{raw=localStorage.getItem('crm-mecenat-lpo-v1')||'';}catch(e){}
+  if(!raw)return out;
+  var orgs=[];
+  try{orgs=JSON.parse(raw)||[];}catch(e2){return out;}
+  var i,j;
+  for(i=0;i<orgs.length;i++){
+    var o=orgs[i]||{};
+    var al=o.alertes||[];
+    for(j=0;j<al.length;j++){
+      if(al[j]&&al[j].date)out.push({kind:'crm',id:String(o.id||''),date:String(al[j].date),heure:'',titre:'CRM — '+String(o.nom||'Structure')+' : '+String(al[j].libelle||'alerte'),prio:'',done:!!al[j].faite,crmHash:'org='+encodeURIComponent(String(o.id||''))});
+    }
+    var pj=o.projets||[];
+    for(j=0;j<pj.length;j++){
+      var a2=pj[j]&&pj[j].aap;
+      if(a2&&a2.existant&&a2.deadline){
+        out.push({kind:'crm',id:String(o.id||''),date:String(a2.deadline),heure:'',titre:'CRM — Deadline AAP : '+String(a2.nom||'appel à projets')+' ('+String(o.nom||'')+')',prio:'',done:false,crmHash:'projet='+encodeURIComponent(String(o.id||'')+'|'+String(pj[j].id||''))});
+      }
+    }
+  }
+  return out;
+}
 function allDated(){
   var out=[],i;
   for(i=0;i<state.taches.length;i++){var t=state.taches[i];if(t.echeance)out.push({kind:'tache',id:t.id,date:t.echeance,heure:t.heure||'',titre:t.titre,prio:t.priorite,done:t.statut==='fait'});}
   for(i=0;i<state.notes.length;i++){var n=state.notes[i];if(n.echeance)out.push({kind:'note',id:n.id,date:n.echeance,heure:n.heure||'',titre:n.titre,prio:n.prio||'',done:n.traitee});}
   for(i=0;i<state.dossiers.length;i++){var d=state.dossiers[i];if(d.echeance)out.push({kind:'dossier',id:d.id,date:d.echeance,heure:'',titre:d.nom,prio:'',done:(d.statut==='termine'||d.statut==='archive')});}
+  var crm=crmDated();
+  for(i=0;i<crm.length;i++)out.push(crm[i]);
   out.sort(function(a,b){return a.date<b.date?-1:(a.date>b.date?1:(a.heure<b.heure?-1:1));});
   return out;
 }
 function calItemRow(it){
-  var act=it.kind==='tache'?'open-tache':(it.kind==='note'?'open-note':'open-dossier');
-  var ico=it.kind==='tache'?'✅':(it.kind==='note'?'📝':'📁');
+  var act=it.kind==='tache'?'open-tache':(it.kind==='note'?'open-note':(it.kind==='crm'?'crm-open':'open-dossier'));
+  var ico=it.kind==='tache'?'✅':(it.kind==='note'?'📝':(it.kind==='crm'?'🤝':'📁'));
   var h='<div class="row'+(it.done?' done':'')+'">'
-   +'<span class="row-title" data-act="'+act+'" data-id="'+it.id+'">'+ico+' '+esc(it.titre)+'</span>';
+   +'<span class="row-title" data-act="'+act+'" data-id="'+it.id+'"'+(it.kind==='crm'?' data-hash="'+esc(it.crmHash)+'" title="Ouvrir dans le CRM"':'')+'>'+ico+' '+esc(it.titre)+'</span>';
   if(it.heure)h+='<span class="chip">🕒 '+esc(it.heure)+'</span>';
   if(it.prio&&it.kind!=='dossier')h+=badgePrio(it.prio);
   if(it.done)h+='<span class="badge" style="background:#d1fae5;color:#065f46">✓</span>';
@@ -1107,7 +1159,7 @@ function pageCal(){
   if(state.calVue==='jour')h+=calJour();
   else if(state.calVue==='semaine')h+=calSemaine();
   else h+=calMois();
-  h+='<p class="tiny muted" style="margin-top:10px">Toutes vos échéances au même endroit : tâches ✅, notes 📝 et dossiers 📁. Cliquez sur un élément pour l’ouvrir directement.</p>';
+  h+='<p class="tiny muted" style="margin-top:10px">Toutes vos échéances au même endroit : tâches ✅, notes 📝, dossiers 📁 et CRM 🤝 (alertes et deadlines d’appels à projets). Cliquez sur un élément pour l’ouvrir directement.</p>';
   h+='</div>';
   return h;
 }
@@ -1196,7 +1248,11 @@ function calChipHtml(it){
 
 // ===== Page Documents =====
 function dropzoneHtml(dosId){
-  return '<div class="dropzone" id="dz-docs" data-dos="'+esc(dosId||'')+'">📄 <b>Déposez ici vos fichiers</b> (Word, Excel, PowerPoint, PDF, images, raccourcis .url / .lnk…) ou cliquez pour parcourir.<br/><span class="tiny muted">Une copie (≤ 10 Mo par fichier) est enregistrée dans l’appli : ouvrable et téléchargeable depuis la fiche. Les raccourcis et liens (SharePoint…) sont enregistrés comme cibles cliquables. Vos originaux ne bougent pas.</span><input type="file" id="doc-file" multiple data-dos="'+esc(dosId||'')+'" style="display:none"/></div>';
+  return '<div class="dropzone" id="dz-docs" data-dos="'+esc(dosId||'')+'">📄 <b>Déposez ici vos fichiers</b> (Word, Excel, PowerPoint, PDF, images, raccourcis .url / .lnk…) ou cliquez pour parcourir.<br/><span class="tiny muted">Une copie (≤ 10 Mo par fichier) est enregistrée dans l’appli : ouvrable et téléchargeable depuis la fiche. Les raccourcis et liens (SharePoint…) sont enregistrés comme cibles cliquables. Vos originaux ne bougent pas.</span><input type="file" id="doc-file" multiple data-dos="'+esc(dosId||'')+'" style="display:none"/></div>'
+   +'<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;align-items:center">'
+   +'<input id="dz-path" maxlength="400" placeholder="Ou collez directement un chemin d\u2019accès (ex. C:\\…\\rapport.docx) ou une URL — la fiche se crée toute seule" style="flex:1;min-width:240px"/>'
+   +'<button class="btn primary sm" data-act="doc-from-path" data-dos="'+esc(dosId||'')+'" title="Créer la fiche du document à partir de ce chemin (sans copie du fichier — l\u2019original reste à sa place)">📄 Créer la fiche</button>'
+   +'</div>';
 }
 function pageDocs(){
   var h='<div class="content"><div class="page-head"><h1 class="page-title">📄 Documents</h1><div class="toolbar"><button class="btn primary" data-act="new-doc">+ Référencer un document</button><button class="btn" data-act="new-doc-link" title="Ajouter un lien web ou SharePoint">+ Lien</button></div></div>';
@@ -2070,7 +2126,7 @@ function pageSynchro(){
   var h='<div class="content"><div class="page-head"><h1 class="page-title">☁️ Synchro multi-appareils</h1></div>';
   h+='<div class="banner info">Vos données sont <b>chiffrées de bout en bout</b> (AES-GCM 256 bits, clé dérivée de votre passphrase) avant tout envoi. Le serveur ne voit jamais le contenu, ni la passphrase — uniquement un email de compte.</div>';
   h+='<h2 class="sec-title">État</h2><div class="step">';
-  h+='<p>Version de l’appli : <b>v5.6</b></p>';
+  h+='<p>Version de l’appli : <b>v5.7</b></p>';
   h+='<p>Configuration : '+(sbReady()?'<b style="color:var(--ok)">complète ✓</b>':'<b>incomplète</b> — il manque : <b>'+sbMissing()+'</b>')+(c.email?' — compte : <b>'+esc(c.email)+'</b>':'')+'</p>';
   h+='<p>Dernière synchro : <b>'+(state.sb.last||'jamais')+'</b>'+(state.sb.busy?' (en cours…)':'')+(state.sb.err?' <span style="color:var(--danger)">⚠️ '+esc(state.sb.err)+'</span>':'')+'</p>';
   h+='<div class="toolbar" style="margin-top:8px">'
@@ -2645,7 +2701,7 @@ function saveDocForm(f){
   x.nom=el.n.value.trim()||'Sans nom';
   x.type=el.ty.value;
   x.role=el.ro.value;
-  x.localisation=el.loc.value.trim();
+  x.localisation=el.loc.value.trim().replace(/^["']+|["']+$/g,'');
   x.description=el.desc.value;
   var ids=[],i;
   if(el.dos){
@@ -2822,7 +2878,11 @@ document.addEventListener('click',function(ev){
   ev.preventDefault();
   var a=el.getAttribute('data-act');
   var id=el.getAttribute('data-id');
-  if(a==='go'){navGo(el.getAttribute('data-page'),'');render();}
+  if(a==='go'){
+    var pg=el.getAttribute('data-page');
+    if(pg==='crm'){state._crmOpen=(state.page==='crm')?!state._crmOpen:true;}
+    navGo(pg,'');render();
+  }
   else if(a==='nav-back'){navBack();render();}
   else if(a==='nav-fwd'){navFwd();render();}
   else if(a==='open-dossier'){navGo('dossier',id);render();}
@@ -2938,6 +2998,27 @@ document.addEventListener('click',function(ev){
   else if(a==='tag-clear'){state.filtres.no.tag='';render();}
   else if(a==='open-doc'){navGo('doc',id);render();var af=docNotes(id).filter(function(nn){return nn.autoFloat;});var k;for(k=0;k<af.length;k++){try{openFloatNote(af[k].id);}catch(ef){}}}
   else if(a==='new-doc'){modalDoc('',el.getAttribute('data-dos')||'');}
+  else if(a==='doc-from-path'){
+    var inp=document.getElementById('dz-path');
+    var val=inp?String(inp.value||'').trim():'';
+    if(!val){toast('Collez d’abord un chemin d’accès ou une URL dans le champ, puis cliquez à nouveau.');return;}
+    val=val.replace(/^["']+|["']+$/g,'').trim();
+    if(!val){toast('Champ vide ou invalide.');return;}
+    var isUrl=/^https?:\/\//i.test(val);
+    var seg=val.replace(/[\\/]+$/,'').split(/[\\/]/).pop()||'Document';
+    if(isUrl){try{seg=decodeURIComponent(seg)||'Document';}catch(ep){}}
+    var dtype=isUrl?'lien':guessDocType(seg);
+    seg=seg.replace(/\.(docx?|xlsx?|pptx?|pdf|odt|ods|odp|rtf|csv|txt|png|jpe?g|gif|webp|svg|url|lnk)$/i,'');
+    var nom=seg||'Document';
+    var dos=el.getAttribute('data-dos')||'';
+    var nx={id:uid(),nom:nom,type:dtype,role:'livrable',localisation:val,description:'',dossiers:dos?[dos]:[],cree:today(),maj:today()};
+    state.docs.push(nx);
+    save();
+    if(inp)inp.value='';
+    toast('Fiche créée : « '+nom+' » — chemin enregistré, bouton 📋 disponible sur la fiche.');
+    navGo('doc',nx.id);
+    render();
+  }
   else if(a==='edit-doc'){modalDoc(id,'');}
   else if(a==='link-doc'){modalLinkDoc(id);}
   else if(a==='doc-tgl-dos'){
@@ -2996,6 +3077,18 @@ document.addEventListener('click',function(ev){
       if(state.page==='notes')render();
     }
     openFloatNote(cible.id);
+  }
+  else if(a==='crm-go'){
+    if(state.page!=='crm')navGo('crm','');
+    state.crmPage=el.getAttribute('data-crm')||'dash';
+    state._crmOpen=true;
+    render();
+  }
+  else if(a==='crm-open'){
+    if(state.page!=='crm')navGo('crm','');
+    state.crmPage=el.getAttribute('data-hash')||'dash';
+    state._crmOpen=true;
+    render();
   }
   else if(a==='float-open-all'){
     var j3;for(j3=0;j3<state.notes.length;j3++){if(state.notes[j3].docId===id)openFloatNote(state.notes[j3].id);}
