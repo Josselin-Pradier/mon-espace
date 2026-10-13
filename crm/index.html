@@ -913,6 +913,35 @@ function viewAlerts() {
     + '</div>';
 }
 
+/* ===================== Agenda interne (v3) ===================== */
+function viewAgenda() {
+  var items = collectAlerts(state.orgs).filter(function (a) { return a.date; });
+  items.sort(function (a, b) { return a.date < b.date ? -1 : 1; });
+  var passes = items.filter(function (a) { return !a.faite && daysUntil(a.date) < 0; });
+  var semaine = items.filter(function (a) { return !a.faite && daysUntil(a.date) >= 0 && daysUntil(a.date) <= 7; });
+  var plusTard = items.filter(function (a) { return !a.faite && daysUntil(a.date) > 7; });
+
+  var group = function (titre, arr) {
+    if (!arr.length) return "";
+    return '<h3 style="margin:18px 0 8px;font-size:15px;color:#334155">' + titre + " (" + arr.length + ")</h3>"
+      + arr.map(function (a) { return alertRowHtml(a); }).join("");
+  };
+
+  return '<div>'
+    + '<div class="filters">'
+    + '<span class="badge b-rose">' + passes.length + ' en retard</span>'
+    + '<span class="badge b-amber">' + semaine.length + ' dans les 7 jours</span>'
+    + '<span class="badge">' + plusTard.length + ' plus tard</span>'
+    + '<p style="margin:0;font-size:12.5px;color:#64748b">Vue chronologique de tous les rendez-vous du mécénat : relances, rappels et deadlines d&#39;AAP. Les mêmes échéances alimentent le calendrier 📅 de Mon Espace.</p>'
+    + '<button class="btn primary" style="margin-left:auto" data-act="new-alert-any">＋ Ajouter un rappel</button>'
+    + '</div>'
+    + (items.length === 0 ? '<div class="empty">Aucune échéance enregistrée pour l&#39;instant. Ajoutez une relance depuis la fiche d&#39;un établissement, ou une deadline d&#39;AAP depuis un projet.</div>' : "")
+    + group("🚨 En retard", passes)
+    + group("📅 Dans les 7 prochains jours", semaine)
+    + group("⏳ Plus tard", plusTard)
+    + '</div>';
+}
+
 function viewAap() {
   var items = [];
   state.orgs.forEach(function (o) {
@@ -1195,7 +1224,7 @@ function viewDetail() {
     + '<button class="btn primary" data-act="edit-org" data-id="' + org.id + '">✎ Modifier la fiche</button></div>'
     + '<div class="info-grid">'
     + '<div><p class="k">Site web</p><p class="v">' + (org.siteWeb ? '<a href="' + esc(org.siteWeb) + '" target="_blank" rel="noreferrer">' + esc(org.siteWeb.replace(/^https?:\/\//, "")) + '</a>' : "—") + '</p></div>'
-    + '<div><p class="k">Montant potentiel</p><p class="v">' + esc(org.montantPotentiel || "—") + '</p></div>'
+    + '<div><p class="k">Montant potentiel</p><p class="v" contenteditable="true" data-live="org-montant" data-org="' + org.id + '" title="Cliquez pour modifier — enregistrement automatique" style="outline:none;min-height:22px">' + esc(org.montantPotentiel || "—") + '</p></div>'
     + '<div><p class="k">Refuge LPO</p><p class="v">' + (org.refugeLPO ? '<span style="color:#047857;font-weight:600">Oui' + (org.refugeDetails ? ' <span style="font-weight:400;color:#64748b">— ' + esc(org.refugeDetails) + '</span>' : "") + '</span>' : "Non") + '</p></div>'
     + '<div><p class="k">Projets</p><p class="v">' + (org.projets || []).length + ' enregistré(s)' + (coList.length > 0 ? " · " + coList.length + " co-financé(s)" : "") + '</p></div>'
     + '</div>'
@@ -1254,7 +1283,7 @@ function viewProjet() {
     ? '<p style="font-size:13px;color:#94a3b8;margin:6px 0 0">Aucune ligne de financement. Utilisez « ＋ Ligne de financement » pour décomposer le financement (fonds région, fonds propres, fonds mécène…).</p>'
     : '<table class="fin-table"><thead><tr><th>Source de financement</th><th class="num">Montant</th><th></th></tr></thead><tbody>'
       + lignes.map(function (l) {
-          return '<tr><td>' + esc(l.source || "—") + (l.orgId && findOrg(l.orgId) ? ' <span class="badge">' + esc(findOrg(l.orgId).nom) + '</span>' : "") + '</td><td class="num">' + fmtE(num(l.montant)) + '</td>'
+          return '<tr><td><span contenteditable="true" data-live="ligne-src" data-org="' + org.id + '" data-projet="' + p.id + '" data-ligne="' + l.id + '" title="Cliquez pour modifier — enregistrement automatique" style="outline:none">' + esc(l.source || "—") + '</span>' + (l.orgId && findOrg(l.orgId) ? ' <span class="badge">' + esc(findOrg(l.orgId).nom) + '</span>' : "") + '</td><td class="num"><span contenteditable="true" data-live="ligne-mont" data-org="' + org.id + '" data-projet="' + p.id + '" data-ligne="' + l.id + '" title="Cliquez pour modifier le montant — enregistrement automatique" style="outline:none">' + fmtE(num(l.montant)) + '</span></td>'
             + '<td style="width:110px;text-align:right">'
             + '<button class="btn sm" data-act="edit-ligne" data-org="' + org.id + '" data-projet="' + p.id + '" data-id="' + l.id + '">✎</button> '
             + '<button class="btn sm danger" data-act="delete-ligne" data-org="' + org.id + '" data-projet="' + p.id + '" data-id="' + l.id + '">Suppr.</button></td></tr>';
@@ -1330,7 +1359,7 @@ function viewProjet() {
     + '<button class="btn sm" data-act="new-ligne" data-org="' + org.id + '" data-projet="' + p.id + '">＋ Ligne de financement</button></div>'
     + lignesHtml
     + '<div class="fin-tot">'
-    + '<div><span style="color:#64748b;font-size:11px;text-transform:uppercase;font-weight:700">Coût total</span><br/><b>' + fmtE(num(p.cout)) + '</b></div>'
+    + '<div><span style="color:#64748b;font-size:11px;text-transform:uppercase;font-weight:700">Coût total</span><br/><b contenteditable="true" data-live="projet-cout" data-org="' + org.id + '" data-projet="' + p.id + '" title="Cliquez pour modifier le budget — enregistrement automatique" style="outline:none">' + fmtE(num(p.cout)) + '</b></div>'
     + '<div><span style="color:#64748b;font-size:11px;text-transform:uppercase;font-weight:700">Financé</span><br/><b class="ok-fin">' + fmtE(tot) + '</b></div>'
     + '<div><span style="color:#64748b;font-size:11px;text-transform:uppercase;font-weight:700">Reste à financer</span><br/><b class="' + (reste > 0 ? "ko-fin" : "ok-fin") + '">' + fmtE(Math.max(0, reste)) + '</b></div>'
     + '</div>'
@@ -1497,7 +1526,9 @@ function viewModal() {
   if (m.type === "alert") {
     var a0 = m.alertId && org ? (org.alertes || []).find(function (x) { return x.id === m.alertId; }) : null;
     title = a0 ? "Modifier l'alerte" : "Ajouter une alerte / un rappel";
+    var alOrgPick = org ? "" : fld("Établissement concerné *", '<select id="m_alorg" required><option value="">— Choisir un établissement —</option>' + state.orgs.map(function (o) { return '<option value="' + o.id + '">' + esc(o.nom) + '</option>'; }).join("") + '</select>');
     body = '<form id="modal-form"><div class="form-grid">'
+      + (alOrgPick ? '<div class="full">' + alOrgPick + '</div>' : "")
       + fld("Libellé de l'alerte *", '<input id="m_alib" required value="' + esc(a0 ? a0.libelle : m.presetLibelle || "") + '" placeholder="Ex. Relancer sur le dossier, appeler pour…"/>')
       + fld("Échéance *", '<input type="date" id="m_adate" required value="' + esc(a0 ? a0.date : m.presetDate || today()) + '"/>')
       + fld("Type de rappel", '<select id="m_atype">' + TYPES_ALERTE.map(function (t) { return '<option value="' + t.value + '"' + ((a0 ? a0.type : m.presetType) === t.value ? " selected" : "") + '>' + t.label + '</option>'; }).join("") + '</select>')
@@ -1661,6 +1692,7 @@ function render() {
     : state.page === "projets" ? viewProjets()
     : state.page === "projet" ? viewProjet()
     : state.page === "aap" ? viewAap()
+    : state.page === "agenda" ? viewAgenda()
     : state.page === "alerts" ? viewAlerts()
     : state.page === "stats" ? viewStats()
     : viewDetail();
@@ -1673,6 +1705,7 @@ function render() {
     + navBtn("orgs", "Établissements", "🏢", state.orgs.length)
     + navBtn("projets", "Projets", "📁", projCount)
     + navBtn("aap", "AAP", "📢", aapCount)
+    + navBtn("agenda", "Agenda", "📅", alerts.filter(function (a) { return !a.faite && a.date && daysUntil(a.date) < 0; }).length)
     + navBtn("alerts", "Alertes", "🔔", pendingCount)
     + navBtn("stats", "Stats", "📊")
     + '</nav>'
@@ -1689,7 +1722,7 @@ function render() {
     + '</div></header>'
     + '<main class="wrap">' + content + '</main>'
     + viewModal()
-    + '<footer class="foot wrap">CRM Mécénat LPO · <b>v2</b> — les données sont enregistrées dans ce navigateur. Pensez à exporter régulièrement : bouton Export (sauvegarde JSON, CSV ou HTML tout-en-un) · bouton 🖨 Imprimer pour une version papier / PDF pour les réunions.</footer>';
+    + '<footer class="foot wrap">CRM Mécénat LPO · <b>v3</b> — les données sont enregistrées dans ce navigateur. Pensez à exporter régulièrement : bouton Export (sauvegarde JSON, CSV ou HTML tout-en-un) · bouton 🖨 Imprimer pour une version papier / PDF pour les réunions.</footer>';
 
   if (state.focusSearch) {
     var s = document.getElementById("search");
@@ -1756,6 +1789,7 @@ document.addEventListener("click", function (e) {
     if (confirm("Supprimer cet échange ?")) { updateOrg(orgId, function (o) { o.historique = o.historique.filter(function (h) { return h.id !== id; }); return o; }); render(); }
   }
   else if (act === "new-alert") setState({ modal: { type: "alert", orgId: orgId } });
+  else if (act === "new-alert-any") setState({ modal: { type: "alert", orgId: null } });
   else if (act === "new-alert-deadline") {
     var o2 = findOrg(orgId);
     var pj2 = findProjet(o2, el.getAttribute("data-projet"));
@@ -2048,15 +2082,18 @@ document.addEventListener("submit", function (e) {
 
   else if (m.type === "alert") {
     var aData = { libelle: v("m_alib"), type: v("m_atype"), date: v("m_adate"), notes: v("m_anotes") };
+    var alOrgId = m.orgId || v("m_alorg") || "";
+    if (!alOrgId) { setState({ modal: null }); return; }
     if (m.alertId) {
-      updateOrg(m.orgId, function (o) {
+      updateOrg(alOrgId, function (o) {
         o.alertes = (o.alertes || []).map(function (a) { return a.id === m.alertId ? Object.assign({}, a, aData) : a; });
         return o;
       });
     } else {
-      updateOrg(m.orgId, function (o) { o.alertes = (o.alertes || []).concat([Object.assign({ id: uid(), faite: false }, aData)]); return o; });
+      updateOrg(alOrgId, function (o) { o.alertes = (o.alertes || []).concat([Object.assign({ id: uid(), faite: false }, aData)]); return o; });
     }
-    setState({ modal: null });
+    if (!m.orgId) setState({ modal: null, page: "agenda", detailId: null, projetId: null });
+    else setState({ modal: null });
   }
 
   else if (m.type === "mecenat") {
@@ -2172,6 +2209,14 @@ document.addEventListener("blur", function (e) {
     updateOrg(el.getAttribute("data-org"), function (o) { o.notes = txt; return o; });
   } else if (kind === "projet-desc") {
     updateOrg(el.getAttribute("data-org"), function (o) { var pp = findProjet(o, el.getAttribute("data-projet")); if (pp) pp.description = txt; return o; });
+  } else if (kind === "org-montant") {
+    updateOrg(el.getAttribute("data-org"), function (o) { o.montantPotentiel = txt; return o; });
+  } else if (kind === "projet-cout") {
+    updateOrg(el.getAttribute("data-org"), function (o) { var pp = findProjet(o, el.getAttribute("data-projet")); if (pp) pp.cout = num(txt); return o; });
+  } else if (kind === "ligne-src") {
+    updateOrg(el.getAttribute("data-org"), function (o) { var pp = findProjet(o, el.getAttribute("data-projet")); var ll = pp && (pp.financement || {}).lignes || []; for (var i = 0; i < ll.length; i++) { if (ll[i].id === el.getAttribute("data-ligne")) ll[i].source = txt; } return o; });
+  } else if (kind === "ligne-mont") {
+    updateOrg(el.getAttribute("data-org"), function (o) { var pp = findProjet(o, el.getAttribute("data-projet")); var ll = pp && (pp.financement || {}).lignes || []; for (var j = 0; j < ll.length; j++) { if (ll[j].id === el.getAttribute("data-ligne")) ll[j].montant = num(txt); } return o; });
   }
   if (!state.modal) render();
 }, true);
@@ -2184,7 +2229,7 @@ function applyHash() {
   var parts = h.split("=");
   var key = parts[0];
   var val = parts[1] ? decodeURIComponent(parts[1]) : null;
-  if (key === "dash" || key === "orgs" || key === "projets" || key === "aap" || key === "alerts" || key === "stats") {
+  if (key === "dash" || key === "orgs" || key === "projets" || key === "aap" || key === "agenda" || key === "alerts" || key === "stats") {
     setState({ page: key, detailId: null, projetId: null });
     return true;
   }
