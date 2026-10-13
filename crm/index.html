@@ -1,0 +1,2122 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>CRM Mécénat LPO</title>
+<style>
+  :root { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: #1e293b; background: #f1f5f9; }
+  * { box-sizing: border-box; }
+  body { margin: 0; min-height: 100vh; font-size: 14px; }
+  a { color: #059669; }
+  button { font-family: inherit; cursor: pointer; }
+
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 0 16px; }
+  header.top { position: sticky; top: 0; z-index: 40; background: rgba(255,255,255,.92); backdrop-filter: blur(6px); border-bottom: 1px solid #e2e8f0; }
+  .topbar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 10px 0; }
+  .brand { display: flex; align-items: center; gap: 10px; margin-right: 6px; }
+  .brand .logo { width: 36px; height: 36px; border-radius: 12px; background: #059669; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+  .brand h1 { font-size: 15px; margin: 0; line-height: 1.2; }
+  .brand p { margin: 0; font-size: 11px; color: #64748b; }
+  nav.tabs { display: flex; gap: 4px; flex-wrap: wrap; }
+  .nav-btn { display: inline-flex; align-items: center; gap: 6px; border: 0; background: transparent; border-radius: 8px; padding: 8px 12px; font-size: 13px; font-weight: 500; color: #475569; }
+  .nav-btn:hover { background: #f1f5f9; }
+  .nav-btn.active { background: #059669; color: #fff; }
+  .nav-btn .count { border-radius: 999px; padding: 1px 6px; font-size: 11px; font-weight: 700; background: #fecdd3; color: #be123c; }
+  .nav-btn.active .count { background: rgba(255,255,255,.25); color: #fff; }
+  .actions { margin-left: auto; display: flex; gap: 6px; flex-wrap: wrap; }
+
+  .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 16px; box-shadow: 0 1px 2px rgba(15,23,42,.05); }
+  .card.pad { padding: 18px; }
+  main { padding: 20px 0 30px; }
+  .row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+  .row.between { justify-content: space-between; }
+  h3 { font-size: 14px; margin: 0; }
+  .section-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; gap: 8px; flex-wrap: wrap; }
+
+  .btn { display: inline-flex; align-items: center; gap: 6px; border-radius: 10px; border: 1px solid #cbd5e1; background: #fff; color: #334155; padding: 8px 14px; font-size: 13px; font-weight: 500; }
+  .btn:disabled { opacity: .4; cursor: default; }
+  .btn:hover { background: #f8fafc; }
+  .btn.primary { background: #059669; border-color: #059669; color: #fff; font-weight: 600; }
+  .btn.primary:hover { background: #047857; }
+  .btn.sm { padding: 4px 10px; font-size: 12px; border-radius: 8px; }
+  .btn.danger { border-color: #fecdd3; color: #e11d48; }
+  .btn.danger:hover { background: #fff1f2; }
+
+  .badge { display: inline-flex; align-items: center; gap: 4px; border-radius: 999px; border: 1px solid #e2e8f0; background: #f8fafc; color: #475569; padding: 2px 9px; font-size: 11px; font-weight: 500; white-space: nowrap; }
+  .b-gray { background:#f1f5f9; color:#475569; border-color:#e2e8f0; }
+  .b-sky { background:#e0f2fe; color:#0369a1; border-color:#bae6fd; }
+  .b-amber { background:#fef3c7; color:#b45309; border-color:#fde68a; }
+  .b-emerald { background:#d1fae5; color:#047857; border-color:#a7f3d0; }
+  .b-teal { background:#ccfbf1; color:#0f766e; border-color:#99f6e4; }
+  .b-rose { background:#ffe4e6; color:#be123c; border-color:#fecdd3; }
+
+  .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 14px; margin-bottom: 22px; }
+  .stat p { margin: 0; }
+  .stat .lbl { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: #64748b; font-weight: 600; }
+  .stat .val { font-size: 24px; font-weight: 700; margin-top: 4px; }
+  .stat .hint { font-size: 11px; color: #94a3b8; margin-top: 2px; }
+
+  .dash-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
+  @media (max-width: 900px) { .dash-grid { grid-template-columns: 1fr; } }
+
+  .alert-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; border: 1px solid #e2e8f0; background: #fff; border-radius: 12px; padding: 10px 12px; margin-bottom: 8px; }
+  .alert-row.overdue { border-color: #fecdd3; background: #fff7f8; }
+  .alert-row.done { border-color: #f1f5f9; background: #f8fafc; opacity: .6; }
+  .pill { border-radius: 6px; padding: 2px 7px; font-size: 11px; font-weight: 700; }
+  .p-overdue { background: #ffe4e6; color: #be123c; }
+  .p-urgent { background: #fef3c7; color: #b45309; }
+  .p-soon { background: #e0f2fe; color: #0369a1; }
+  .p-later { background: #f1f5f9; color: #475569; }
+  .alert-main { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; flex: 1; min-width: 220px; }
+  .alert-lib { font-weight: 600; font-size: 13px; }
+  .alert-sub { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; font-size: 11.5px; color: #64748b; width: 100%; }
+  .alert-sub .org-link { background: none; border: 0; padding: 0; color: #047857; font-weight: 600; text-decoration: underline; font-size: 11.5px; }
+  .alert-ops { display: flex; gap: 6px; align-items: center; }
+
+  .bar-track { height: 8px; border-radius: 999px; background: #f1f5f9; overflow: hidden; margin-top: 4px; }
+  .bar-fill { height: 8px; border-radius: 999px; }
+  .bar-line { display: flex; justify-content: space-between; font-size: 11.5px; color: #475569; margin-top: 10px; }
+
+  .filters { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 18px; }
+  .search-wrap { position: relative; flex: 1; min-width: 220px; }
+  input, select, textarea { font-family: inherit; font-size: 13px; border: 1px solid #cbd5e1; border-radius: 10px; padding: 8px 11px; background: #fff; color: #1e293b; width: 100%; }
+  input:focus, select:focus, textarea:focus { outline: none; border-color: #10b981; box-shadow: 0 0 0 3px rgba(16,185,129,.18); }
+  .search-wrap input { padding-left: 32px; }
+  .search-wrap svg { position: absolute; left: 10px; top: 9px; color: #94a3b8; }
+
+  .org-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 14px; }
+  .org-card { padding: 16px; cursor: pointer; transition: box-shadow .15s; text-align: left; border: 1px solid #e2e8f0; }
+  .org-card:hover { box-shadow: 0 4px 14px rgba(15,23,42,.09); }
+  .org-card .nom { font-size: 15px; font-weight: 700; margin: 0; }
+  .org-card .sub { font-size: 11.5px; color: #64748b; margin: 2px 0 10px; }
+  .org-card .tags { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 10px; }
+  .org-card .foot { display: flex; justify-content: space-between; font-size: 11.5px; color: #64748b; gap: 8px; flex-wrap: wrap; }
+
+  .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; border-top: 1px solid #f1f5f9; margin-top: 16px; padding-top: 16px; }
+  .info-grid .k { font-size: 10.5px; text-transform: uppercase; letter-spacing: .05em; color: #94a3b8; font-weight: 700; margin: 0; }
+  .info-grid .v { margin: 3px 0 0; font-size: 13px; }
+  .note-box { margin-top: 14px; background: #f8fafc; border-radius: 12px; padding: 10px 13px; font-size: 13px; color: #475569; }
+
+  .list-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; background: #f8fafc; border: 1px solid #f1f5f9; border-radius: 12px; padding: 10px 13px; margin-bottom: 8px; }
+  .list-row .t { font-weight: 600; font-size: 13px; margin: 0; }
+  .list-row .s { font-size: 11.5px; color: #64748b; margin: 2px 0 0; }
+
+  .hist { border-left: 2px solid #a7f3d0; padding: 9px 0 9px 15px; margin-left: 6px; display: flex; justify-content: space-between; gap: 10px; }
+  .hist .head { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; }
+  .hist .d { font-weight: 700; font-size: 13px; }
+  .hist .txt { margin: 3px 0 0; font-size: 13px; color: #475569; }
+
+  .aap-box { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 12px; padding: 14px; margin-top: 10px; }
+  .aap-cols { display: flex; flex-wrap: wrap; gap: 8px 24px; }
+  .aap-cols .k { font-size: 10.5px; text-transform: uppercase; letter-spacing: .05em; color: #0284c7; font-weight: 700; margin: 0; }
+  .aap-cols .v { margin: 2px 0 0; font-size: 13px; font-weight: 600; }
+
+  .overlay { position: fixed; inset: 0; z-index: 60; background: rgba(15,23,42,.42); display: flex; align-items: flex-start; justify-content: center; padding: 30px 16px; overflow-y: auto; }
+  .modal { background: #fff; border-radius: 18px; box-shadow: 0 20px 60px rgba(15,23,42,.3); width: 100%; max-width: 640px; }
+  .modal-head { display: flex; justify-content: space-between; align-items: center; padding: 14px 22px; border-bottom: 1px solid #f1f5f9; }
+  .modal-head h2 { margin: 0; font-size: 16px; }
+  .modal-body { padding: 18px 22px 22px; }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 13px; }
+  .form-grid .full { grid-column: 1 / -1; }
+  label.fld { display: block; }
+  label.fld span { display: block; font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: #64748b; margin-bottom: 4px; }
+  .chk { display: flex; align-items: center; gap: 7px; font-size: 13px; padding: 6px 0; }
+  .chk input { width: 16px; height: 16px; accent-color: #059669; }
+  .modal-foot { display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid #f1f5f9; margin-top: 18px; padding-top: 16px; }
+  .fieldset-tint { border-radius: 12px; padding: 13px; margin-top: 4px; }
+  .fs-green { background: #ecfdf5; border: 1px solid #a7f3d0; }
+  .fs-blue { background: #f0f9ff; border: 1px solid #bae6fd; }
+  .fieldset-tint h4 { margin: 0 0 8px; font-size: 13px; color: #065f46; }
+  .fs-blue h4 { color: #075985; margin-bottom: 0; }
+
+  .stats-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .stats-table th { text-align: left; font-size: 10.5px; text-transform: uppercase; letter-spacing: .05em; color: #64748b; padding: 8px 10px; border-bottom: 1px solid #e2e8f0; white-space: nowrap; }
+  .stats-table td { padding: 9px 10px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+  .stats-table tr.total td { font-weight: 700; border-top: 2px solid #e2e8f0; border-bottom: 0; }
+  .stats-table tbody tr.clickable { cursor: pointer; }
+  .stats-table tbody tr.clickable:hover td { background: #f8fafc; }
+  .num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+  .fin-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 10px; }
+  .fin-table th { text-align: left; font-size: 10.5px; text-transform: uppercase; color: #64748b; padding: 6px 8px; border-bottom: 1px solid #e2e8f0; }
+  .fin-table td { padding: 7px 8px; border-bottom: 1px solid #f1f5f9; }
+  .fin-tot { display: flex; flex-wrap: wrap; gap: 20px; margin-top: 12px; font-size: 13px; }
+  .fin-tot b { font-size: 15px; }
+  .ok-fin { color: #047857; } .ko-fin { color: #be123c; }
+
+  .statut-edit-row { display: grid; grid-template-columns: 1fr 150px auto; gap: 8px; align-items: center; margin-bottom: 8px; }
+
+  footer.foot { text-align: center; font-size: 11.5px; color: #94a3b8; padding: 4px 16px 26px; }
+  .empty { border: 2px dashed #cbd5e1; border-radius: 12px; padding: 30px; text-align: center; color: #94a3b8; background: #fff; font-size: 13px; }
+  .ok-box { background: #ecfdf5; border-radius: 12px; padding: 13px; color: #047857; font-size: 13px; }
+  #print-area { display: none; }
+  @media print {
+    body { background: #fff; }
+    .top, main, footer.foot { display: none !important; }
+    #print-area { display: block !important; }
+    #print-area h1 { font-size: 19px; margin: 0 0 2px; }
+    #print-area h2 { font-size: 14px; margin: 18px 0 6px; }
+    #print-area .p-sub { color: #555; font-size: 12px; margin: 0 0 12px; }
+    #print-area .p-kpis { display: flex; gap: 22px; flex-wrap: wrap; margin-bottom: 8px; font-size: 11.5px; color: #555; }
+    #print-area .p-kpis b { font-size: 17px; color: #1e293b; display: block; }
+    #print-area .p-table { width: 100%; border-collapse: collapse; font-size: 11px; margin-bottom: 8px; }
+    #print-area .p-table th { text-align: left; border-bottom: 1.5px solid #334155; padding: 5px 6px; }
+    #print-area .p-table td { border-bottom: 1px solid #ddd; padding: 4px 6px; vertical-align: top; }
+  }
+
+  @media (max-width: 640px) { .form-grid { grid-template-columns: 1fr; } .stats-table { display: block; overflow-x: auto; } }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="print-area"></div>
+
+<script>
+"use strict";
+
+/* ===================== Données d'exemple ===================== */
+
+var SEED = [
+  {
+    id: "org-ex-1",
+    nom: "Fondation Avenir & Biodiversité",
+    type: "fondation",
+    secteur: "Philanthropie environnementale",
+    siteWeb: "https://exemple-fondation.fr",
+    region: "Occitanie",
+    statut: "en-discussion",
+    montantPotentiel: "15 000 – 30 000 €",
+    notes: "Forte sensibilité oiseaux et trames vertes. Préfère les projets terrain avec indicateurs mesurables.",
+    refugeLPO: false, refugeDetails: "",
+    mecenats: [],
+    projets: [
+      {
+        id: "pj1",
+        nom: "Restauration des zones humides",
+        statut: "en-cours",
+        cout: 25000,
+        annee: "2026 – 2027",
+        description: "Programme de restauration présenté lors du premier rendez-vous.",
+        financement: { lignes: [ { id: "fl1", source: "Fondation Avenir & Biodiversité (AAP — demandé)", montant: 20000 } ] },
+        aap: { existant: true, nom: "AAP Biodiversité 2027", deadline: "2026-11-15", montant: "20 000 €", lien: "" }
+      }
+    ],
+    contacts: [
+      { id: "c1", nom: "Claire Moreau", fonction: "Responsable mécénat", email: "c.moreau@exemple.fr", tel: "05 61 00 00 01", principal: true },
+      { id: "c2", nom: "Paul Vidal", fonction: "Directeur général", email: "p.vidal@exemple.fr", tel: "05 61 00 00 02", principal: false }
+    ],
+    historique: [
+      { id: "h1", date: "2026-09-18", type: "reunion", contact: "Claire Moreau", resume: "Premier rendez-vous : présentation des refuges LPO et du programme de restauration des zones humides.", projetId: "pj1" },
+      { id: "h2", date: "2026-09-30", type: "email", contact: "Claire Moreau", resume: "Envoi du dossier de présentation et du budget prévisionnel du projet.", projetId: "pj1" }
+    ],
+    alertes: [
+      { id: "a1", libelle: "Relancer sur le dossier AAP Biodiversité", type: "relance", date: "2026-10-12", notes: "Vérifier que le dossier est complet avant envoi.", faite: false },
+      { id: "a2", libelle: "Appeler Claire Moreau pour faire le point", type: "appel", date: "2026-10-05", notes: "", faite: false }
+    ]
+  },
+  {
+    id: "org-ex-2",
+    nom: "Menuiserie Dupont & Fils",
+    type: "entreprise",
+    secteur: "Artisanat / bois",
+    siteWeb: "",
+    region: "Nouvelle-Aquitaine",
+    statut: "premier-contact",
+    montantPotentiel: "2 000 – 5 000 €",
+    notes: "Entreprise locale sensible à la biodiversité forestière. Salariés motivés pour du volontariat.",
+    refugeLPO: true, refugeDetails: "Refuge LPO créé sur le site de production en 2024 (2 ha).",
+    mecenats: [
+      { id: "mc1", type: "nature", montant: 1500, description: "Don de bois et fabrication de 20 nichoirs en chêne pour la foulée nature.", poste: "", personnel: "", mission: "" },
+      { id: "mc2", type: "competence", montant: 1200, description: "", poste: "Menuisier", personnel: "1 salarié volontaire (2 jours)", mission: "Fabrication et pose de nichoirs sur le refuge LPO du site" }
+    ],
+    projets: [
+      {
+        id: "pj2",
+        nom: "Animation nature sur site",
+        statut: "termine",
+        cout: 0,
+        annee: "Printemps 2025",
+        description: "Animation nature sur site avec les salariés.",
+        financement: { lignes: [] },
+        aap: { existant: false, nom: "", deadline: "", montant: "", lien: "" }
+      }
+    ],
+    contacts: [
+      { id: "c3", nom: "Marc Dupont", fonction: "Gérant", email: "marc@dupont-exemple.fr", tel: "05 57 00 00 03", principal: true }
+    ],
+    historique: [
+      { id: "h3", date: "2026-09-05", type: "appel", contact: "Marc Dupont", resume: "Échange sur la possibilité d'un sponsoring pour la foulée nature locale." }
+    ],
+    alertes: [
+      { id: "a3", libelle: "Envoyer la convention de mécénat", type: "suivi", date: "2026-10-20", notes: "", faite: false }
+    ]
+  },
+  {
+    id: "org-ex-3",
+    nom: "Groupe Banque Régionale Ouest",
+    type: "entreprise",
+    secteur: "Banque / assurance",
+    siteWeb: "https://exemple-banque.fr",
+    region: "Pays de la Loire",
+    statut: "partenaire",
+    montantPotentiel: "10 000 €",
+    notes: "Partenaire fidèle depuis 3 ans. Communication importante autour du partenariat.",
+    refugeLPO: true, refugeDetails: "Refuge LPO sur le parc du siège social.",
+    mecenats: [
+      { id: "mc3", type: "financier", montant: 8000, description: "Aménagement de la mare pédagogique (2024).", poste: "", personnel: "", mission: "" },
+      { id: "mc4", type: "financier", montant: 2500, description: "Parrainage de nichoirs (2025).", poste: "", personnel: "", mission: "" }
+    ],
+    projets: [
+      {
+        id: "pj3",
+        nom: "Mare pédagogique",
+        statut: "termine",
+        cout: 12000,
+        annee: "2024",
+        description: "Aménagement d'une mare pédagogique sur le refuge LPO du siège.",
+        financement: { lignes: [
+          { id: "fl2", source: "Groupe Banque Régionale Ouest (mécénat)", montant: 8000 },
+          { id: "fl3", source: "Région (subvention)", montant: 3000 }
+        ] },
+        aap: { existant: false, nom: "", deadline: "", montant: "", lien: "" }
+      },
+      {
+        id: "pj4",
+        nom: "Parrainage de nichoirs",
+        statut: "termine",
+        cout: 2500,
+        annee: "2025",
+        description: "Parrainage de nichoirs avec les salariés.",
+        financement: { lignes: [ { id: "fl4", source: "Fonds mécène (entreprise)", montant: 2500 } ] },
+        aap: { existant: false, nom: "", deadline: "", montant: "", lien: "" }
+      }
+    ],
+    contacts: [
+      { id: "c4", nom: "Sophie Lambert", fonction: "Responsable RSE", email: "s.lambert@exemple.fr", tel: "02 40 00 00 04", principal: true }
+    ],
+    historique: [
+      { id: "h4", date: "2026-06-12", type: "reunion", contact: "Sophie Lambert", resume: "Bilan du parrainage de nichoirs, très satisfait. Ouvert à renouveler en 2027.", projetId: "pj4" },
+      { id: "h5", date: "2026-07-03", type: "email", contact: "Sophie Lambert", resume: "Envoi du rapport d'impact annuel avec photos." }
+    ],
+    alertes: [
+      { id: "a4", libelle: "Préparer la réunion de renouvellement 2027", type: "relance", date: "2026-11-02", notes: "Prévoir un projet phare à proposer.", faite: false }
+    ]
+  },
+  {
+    id: "org-ex-4",
+    nom: "Fondation Enfance & Nature",
+    type: "fondation",
+    secteur: "Fondation d'entreprise",
+    siteWeb: "",
+    region: "Île-de-France",
+    statut: "prospect",
+    montantPotentiel: "5 000 – 10 000 €",
+    notes: "Cible les projets d'éducation à l'environnement pour les jeunes publics. Chercher le bon AAP.",
+    refugeLPO: false, refugeDetails: "",
+    mecenats: [],
+    projets: [
+      {
+        id: "pj5",
+        nom: "Candidature AAP Jeunesse & Nature",
+        statut: "prospection",
+        cout: 8000,
+        annee: "2026",
+        description: "",
+        financement: { lignes: [] },
+        aap: { existant: true, nom: "AAP Jeunesse & Nature", deadline: "2026-10-25", montant: "8 000 €", lien: "" }
+      }
+    ],
+    contacts: [], historique: [], alertes: []
+  }
+];
+
+var STORAGE_KEY = "crm-mecenat-lpo-v1";
+var STATUTS_KEY = "crm-mecenat-lpo-statuts-v1";
+
+var TYPES_ALERTE = [
+  { value: "deadline-aap", label: "Deadline AAP" },
+  { value: "appel", label: "À appeler" },
+  { value: "relance", label: "Relance projet" },
+  { value: "suivi", label: "Suivi contact" },
+  { value: "autre", label: "Autre" }
+];
+
+var TYPES_INTERACTION = [
+  { value: "appel", label: "Appel téléphonique" },
+  { value: "email", label: "Email / courriel" },
+  { value: "reunion", label: "Réunion / visite" },
+  { value: "courrier", label: "Courrier postal" },
+  { value: "salon", label: "Salon / événement" },
+  { value: "autre", label: "Autre" }
+];
+
+var TYPES_ORG = [
+  { value: "entreprise", label: "Entreprise", icon: "🏢", plural: "Entreprises" },
+  { value: "fondation", label: "Fondation", icon: "🏛", plural: "Fondations" },
+  { value: "fonds-dotation", label: "Fonds de dotation", icon: "💼", plural: "Fonds de dotation" }
+];
+
+var TYPES_MECENAT = [
+  { value: "financier", label: "Mécénat financier", icon: "💶", badge: "b-emerald" },
+  { value: "nature", label: "Mécénat en nature", icon: "🎁", badge: "b-amber" },
+  { value: "competence", label: "Mécénat de compétence", icon: "🧠", badge: "b-sky" }
+];
+
+var SOURCES_FIN = [
+  "Fonds région",
+  "Fonds département",
+  "Fonds propres LPO",
+  "Fonds mécène (entreprise)",
+  "Fonds de dotation",
+  "Fonds européen",
+  "Subvention publique (autre)",
+  "Crowdfunding / collecte"
+];
+
+var PROJET_STATUTS = [
+  { value: "prospection", label: "Prospection", badge: "b-sky" },
+  { value: "en-cours", label: "En cours", badge: "b-amber" },
+  { value: "termine", label: "Terminé", badge: "b-emerald" },
+  { value: "abandonne", label: "Abandonné", badge: "b-rose" }
+];
+
+/* Palette de couleurs disponible pour les statuts */
+var PALETTE = {
+  gray:    { label: "Gris", bg: "#f1f5f9", fg: "#475569", bar: "#94a3b8" },
+  sky:     { label: "Bleu clair", bg: "#e0f2fe", fg: "#0369a1", bar: "#38bdf8" },
+  blue:    { label: "Bleu", bg: "#dbeafe", fg: "#1d4ed8", bar: "#60a5fa" },
+  amber:   { label: "Ambre", bg: "#fef3c7", fg: "#b45309", bar: "#fbbf24" },
+  orange:  { label: "Orange", bg: "#ffedd5", fg: "#c2410c", bar: "#fb923c" },
+  emerald: { label: "Vert", bg: "#d1fae5", fg: "#047857", bar: "#10b981" },
+  teal:    { label: "Turquoise", bg: "#ccfbf1", fg: "#0f766e", bar: "#2dd4bf" },
+  violet:  { label: "Violet", bg: "#ede9fe", fg: "#5b21b6", bar: "#8b5cf6" },
+  pink:    { label: "Rose clair", bg: "#fce7f3", fg: "#a21caf", bar: "#ec4899" },
+  rose:    { label: "Rouge rosé", bg: "#ffe4e6", fg: "#be123c", bar: "#fb7185" }
+};
+
+var DEFAULT_STATUTS = [
+  { value: "prospect", label: "Prospect", color: "gray" },
+  { value: "premier-contact", label: "Premier contact", color: "sky" },
+  { value: "en-discussion", label: "En discussion", color: "amber" },
+  { value: "deja-mecene", label: "Déjà mécène", color: "violet" },
+  { value: "partenaire", label: "Partenaire", color: "emerald" },
+  { value: "sans-suite", label: "Sans suite", color: "rose" }
+];
+
+/* ===================== Helpers ===================== */
+
+function uid() { return Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4); }
+
+function today() {
+  var d = new Date();
+  return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+}
+
+function daysUntil(dateStr) {
+  if (!dateStr) return 9999;
+  var t = new Date(today() + "T00:00:00").getTime();
+  var x = new Date(dateStr + "T00:00:00").getTime();
+  return Math.round((x - t) / 86400000);
+}
+
+function formatDate(dateStr) {
+  if (!dateStr) return "—";
+  return new Date(dateStr + "T00:00:00").toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" });
+}
+
+function relLabel(dateStr) {
+  var d = daysUntil(dateStr);
+  if (d < 0) return { text: "en retard de " + (-d) + " j", tone: "overdue" };
+  if (d === 0) return { text: "aujourd'hui", tone: "urgent" };
+  if (d <= 7) return { text: "dans " + d + " j", tone: "urgent" };
+  if (d <= 21) return { text: "dans " + d + " j", tone: "soon" };
+  return { text: "dans " + d + " j", tone: "later" };
+}
+
+function esc(s) {
+  return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+}
+
+function normNom(s) { return String(s || "").trim().toLowerCase(); }
+
+function num(v) {
+  var n = parseFloat(String(v == null ? "" : v).replace(/\u00a0|\s/g, "").replace(",", "."));
+  return isNaN(n) ? 0 : n;
+}
+function fmtE(n) {
+  if (!isFinite(n)) n = 0;
+  return n.toLocaleString("fr-FR", { maximumFractionDigits: 0 }) + " €";
+}
+
+/* --- Helpers CSV / téléchargement --- */
+function csvEsc(v) {
+  var s = String(v == null ? "" : v);
+  if (/[";\n\r]/.test(s)) s = '"' + s.replace(/"/g, '""') + '"';
+  return s;
+}
+function toCSV(rows) {
+  return rows.map(function (r) { return r.map(csvEsc).join(";"); }).join("\r\n");
+}
+function downloadText(name, content, mime, bom) {
+  var parts = [];
+  if (bom) parts.push("\ufeff");
+  parts.push(content);
+  var blob = new Blob(parts, { type: mime });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement("a");
+  a.href = url;
+  a.download = name;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function alerteTypeInfo(t) { return TYPES_ALERTE.find(function (x) { return x.value === t; }) || TYPES_ALERTE[4]; }
+function interactionInfo(t) { return TYPES_INTERACTION.find(function (x) { return x.value === t; }) || TYPES_INTERACTION[5]; }
+function orgTypeInfo(t) { return TYPES_ORG.find(function (x) { return x.value === t; }) || TYPES_ORG[0]; }
+function mecInfo(t) { return TYPES_MECENAT.find(function (x) { return x.value === t; }) || TYPES_MECENAT[0]; }
+function mecTotal(list, type) { return (list || []).filter(function (m) { return m.type === type; }).reduce(function (s, m) { return s + num(m.montant); }, 0); }
+
+function embeddedData() {
+  try { return (typeof window !== "undefined" && window.__CRM_EMBEDDED_DATA__) || null; } catch (e) { return null; }
+}
+
+function loadOrgs() {
+  try {
+    var raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      var parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        var changed = false;
+        parsed = parsed.map(function (o) {
+          var needs = !o.projets || (o.projets || []).some(function (p) { return !p.contributeurs; });
+          if (needs) { changed = true; return migrateOrg(o); }
+          return o;
+        });
+        if (changed) { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed)); } catch (e2) { /* stockage indisponible */ } }
+        return parsed;
+      }
+    }
+  } catch (e) { /* stockage indisponible */ }
+  var ed = embeddedData();
+  if (ed && Array.isArray(ed.orgs)) return ed.orgs.map(migrateOrg);
+  return JSON.parse(JSON.stringify(SEED)).map(migrateOrg);
+}
+
+function loadStatuts() {
+  try {
+    var raw = localStorage.getItem(STATUTS_KEY);
+    if (raw) {
+      var parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length) return parsed;
+    }
+  } catch (e) { /* stockage indisponible */ }
+  var edS = embeddedData();
+  if (edS && Array.isArray(edS.statuts) && edS.statuts.length) return edS.statuts;
+  return JSON.parse(JSON.stringify(DEFAULT_STATUTS));
+}
+
+function persist() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state.orgs));
+    localStorage.setItem(STATUTS_KEY, JSON.stringify(state.statuts));
+  } catch (e) { /* stockage indisponible */ }
+}
+
+function statutInfo(v) {
+  var s = state.statuts.find(function (x) { return x.value === v; });
+  if (!s) return { value: v || "?", label: v || "—", color: "gray" };
+  return s;
+}
+function pal(color) { return PALETTE[color] || PALETTE.gray; }
+function statutBadge(v) {
+  var s = statutInfo(v);
+  var p = pal(s.color);
+  return '<span class="badge" style="background:' + p.bg + ';color:' + p.fg + ';border-color:' + p.bar + '">' + esc(s.label) + '</span>';
+}
+
+function collectAlerts(orgs) {
+  var res = [];
+  orgs.forEach(function (o) {
+    (o.alertes || []).forEach(function (a) {
+      res.push({ key: a.id, orgId: o.id, orgNom: o.nom, libelle: a.libelle, type: a.type, date: a.date, notes: a.notes, faite: a.faite, auto: false });
+    });
+    (o.projets || []).forEach(function (p) {
+      if (p.aap && p.aap.existant && p.aap.deadline) {
+        res.push({ key: "aap-" + p.id, orgId: o.id, orgNom: o.nom, projetId: p.id, libelle: "Deadline AAP : " + (p.aap.nom || "appel à projets") + " — " + (p.nom || "projet"), type: "deadline-aap", date: p.aap.deadline, notes: p.aap.montant ? "Budget : " + p.aap.montant : "", faite: false, auto: true });
+      }
+    });
+  });
+  return res;
+}
+
+function findOrg(id) {
+  return state.orgs.find(function (o) { return o.id === id; }) || null;
+}
+
+function updateOrg(id, fn) {
+  state.orgs = state.orgs.map(function (o) { return o.id === id ? fn(o) : o; });
+  persist();
+}
+
+function finTotal(p) {
+  var f = (p && p.financement) || {};
+  return (f.lignes || []).reduce(function (s, l) { return s + num(l.montant); }, 0);
+}
+function finReste(p) {
+  return num(p && p.cout) - finTotal(p);
+}
+function orgProjets(o) { return (o && o.projets) || []; }
+function findProjet(org, pid) {
+  return (org ? org.projets || [] : []).find(function (p) { return p.id === pid; }) || null;
+}
+function allProjets() {
+  var res = [];
+  state.orgs.forEach(function (o) { (o.projets || []).forEach(function (p) { res.push({ orgId: o.id, orgNom: o.nom, projet: p }); }); });
+  return res;
+}
+function findProjetGlobal(pid) {
+  var res = null;
+  state.orgs.forEach(function (o) {
+    (o.projets || []).forEach(function (p) { if (p.id === pid) res = { orgId: o.id, orgNom: o.nom, projet: p }; });
+  });
+  return res;
+}
+function contactSummaryHtml(o) {
+  var cs = o.contacts || [];
+  var cp = cs.filter(function (c) { return c.principal; })[0] || cs[0];
+  if (!cp) return '<p class="s" style="color:#94a3b8">👤 Aucun contact enregistré</p>';
+  var extra = cs.length > 1 ? ' <span style="color:#94a3b8">· +' + (cs.length - 1) + ' autre(s) contact(s)</span>' : "";
+  return '<p class="s">👤 <b>' + esc(cp.nom) + '</b>' + (cp.fonction ? " (" + esc(cp.fonction) + ")" : "") + (cp.email ? " · " + esc(cp.email) : "") + (cp.tel ? " · " + esc(cp.tel) : "") + extra + '</p>';
+}
+function projStatutInfo(v) { return PROJET_STATUTS.find(function (x) { return x.value === v; }) || PROJET_STATUTS[1]; }
+function projStatutBadge(v) { var s = projStatutInfo(v); return '<span class="badge ' + s.badge + '">' + s.label + '</span>'; }
+function projAap(p) { return p && p.aap && p.aap.existant ? p.aap : null; }
+function projetActif(p) { return p && (p.statut === "en-cours" || p.statut === "prospection"); }
+
+/* Migration : convertit une fiche de l'ancien modèle (financement + aap au niveau de
+   la fiche) vers le nouveau modèle (projets rattachés à l'établissement). */
+function migrateOrg(o) {
+  if (o.projets) {
+    o.projets.forEach(function (p) {
+      if (!p.contributeurs) p.contributeurs = [];
+      ((p.financement || {}).lignes || []).forEach(function (l) { if (!l.orgId) l.orgId = ""; });
+    });
+    return o;
+  }
+  var projets = [];
+  var aapVide = { existant: false, nom: "", deadline: "", montant: "", lien: "" };
+  var fin = o.financement;
+  if (fin && (fin.nom || num(fin.cout) > 0 || (fin.lignes || []).length > 0)) {
+    projets.push({
+      id: uid(),
+      nom: fin.nom || "Projet",
+      statut: o.projetRealise ? "termine" : "en-cours",
+      cout: num(fin.cout),
+      annee: "",
+      description: o.projetDetails || "",
+      financement: { lignes: (fin.lignes || []).map(function (l) { return { id: l.id, source: l.source, montant: l.montant, orgId: l.orgId || "" }; }) },
+      contributeurs: [],
+      aap: (o.aap && o.aap.existant) ? o.aap : aapVide
+    });
+  }
+  if (o.aap && o.aap.existant && projets.length === 0) {
+    projets.push({
+      id: uid(),
+      nom: "Candidature " + (o.aap.nom || "AAP"),
+      statut: "prospection",
+      cout: num(o.aap.montant),
+      annee: "",
+      description: "",
+      financement: { lignes: [] },
+      contributeurs: [],
+      aap: o.aap
+    });
+  }
+  if (projets.length === 0 && o.projetRealise && o.projetDetails) {
+    projets.push({
+      id: uid(),
+      nom: "Projet réalisé",
+      statut: "termine",
+      cout: 0,
+      annee: "",
+      description: o.projetDetails,
+      financement: { lignes: [] },
+      contributeurs: [],
+      aap: aapVide
+    });
+  }
+  o.projets = projets;
+  delete o.financement;
+  delete o.aap;
+  delete o.projetRealise;
+  delete o.projetDetails;
+  return o;
+}
+
+/* ===================== État ===================== */
+
+/* Historique de navigation (Reculer / Avancer, comme un navigateur) */
+var nav = { stack: [{ page: "dash", detailId: null, projetId: null }], index: 0 };
+function navSync() {
+  var cur = nav.stack[nav.index];
+  if (cur && cur.page === state.page && cur.detailId === state.detailId && cur.projetId === state.projetId) return;
+  nav.stack = nav.stack.slice(0, nav.index + 1);
+  nav.stack.push({ page: state.page, detailId: state.detailId, projetId: state.projetId });
+  nav.index = nav.stack.length - 1;
+}
+
+var state = {
+  orgs: loadOrgs(),
+  statuts: loadStatuts(),
+  page: "dash",
+  detailId: null,
+  projetId: null,
+  query: "",
+  fType: "tous",
+  fStatut: "tous",
+  pStatut: "tous",
+  alertType: "toutes",
+  showDone: false,
+  aapFilter: "tous",
+  modal: null,
+  focusSearch: false
+};
+
+function setState(patch) {
+  Object.assign(state, patch);
+  render();
+}
+
+function closeModal() { setState({ modal: null }); }
+
+/* ===================== Vues ===================== */
+
+function alertRowHtml(a, opts) {
+  opts = opts || {};
+  var rel = relLabel(a.date);
+  var ti = alerteTypeInfo(a.type);
+  var cls = "alert-row" + (a.faite ? " done" : rel.tone === "overdue" ? " overdue" : "");
+  var ops = "";
+  if (!a.auto) {
+    ops = '<div class="alert-ops">'
+      + '<button class="btn sm" data-act="toggle-alert" data-org="' + a.orgId + '" data-id="' + a.key + '">' + (a.faite ? "Rouvrir" : "Marquer fait") + '</button>'
+      + '<button class="btn sm" data-act="edit-alert" data-org="' + a.orgId + '" data-id="' + a.key + '" title="Voir / modifier l&#39;alerte">✎</button>'
+      + '<button class="btn sm danger" data-act="delete-alert" data-org="' + a.orgId + '" data-id="' + a.key + '">Suppr.</button>'
+      + '</div>';
+  } else {
+    ops = '<div class="alert-ops"><span class="badge b-sky">auto (deadline AAP)</span></div>';
+  }
+  var libClick = a.auto
+    ? (a.projetId
+        ? ' data-act="open-projet" data-org="' + a.orgId + '" data-id="' + a.projetId + '" title="Cliquer pour ouvrir le projet"'
+        : ' data-act="open-org" data-id="' + a.orgId + '" title="Cliquer pour ouvrir la fiche"')
+    : ' data-act="edit-alert" data-org="' + a.orgId + '" data-id="' + a.key + '" title="Cliquer pour voir / modifier"';
+  var lib = a.faite
+    ? '<span class="alert-lib" style="text-decoration:line-through;color:#64748b">' + esc(a.libelle) + '</span>'
+    : '<button class="alert-lib" style="background:none;border:0;padding:0;color:#1e293b;font-weight:600;font-size:13px;cursor:pointer;text-decoration:underline dotted"' + libClick + '>' + esc(a.libelle) + '</button>';
+  return '<div class="' + cls + '">'
+    + '<div class="alert-main">'
+    + (a.faite ? "" : '<span class="pill p-' + rel.tone + '">' + esc(rel.text) + '</span>')
+    + lib
+    + '<span class="alert-sub">'
+    + '<span class="badge">' + esc(ti.label) + '</span>'
+    + '<span>' + esc(formatDate(a.date)) + '</span>'
+    + (opts.hideOrg ? "" : '<button class="org-link" data-act="open-org" data-id="' + a.orgId + '">' + esc(a.orgNom) + '</button>')
+    + (a.notes ? '<span style="font-style:italic">— ' + esc(a.notes) + '</span>' : "")
+    + '</span>'
+    + '</div>'
+    + ops
+    + '</div>';
+}
+
+function viewDashboard() {
+  var alerts = collectAlerts(state.orgs);
+  var pending = alerts.filter(function (a) { return !a.faite; }).sort(function (a, b) { return a.date < b.date ? -1 : 1; });
+  var overdue = pending.filter(function (a) { return daysUntil(a.date) < 0; }).length;
+  var partenaires = state.orgs.filter(function (o) { return o.statut === "partenaire"; }).length;
+  var mecenats = state.orgs.filter(function (o) { return o.statut === "deja-mecene"; }).length;
+  var aapActifs = 0, resteTotal = 0, nbProjets = 0, nbProjetsActifs = 0;
+  state.orgs.forEach(function (o) {
+    (o.projets || []).forEach(function (p) {
+      nbProjets++;
+      if (projetActif(p)) { nbProjetsActifs++; resteTotal += Math.max(0, finReste(p)); }
+      if (projAap(p)) aapActifs++;
+    });
+  });
+  var maxStatut = Math.max(1, state.statuts.map(function (s) { return state.orgs.filter(function (o) { return o.statut === s.value; }).length; }));
+  var activity = [];
+  state.orgs.forEach(function (o) { (o.historique || []).forEach(function (h) { activity.push(Object.assign({}, h, { orgId: o.id, orgNom: o.nom })); }); });
+  activity.sort(function (a, b) { return a.date < b.date ? 1 : -1; });
+  activity = activity.slice(0, 6);
+
+  var stat = function (lbl, val, hint, tone) {
+    return '<div class="card pad stat"><p class="lbl">' + lbl + '</p><p class="val" style="color:' + (tone || "#1e293b") + '">' + val + '</p>' + (hint ? '<p class="hint">' + hint + '</p>' : "") + '</div>';
+  };
+
+  var bars = state.statuts.map(function (s) {
+    var n = state.orgs.filter(function (o) { return o.statut === s.value; }).length;
+    var p = pal(s.color);
+    return '<div><div class="bar-line"><span>' + esc(s.label) + '</span><span style="font-weight:700">' + n + '</span></div>'
+      + '<div class="bar-track"><div class="bar-fill" style="width:' + (n / maxStatut) * 100 + '%;background:' + p.bar + '"></div></div></div>';
+  }).join("");
+
+  var actHtml = activity.length === 0
+    ? '<p style="font-size:13px;color:#94a3b8">Aucune interaction enregistrée.</p>'
+    : activity.map(function (h) {
+        return '<div class="list-row" style="cursor:pointer" data-act="edit-histo" data-org="' + h.orgId + '" data-id="' + h.id + '" title="Cliquer pour voir / modifier cet échange">'
+          + '<div><p class="t"><button class="org-link" style="background:none;border:0;padding:0;color:#0f172a;font-weight:600;text-decoration:underline" data-act="open-org" data-id="' + h.orgId + '">' + esc(h.orgNom) + '</button></p><p class="s">' + esc(interactionInfo(h.type).label) + ' — ' + esc(h.resume) + '</p></div>'
+          + '<span class="badge">' + esc(formatDate(h.date)) + '</span></div>';
+      }).join("");
+
+  var pendingHtml = pending.length === 0
+    ? '<div class="ok-box">Aucune alerte en attente. Tout est à jour !</div>'
+    : pending.slice(0, 6).map(function (a) { return alertRowHtml(a); }).join("");
+
+  return '<div>'
+    + '<div class="stat-grid">'
+    + stat("Établissements", state.orgs.length, "entreprises, fondations, fonds de dotation")
+    + stat("Projets", nbProjets, nbProjetsActifs + " actif(s)", "#0f766e")
+    + stat("Partenaires", partenaires, "relations actives", "#047857")
+    + stat("Déjà mécènes", mecenats, "financements passés", "#5b21b6")
+    + stat("AAP identifiés", aapActifs, "appels à projets en cours", "#0284c7")
+    + stat("Reste à financer", fmtE(resteTotal), "projets actifs", resteTotal > 0 ? "#be123c" : "#1e293b")
+    + stat("Alertes en attente", pending.length, overdue + " en retard", overdue > 0 ? "#e11d48" : "#1e293b")
+    + '</div>'
+    + '<div class="dash-grid">'
+    + '<div class="card pad"><div class="section-head"><h3>Prochaines alertes</h3><button class="btn sm" data-act="goto" data-page="alerts">Tout voir (' + pending.length + ')</button></div>' + pendingHtml + '</div>'
+    + '<div>'
+    + '<div class="card pad" style="margin-bottom:20px"><div class="section-head"><h3>Répartition par statut</h3><button class="btn sm" data-act="edit-statuts">✎ Éditer</button></div>' + bars + '</div>'
+    + '<div class="card pad"><div class="section-head"><h3>Dernières interactions</h3><button class="btn sm" data-act="goto" data-page="orgs">Fiches</button></div>' + actHtml + '</div>'
+    + '</div>'
+    + '</div>'
+    + '</div>';
+}
+
+function viewOrgs() {
+  var q = state.query.trim().toLowerCase();
+  var filtered = state.orgs.filter(function (o) {
+    if (state.fType !== "tous" && o.type !== state.fType) return false;
+    if (state.fStatut !== "tous" && o.statut !== state.fStatut) return false;
+    if (!q) return true;
+    return (o.nom || "").toLowerCase().indexOf(q) >= 0
+      || (o.secteur || "").toLowerCase().indexOf(q) >= 0
+      || (o.region || "").toLowerCase().indexOf(q) >= 0
+      || (o.contacts || []).some(function (c) { return (c.nom || "").toLowerCase().indexOf(q) >= 0; })
+      || (o.projets || []).some(function (p) { return (p.nom || "").toLowerCase().indexOf(q) >= 0; });
+  });
+
+  var statutOptions = state.statuts.map(function (s) {
+    return '<option value="' + esc(s.value) + '"' + (state.fStatut === s.value ? " selected" : "") + '>' + esc(s.label) + '</option>';
+  }).join("");
+
+  var cards = filtered.length === 0
+    ? '<div class="empty">Aucune fiche ne correspond à la recherche.</div>'
+    : '<div class="org-grid">' + filtered.map(function (o) {
+        var nextAlert = (o.alertes || []).filter(function (a) { return !a.faite; }).sort(function (a, b) { return a.date < b.date ? -1 : 1; })[0];
+        var mainContact = (o.contacts || []).find(function (c) { return c.principal; }) || (o.contacts || [])[0];
+        var tags = "";
+        if (o.refugeLPO) tags += '<span class="badge b-emerald">🌿 Refuge LPO</span>';
+        var pjList = orgProjets(o);
+        var pjActifs = pjList.filter(projetActif).length;
+        if (pjList.length > 0) tags += '<span class="badge b-teal">📁 ' + pjList.length + ' projet(s)' + (pjActifs > 0 ? " · " + pjActifs + " actif(s)" : "") + '</span>';
+        var pjDeadlines = pjList.map(function (p) { return projAap(p) && projAap(p).deadline; }).filter(Boolean).sort();
+        if (pjDeadlines.length > 0) tags += '<span class="badge b-sky">📢 AAP · ' + esc(formatDate(pjDeadlines[0])) + '</span>';
+        if (pjDeadlines.length > 0 && daysUntil(pjDeadlines[0]) < 0) tags += '<span class="badge b-rose">⏰ deadline dépassée</span>';
+        var ti = orgTypeInfo(o.type);
+        if ((o.mecenats || []).length > 0) tags += '<span class="badge b-emerald">🤝 Mécénat × ' + (o.mecenats || []).length + '</span>';
+        return '<button class="card org-card" data-act="open-org" data-id="' + o.id + '">'
+          + '<div class="row between"><div style="min-width:0"><p class="nom">' + esc(o.nom) + '</p>'
+          + '<p class="sub">' + ti.icon + " " + ti.label + (o.secteur ? " · " + esc(o.secteur) : "") + (o.region ? " · " + esc(o.region) : "") + '</p></div>'
+          + statutBadge(o.statut) + '</div>'
+          + '<div class="tags">' + tags + '</div>'
+          + '<div class="foot"><span>' + (mainContact ? "👤 " + esc(mainContact.nom) : "Aucun contact enregistré") + '</span>'
+          + (nextAlert ? '<span class="pill p-' + relLabel(nextAlert.date).tone + '">⏰ ' + esc(formatDate(nextAlert.date)) + '</span>' : "")
+          + '</div></button>';
+      }).join("") + '</div>';
+
+  return '<div>'
+    + '<div class="filters">'
+    + '<div class="search-wrap"><input id="search" placeholder="Rechercher une structure, un contact, un secteur…" value="' + esc(state.query) + '"/>'
+    + '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></div>'
+    + '<select data-filter="fType" style="max-width:200px"><option value="tous"' + (state.fType === "tous" ? " selected" : "") + '>Tous les types</option>' + TYPES_ORG.map(function (t) { return '<option value="' + t.value + '"' + (state.fType === t.value ? " selected" : "") + '>' + t.plural + '</option>'; }).join("") + '</select>'
+    + '<select data-filter="fStatut" style="max-width:190px"><option value="tous"' + (state.fStatut === "tous" ? " selected" : "") + '>Tous les statuts</option>' + statutOptions + '</select>'
+    + '<button class="btn primary" style="margin-left:auto" data-act="new-org">＋ Nouvel établissement</button>'
+    + '</div>'
+    + cards + '</div>';
+}
+
+/* ===================== Onglet Projets ===================== */
+
+function viewProjets() {
+  var items = allProjets();
+  if (state.pStatut !== "tous") items = items.filter(function (it) { return it.projet.statut === state.pStatut; });
+  var ordre = function (s) { return s === "en-cours" ? 0 : s === "prospection" ? 1 : s === "termine" ? 2 : 3; };
+  items.sort(function (a, b) { return ordre(a.projet.statut) - ordre(b.projet.statut) || ((a.projet.nom || "") < (b.projet.nom || "") ? -1 : 1); });
+
+  var cards = items.length === 0
+    ? '<div class="empty">Aucun projet ne correspond au filtre. Créez un projet depuis un établissement ou le bouton « Nouveau projet ».</div>'
+    : '<div class="org-grid">' + items.map(function (it) {
+        var p = it.projet;
+        var tot = finTotal(p);
+        var reste = finReste(p);
+        var pct = num(p.cout) > 0 ? Math.min(100, Math.round(tot / num(p.cout) * 100)) : 0;
+        var aap = projAap(p);
+        return '<button class="card org-card" data-act="open-projet" data-org="' + it.orgId + '" data-id="' + p.id + '">'
+          + '<div class="row between"><div style="min-width:0"><p class="nom">' + esc(p.nom || "Projet") + '</p>'
+          + '<p class="sub">🏢 ' + esc(it.orgNom) + (p.annee ? " · " + esc(p.annee) : "") + ((p.contributeurs || []).length > 0 ? ' <span style="color:#0284c7">+' + (p.contributeurs || []).length + ' co-financé(s)</span>' : "") + '</p></div>'
+          + projStatutBadge(p.statut) + '</div>'
+          + '<div class="tags">'
+          + (num(p.cout) > 0 ? '<span class="badge b-amber">💰 ' + fmtE(num(p.cout)) + ' · ' + pct + ' % financé</span>' : "")
+          + (aap ? '<span class="badge b-sky">📢 ' + esc(aap.nom || "AAP") + (aap.deadline ? " · " + esc(formatDate(aap.deadline)) : "") + '</span>' : "")
+          + '</div>'
+          + '<div class="foot"><span>' + (num(p.cout) > 0 ? "Financé : " + fmtE(tot) + " · Reste : " + fmtE(Math.max(0, reste)) : "Financement non renseigné") + '</span></div>'
+          + '</button>';
+      }).join("") + '</div>';
+
+  var stOpts = PROJET_STATUTS.map(function (s) {
+    return '<option value="' + s.value + '"' + (state.pStatut === s.value ? " selected" : "") + '>' + s.label + '</option>';
+  }).join("");
+
+  return '<div>'
+    + '<div class="filters">'
+    + '<select data-filter="pStatut" style="max-width:200px"><option value="tous"' + (state.pStatut === "tous" ? " selected" : "") + '>Tous les projets</option>' + stOpts + '</select>'
+    + '<button class="btn primary" style="margin-left:auto" data-act="new-projet">＋ Nouveau projet</button>'
+    + '</div>'
+    + cards + '</div>';
+}
+
+function viewAlerts() {
+  var alerts = collectAlerts(state.orgs);
+  var filtered = alerts
+    .filter(function (a) { return state.showDone || !a.faite; })
+    .filter(function (a) { return state.alertType === "toutes" || a.type === state.alertType; })
+    .sort(function (a, b) { return a.date < b.date ? -1 : 1; });
+  var overdue = filtered.filter(function (a) { return !a.faite && daysUntil(a.date) < 0; }).length;
+  var thisWeek = filtered.filter(function (a) { return !a.faite && daysUntil(a.date) >= 0 && daysUntil(a.date) <= 7; }).length;
+
+  var typeOptions = TYPES_ALERTE.map(function (t) {
+    return '<option value="' + t.value + '"' + (state.alertType === t.value ? " selected" : "") + '>' + t.label + '</option>';
+  }).join("");
+
+  return '<div>'
+    + '<div class="filters">'
+    + '<select data-filter="alertType" style="max-width:230px"><option value="toutes"' + (state.alertType === "toutes" ? " selected" : "") + '>Tous les types de rappel</option>' + typeOptions + '</select>'
+    + '<label class="chk" style="margin:0"><input type="checkbox" data-filter="showDone"' + (state.showDone ? " checked" : "") + '/> Afficher les alertes traitées</label>'
+    + '<div style="margin-left:auto;display:flex;gap:6px">'
+    + (overdue > 0 ? '<span class="badge b-rose">' + overdue + ' en retard</span>' : "")
+    + (thisWeek > 0 ? '<span class="badge b-amber">' + thisWeek + ' dans les 7 jours</span>' : "")
+    + '</div></div>'
+    + (filtered.length === 0 ? '<div class="empty">Aucune alerte à afficher.</div>'
+       : filtered.map(function (a) { return alertRowHtml(a); }).join(""))
+    + '</div>';
+}
+
+function viewAap() {
+  var items = [];
+  state.orgs.forEach(function (o) {
+    (o.projets || []).forEach(function (p) {
+      if (p.aap && p.aap.existant) items.push({ orgId: o.id, orgNom: o.nom, projetId: p.id, projetNom: p.nom, aap: p.aap });
+    });
+  });
+  var filtered = items.filter(function (it) {
+    var d = it.aap.deadline ? daysUntil(it.aap.deadline) : 9999;
+    if (state.aapFilter === "avenir") return d >= 0;
+    if (state.aapFilter === "passes") return d < 0;
+    return true;
+  });
+  filtered.sort(function (a, b) { return (a.aap.deadline || "9999") < (b.aap.deadline || "9999") ? -1 : 1; });
+
+  var rows = filtered.length === 0
+    ? '<div class="empty">Aucun AAP à afficher.</div>'
+    : filtered.map(function (it) {
+        var dl = it.aap.deadline ? relLabel(it.aap.deadline) : null;
+        return '<div class="list-row">'
+          + '<div style="min-width:0;flex:1">'
+          + '<p class="t">' + esc(it.aap.nom || "Appel à projets") + ' ' + (dl ? '<span class="pill p-' + dl.tone + '">' + esc(dl.text) + '</span>' : "") + '</p>'
+          + '<p class="s"><button class="org-link" style="background:none;border:0;padding:0;color:#047857;font-weight:600;text-decoration:underline" data-act="open-org" data-id="' + it.orgId + '">' + esc(it.orgNom) + '</button>'
+          + (it.projetNom ? ' · projet : ' + esc(it.projetNom) : "")
+          + (it.aap.deadline ? ' · limite : ' + esc(formatDate(it.aap.deadline)) : "")
+          + (it.aap.montant ? ' · dotation : ' + esc(it.aap.montant) : "")
+          + (it.aap.lien ? ' · <a href="' + esc(it.aap.lien) + '" target="_blank" rel="noreferrer">lien</a>' : "")
+          + '</p></div>'
+          + '<div style="display:flex;gap:6px">'
+          + '<button class="btn sm" data-act="edit-aap" data-org="' + it.orgId + '" data-projet="' + it.projetId + '">✎ Éditer</button>'
+          + '<button class="btn sm" data-act="open-projet" data-org="' + it.orgId + '" data-id="' + it.projetId + '">Projet</button>'
+          + '</div></div>';
+      }).join("");
+
+  var passes = items.filter(function (it) { return it.aap.deadline && daysUntil(it.aap.deadline) < 0; }).length;
+
+  return '<div>'
+    + '<div class="filters">'
+    + '<select data-filter="aapFilter" style="max-width:220px">'
+    + '<option value="tous"' + (state.aapFilter === "tous" ? " selected" : "") + '>Tous les AAP</option>'
+    + '<option value="avenir"' + (state.aapFilter === "avenir" ? " selected" : "") + '>Deadlines à venir</option>'
+    + '<option value="passes"' + (state.aapFilter === "passes" ? " selected" : "") + '>Deadlines dépassées</option>'
+    + '</select>'
+    + (passes > 0 ? '<span class="badge b-rose">' + passes + ' deadline(s) dépassée(s)</span>' : "")
+    + '<button class="btn primary" style="margin-left:auto" data-act="new-aap">＋ Ajouter un AAP</button>'
+    + '</div>'
+    + rows + '</div>';
+}
+
+function viewStats() {
+  var totalEchanges = 0, totalContacts = 0, totalFin = 0, totalReste = 0;
+  var totalMec = 0, nbMec = 0;
+  var nbProjets = 0, nbProjetsActifs = 0, nbAap = 0, coutTotal = 0;
+  var mecParType = {};
+  TYPES_MECENAT.forEach(function (t) { mecParType[t.value] = { n: 0, total: 0 }; });
+  state.orgs.forEach(function (o) {
+    totalEchanges += (o.historique || []).length;
+    totalContacts += (o.contacts || []).length;
+    (o.mecenats || []).forEach(function (mc) {
+      nbMec++;
+      totalMec += num(mc.montant);
+      if (mecParType[mc.type]) { mecParType[mc.type].n++; mecParType[mc.type].total += num(mc.montant); }
+    });
+    (o.projets || []).forEach(function (p) {
+      nbProjets++;
+      coutTotal += num(p.cout);
+      totalFin += finTotal(p);
+      if (projetActif(p)) { nbProjetsActifs++; totalReste += Math.max(0, finReste(p)); }
+      if (projAap(p)) nbAap++;
+    });
+  });
+
+  var stat = function (lbl, val, hint, tone) {
+    return '<div class="card pad stat"><p class="lbl">' + lbl + '</p><p class="val" style="color:' + (tone || "#1e293b") + '">' + val + '</p>' + (hint ? '<p class="hint">' + hint + '</p>' : "") + '</div>';
+  };
+
+  var statutRows = state.statuts.map(function (s) {
+    var n = state.orgs.filter(function (o) { return o.statut === s.value; }).length;
+    var pct = state.orgs.length ? Math.round(n / state.orgs.length * 100) : 0;
+    var p = pal(s.color);
+    return '<tr class="clickable" data-act="goto-filtered" data-statut="' + esc(s.value) + '">'
+      + '<td>' + statutBadge(s.value) + '</td>'
+      + '<td class="num">' + n + '</td>'
+      + '<td style="min-width:140px"><div class="bar-track" style="margin:0"><div class="bar-fill" style="width:' + pct + '%;background:' + p.bar + '"></div></div></td>'
+      + '<td class="num">' + pct + ' %</td></tr>';
+  }).join("");
+
+  var ficheRows = state.orgs.map(function (o) {
+    var pjList = orgProjets(o);
+    var pjActifs = pjList.filter(projetActif).length;
+    return '<tr class="clickable" data-act="open-org" data-id="' + o.id + '">'
+      + '<td style="font-weight:600">' + esc(o.nom) + '</td>'
+      + '<td>' + statutBadge(o.statut) + '</td>'
+      + '<td class="num">' + pjList.length + (pjActifs > 0 ? ' <span style="color:#b45309">(' + pjActifs + ' actif)</span>' : "") + '</td>'
+      + '<td class="num">' + (o.historique || []).length + '</td>'
+      + '<td class="num">' + (o.contacts || []).length + '</td>'
+      + '<td class="num">' + ((o.mecenats || []).length > 0 ? ((o.mecenats.length) + ' · ' + fmtE(o.mecenats.reduce(function (s, mc) { return s + num(mc.montant); }, 0))) : "—") + '</td>'
+      + '</tr>';
+  }).join("");
+
+  var projetRows = allProjets().map(function (it) {
+    var p = it.projet;
+    var aap = projAap(p);
+    var aapCell = aap
+      ? (aap.deadline ? '<span class="pill p-' + relLabel(aap.deadline).tone + '">' + esc(formatDate(aap.deadline)) + '</span>' : '<span class="badge b-sky">AAP</span>')
+      : '<span style="color:#94a3b8">—</span>';
+    return '<tr class="clickable" data-act="open-projet" data-org="' + it.orgId + '" data-id="' + p.id + '">'
+      + '<td style="font-weight:600">' + esc(p.nom || "Projet") + '</td>'
+      + '<td>' + esc(it.orgNom) + (((p.contributeurs || []).length > 0) ? ' <span class="badge b-sky">+' + p.contributeurs.length + '</span>' : "") + '</td>'
+      + '<td>' + projStatutBadge(p.statut) + '</td>'
+      + '<td class="num">' + (num(p.cout) > 0 ? fmtE(num(p.cout)) : "—") + '</td>'
+      + '<td class="num">' + (finTotal(p) > 0 ? fmtE(finTotal(p)) : "—") + '</td>'
+      + '<td class="num" style="' + (finReste(p) > 0 ? "color:#be123c" : "color:#047857;font-weight:600") + '">' + (num(p.cout) > 0 ? fmtE(Math.max(0, finReste(p))) : "—") + '</td>'
+      + '<td>' + aapCell + '</td>'
+      + '</tr>';
+  }).join("");
+
+  return '<div>'
+    + '<div class="stat-grid">'
+    + stat("Établissements", state.orgs.length, "structures suivies")
+    + stat("Projets", nbProjets, nbProjetsActifs + " actif(s)", "#0f766e")
+    + stat("Échanges", totalEchanges, "interactions enregistrées")
+    + stat("Contacts", totalContacts, "personnes suivies")
+    + stat("AAP actifs", nbAap, "appels à projets", "#0284c7")
+    + stat("Financement acquis", fmtE(totalFin), "sur " + fmtE(coutTotal) + " de projets", "#047857")
+    + stat("Reste à financer", fmtE(totalReste), "projets actifs", totalReste > 0 ? "#be123c" : "#1e293b")
+    + stat("Mécénat valorisé", fmtE(totalMec), nbMec + " mécénat(s) : financier, nature, compétence", "#065f46")
+    + '</div>'
+    + '<div class="card pad" style="margin-bottom:20px"><div class="section-head"><h3>Répartition par statut</h3><button class="btn sm" data-act="edit-statuts">✎ Éditer les statuts</button></div>'
+    + '<table class="stats-table"><thead><tr><th>Statut</th><th class="num">Fiches</th><th></th><th class="num">Part</th></tr></thead><tbody>' + statutRows + '</tbody></table></div>'
+    + '<div class="card pad" style="margin-bottom:20px"><div class="section-head"><h3>Mécénats par type</h3></div>'
+    + '<table class="stats-table"><thead><tr><th>Type de mécénat</th><th class="num">Nombre</th><th class="num">Montant valorisé</th></tr></thead><tbody>'
+    + TYPES_MECENAT.map(function (t) {
+        return '<tr><td><span class="badge ' + t.badge + '">' + t.icon + " " + t.label + '</span></td>'
+          + '<td class="num">' + mecParType[t.value].n + '</td>'
+          + '<td class="num">' + fmtE(mecParType[t.value].total) + '</td></tr>';
+      }).join("")
+    + '<tr class="total"><td>Total</td><td class="num">' + nbMec + '</td><td class="num">' + fmtE(totalMec) + '</td></tr>'
+    + '</tbody></table></div>'
+    + '<div class="card pad" style="margin-bottom:20px"><div class="section-head"><h3>Vue détaillée par projet</h3></div>'
+    + '<table class="stats-table"><thead><tr><th>Projet</th><th>Établissement</th><th>Statut</th><th class="num">Coût</th><th class="num">Financé</th><th class="num">Reste</th><th>AAP</th></tr></thead><tbody>'
+    + projetRows
+    + '<tr class="total"><td>Totaux</td><td></td><td></td><td class="num">' + fmtE(coutTotal) + '</td><td class="num">' + fmtE(totalFin) + '</td><td class="num" style="color:#be123c">' + fmtE(totalReste) + '</td><td></td></tr>'
+    + '</tbody></table></div>'
+    + '<div class="card pad"><div class="section-head"><h3>Vue par établissement</h3></div>'
+    + '<table class="stats-table"><thead><tr><th>Établissement</th><th>Statut</th><th class="num">Projets</th><th class="num">Échanges</th><th class="num">Contacts</th><th class="num">Mécénats</th></tr></thead><tbody>'
+    + ficheRows
+    + '<tr class="total"><td>Totaux</td><td></td><td class="num">' + nbProjets + '</td><td class="num">' + totalEchanges + '</td><td class="num">' + totalContacts + '</td><td class="num">' + nbMec + '</td></tr>'
+    + '</tbody></table></div>'
+    + '</div>';
+}
+
+function viewDetail() {
+  var org = findOrg(state.detailId);
+  if (!org) { state.page = "orgs"; return viewOrgs(); }
+
+  var contactsHtml = (org.contacts || []).length === 0
+    ? '<p style="font-size:13px;color:#94a3b8">Aucun contact enregistré.</p>'
+    : org.contacts.map(function (c) {
+        return '<div class="list-row" style="cursor:pointer" data-act="view-contact" data-org="' + org.id + '" data-id="' + c.id + '" title="Cliquer pour voir la fiche du contact"><div style="min-width:0">'
+          + '<button class="t" style="background:none;border:0;padding:0;color:#0f172a;font-weight:600;font-size:13px;text-decoration:underline" data-act="view-contact" data-org="' + org.id + '" data-id="' + c.id + '">' + esc(c.nom) + '</button> '
+          + (c.principal ? '<span class="badge b-emerald">principal</span>' : "")
+          + '<p class="s">' + esc(c.fonction || "") + (c.email ? " · " + esc(c.email) : "") + (c.tel ? " · " + esc(c.tel) : "") + '</p></div>'
+          + '<div style="display:flex;gap:6px">'
+          + '<button class="btn sm" data-act="edit-contact" data-org="' + org.id + '" data-id="' + c.id + '">Éditer</button>'
+          + '<button class="btn sm danger" data-act="delete-contact" data-org="' + org.id + '" data-id="' + c.id + '">Suppr.</button>'
+          + '</div></div>';
+      }).join("");
+
+  var histoHtml = (org.historique || []).length === 0
+    ? '<p style="font-size:13px;color:#94a3b8">Aucun échange enregistré pour le moment.</p>'
+    : org.historique.slice().sort(function (a, b) { return a.date < b.date ? 1 : -1; }).map(function (h) {
+        return '<div class="hist" style="cursor:pointer" data-act="edit-histo" data-org="' + org.id + '" data-id="' + h.id + '" title="Cliquer pour voir / modifier cet échange"><div style="flex:1">'
+          + '<div class="head"><span class="d">' + esc(formatDate(h.date)) + '</span>'
+          + '<span class="badge">' + esc(interactionInfo(h.type).label) + '</span>'
+          + (h.contact ? '<span style="font-size:11.5px;color:#64748b">avec ' + esc(h.contact) + '</span>' : "")
+          + (h.projetId ? (function () { var hp = findProjetGlobal(h.projetId); return hp ? '<button class="org-link" style="background:none;border:0;padding:0;color:#0284c7;font-weight:600;text-decoration:underline;font-size:11.5px" data-act="open-projet" data-org="' + hp.orgId + '" data-id="' + h.projetId + '" title="Ouvrir le projet">📁 ' + esc(hp.projet.nom || "Projet") + '</button>' : ""; })() : "")
+          + '</div><p class="txt">' + esc(h.resume) + '</p></div>'
+          + '<div style="display:flex;gap:6px;align-items:center">'
+          + '<button class="btn sm" data-act="edit-histo" data-org="' + org.id + '" data-id="' + h.id + '">✎</button>'
+          + '<button class="btn sm danger" data-act="delete-histo" data-org="' + org.id + '" data-id="' + h.id + '">Suppr.</button>'
+          + '</div></div>';
+      }).join("");
+
+  var alertesHtml = (org.alertes || []).length === 0
+    ? '<p style="font-size:13px;color:#94a3b8">Aucune alerte programmée pour cette fiche.</p>'
+    : org.alertes.slice().sort(function (a, b) { return (a.faite ? 1 : 0) - (b.faite ? 1 : 0) || (a.date < b.date ? -1 : 1); }).map(function (a) {
+        return alertRowHtml({ key: a.id, orgId: org.id, orgNom: org.nom, libelle: a.libelle, type: a.type, date: a.date, notes: a.notes, faite: a.faite, auto: false }, { hideOrg: true });
+      }).join("");
+  if ((org.alertes || []).length > 0 && org.alertes.every(function (a) { return a.faite; })) {
+    alertesHtml = '<div class="ok-box">Toutes les alertes ont été traitées.</div>' + alertesHtml;
+  }
+
+  /* --- Projets de l'établissement --- */
+  var pjList = org.projets || [];
+  var projetsHtml = pjList.length === 0
+    ? '<p style="font-size:13px;color:#94a3b8;margin:8px 0">Aucun projet enregistré pour cet établissement.</p>'
+    : pjList.map(function (p) {
+        var tot = finTotal(p);
+        var pct = num(p.cout) > 0 ? Math.min(100, Math.round(tot / num(p.cout) * 100)) : 0;
+        var aap = projAap(p);
+        var sub = [];
+        if (num(p.cout) > 0) sub.push("Coût : " + fmtE(num(p.cout)) + " · " + pct + " % financé");
+        else sub.push("Financement non renseigné");
+        if (p.annee) sub.push(esc(p.annee));
+        if (aap && aap.deadline) sub.push("AAP : " + esc(formatDate(aap.deadline)));
+        return '<div class="list-row" style="cursor:pointer" data-act="open-projet" data-org="' + org.id + '" data-id="' + p.id + '" title="Ouvrir le projet"><div style="min-width:0">'
+          + '<p class="t">' + esc(p.nom || "Projet") + ' ' + projStatutBadge(p.statut) + '</p>'
+          + '<p class="s">' + sub.join(" · ") + '</p></div>'
+          + '<div style="display:flex;gap:6px;align-items:center">'
+          + '<button class="btn sm" data-act="edit-projet" data-org="' + org.id + '" data-id="' + p.id + '" title="Modifier le projet">✎</button>'
+          + '<button class="btn sm danger" data-act="delete-projet" data-org="' + org.id + '" data-id="' + p.id + '">Suppr.</button>'
+          + '</div></div>';
+      }).join("");
+
+  /* --- Co-financements (projets portés par d'autres établissements) --- */
+  var coList = [];
+  state.orgs.forEach(function (o2) {
+    if (o2.id === org.id) return;
+    (o2.projets || []).forEach(function (p) {
+      if ((p.contributeurs || []).indexOf(org.id) >= 0) coList.push({ porteurId: o2.id, porteurNom: o2.nom, projet: p });
+    });
+  });
+  var coHtml = coList.length === 0
+    ? '<p style="font-size:13px;color:#94a3b8;margin:8px 0">Cet établissement ne co-finance aucun projet porté par un autre établissement.</p>'
+    : coList.map(function (it2) {
+        var p = it2.projet;
+        var tot2 = finTotal(p);
+        return '<div class="list-row" style="cursor:pointer" data-act="open-projet" data-org="' + it2.porteurId + '" data-id="' + p.id + '" title="Ouvrir le projet"><div style="min-width:0">'
+          + '<p class="t">' + esc(p.nom || "Projet") + ' ' + projStatutBadge(p.statut) + ' <span class="badge b-sky">co-financement</span></p>'
+          + '<p class="s">chez ' + esc(it2.porteurNom) + (num(p.cout) > 0 ? " · Coût : " + fmtE(num(p.cout)) : "") + (tot2 > 0 ? " · Financé : " + fmtE(tot2) : "") + '</p></div>'
+          + '<div style="display:flex;gap:6px;align-items:center">'
+          + '<button class="btn sm" data-act="open-projet" data-org="' + it2.porteurId + '" data-id="' + p.id + '">Ouvrir</button>'
+          + '</div></div>';
+      }).join("");
+
+  /* --- Mécénats (financier / nature / compétence) --- */
+  var mecList = org.mecenats || [];
+  var mecenatsHtml;
+  if (mecList.length === 0) {
+    mecenatsHtml = '<p style="font-size:13px;color:#94a3b8;margin:8px 0">Aucun mécénat enregistré pour cette structure (financier, nature ou compétence).</p>';
+  } else {
+    mecenatsHtml = mecList.map(function (m2) {
+      var mi = mecInfo(m2.type);
+      var det = [];
+      if (m2.description) det.push(esc(m2.description));
+      if (m2.poste) det.push("Poste : " + esc(m2.poste));
+      if (m2.personnel) det.push("Personnel : " + esc(m2.personnel));
+      if (m2.mission) det.push("Mission : " + esc(m2.mission));
+      return '<div class="list-row"><div style="min-width:0">'
+        + '<p class="t"><span class="badge ' + mi.badge + '">' + mi.icon + " " + mi.label + '</span>'
+        + (num(m2.montant) > 0 ? ' <b>' + fmtE(num(m2.montant)) + '</b>' : "") + '</p>'
+        + (det.length ? '<p class="s">' + det.join(" · ") + '</p>' : "")
+        + '</div>'
+        + '<div style="display:flex;gap:6px">'
+        + '<button class="btn sm" data-act="edit-mecenat" data-org="' + org.id + '" data-id="' + m2.id + '" title="Modifier ce mécénat">✎</button>'
+        + '<button class="btn sm danger" data-act="delete-mecenat" data-org="' + org.id + '" data-id="' + m2.id + '">Suppr.</button>'
+        + '</div></div>';
+    }).join("");
+    var mecSum = mecList.reduce(function (s, m2) { return s + num(m2.montant); }, 0);
+    var mecTotBadges = TYPES_MECENAT.map(function (t) {
+      var n = mecList.filter(function (m2) { return m2.type === t.value; }).length;
+      if (n === 0) return "";
+      return '<span class="badge ' + t.badge + '">' + t.icon + " " + t.label + " : " + n + " · " + fmtE(mecTotal(mecList, t.value)) + '</span>';
+    }).filter(Boolean).join(" ");
+    mecenatsHtml += '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:12px;align-items:center">' + mecTotBadges
+      + '<span class="badge" style="margin-left:auto">Total valorisé : <b>' + fmtE(mecSum) + '</b></span></div>';
+  }
+
+  return '<div>'
+    + '<div class="row between" style="margin-bottom:16px">'
+    + '<button class="btn" data-act="goto" data-page="orgs">← Retour aux établissements</button>'
+    + '<button class="btn danger" data-act="delete-org" data-id="' + org.id + '">Supprimer l&#39;établissement</button>'
+    + '</div>'
+    + '<div class="card pad" style="padding:22px">'
+    + '<div class="row between"><div><div class="row" style="gap:10px"><h2 style="margin:0;font-size:22px">' + esc(org.nom) + '</h2>'
+    + statutBadge(org.statut)
+    + '<span class="badge">' + orgTypeInfo(org.type).icon + " " + orgTypeInfo(org.type).label + '</span></div>'
+    + '<p style="margin:4px 0 0;font-size:13px;color:#64748b">' + esc([org.secteur, org.region].filter(Boolean).join(" · ")) + '</p></div>'
+    + '<button class="btn primary" data-act="edit-org" data-id="' + org.id + '">✎ Modifier la fiche</button></div>'
+    + '<div class="info-grid">'
+    + '<div><p class="k">Site web</p><p class="v">' + (org.siteWeb ? '<a href="' + esc(org.siteWeb) + '" target="_blank" rel="noreferrer">' + esc(org.siteWeb.replace(/^https?:\/\//, "")) + '</a>' : "—") + '</p></div>'
+    + '<div><p class="k">Montant potentiel</p><p class="v">' + esc(org.montantPotentiel || "—") + '</p></div>'
+    + '<div><p class="k">Refuge LPO</p><p class="v">' + (org.refugeLPO ? '<span style="color:#047857;font-weight:600">Oui' + (org.refugeDetails ? ' <span style="font-weight:400;color:#64748b">— ' + esc(org.refugeDetails) + '</span>' : "") + '</span>' : "Non") + '</p></div>'
+    + '<div><p class="k">Projets</p><p class="v">' + (org.projets || []).length + ' enregistré(s)' + (coList.length > 0 ? " · " + coList.length + " co-financé(s)" : "") + '</p></div>'
+    + '</div>'
+    + (org.notes ? '<div class="note-box"><b>Notes :</b> ' + esc(org.notes) + '</div>' : "")
+    + '</div>'
+    + '<div class="card pad" style="margin-top:20px"><div class="section-head"><h3>Projets (' + (pjList.length + coList.length) + ')</h3>'
+    + '<button class="btn sm" data-act="new-projet" data-org="' + org.id + '">＋ Nouveau projet</button></div>' + projetsHtml + '</div>'
+    + '<div class="card pad" style="margin-top:20px"><div class="section-head"><h3>Co-financé chez d&#39;autres établissements (' + coList.length + ')</h3></div>' + coHtml + '</div>'
+    + '<div class="card pad" style="margin-top:20px"><div class="section-head"><h3>Mécénats (' + (org.mecenats || []).length + ')</h3>'
+    + '<button class="btn sm" data-act="new-mecenat" data-org="' + org.id + '">＋ Ajouter un mécénat</button></div>' + mecenatsHtml + '</div>'
+    + '<div class="card pad" style="margin-top:20px"><div class="section-head"><h3>Contacts (' + (org.contacts || []).length + ')</h3>'
+    + '<button class="btn sm" data-act="new-contact" data-org="' + org.id + '">＋ Ajouter un contact</button></div>' + contactsHtml + '</div>'
+    + '<div class="card pad" style="margin-top:20px"><div class="section-head"><h3>Historique des échanges (' + (org.historique || []).length + ')</h3>'
+    + '<button class="btn sm" data-act="new-histo" data-org="' + org.id + '">＋ Ajouter un échange</button></div>' + histoHtml + '</div>'
+    + '<div class="card pad" style="margin-top:20px"><div class="section-head"><h3>Alertes &amp; rappels (' + (org.alertes || []).filter(function (a) { return !a.faite; }).length + ' en cours)</h3>'
+    + '<button class="btn sm" data-act="new-alert" data-org="' + org.id + '">＋ Ajouter une alerte</button></div>' + alertesHtml + '</div>'
+    + '</div>';
+}
+
+/* ===================== Page Projet ===================== */
+
+function viewProjet() {
+  var org = findOrg(state.detailId);
+  var p = findProjet(org, state.projetId);
+  if (!org || !p) { state.page = "projets"; return viewProjets(); }
+
+  var tot = finTotal(p);
+  var reste = finReste(p);
+  var pct = num(p.cout) > 0 ? Math.min(100, Math.round(tot / num(p.cout) * 100)) : 0;
+
+  /* --- AAP --- */
+  var aap = projAap(p);
+  var aapHtml;
+  if (aap) {
+    var dl = aap.deadline ? relLabel(aap.deadline) : null;
+    aapHtml = '<div class="aap-box"><div class="aap-cols">'
+      + '<div><p class="k">AAP</p><p class="v">' + esc(aap.nom || "Appel à projets") + '</p></div>'
+      + '<div><p class="k">Date limite</p><p class="v">' + esc(formatDate(aap.deadline)) + (dl ? ' <span class="pill p-' + dl.tone + '">' + esc(dl.text) + '</span>' : "") + '</p></div>'
+      + '<div><p class="k">Dotation</p><p class="v">' + esc(aap.montant || "—") + '</p></div>'
+      + (aap.lien ? '<div><p class="k">Lien</p><p class="v"><a href="' + esc(aap.lien) + '" target="_blank" rel="noreferrer">Consulter l&#39;AAP</a></p></div>' : "")
+      + '</div>'
+      + '<div style="display:flex;gap:6px">'
+      + (aap.deadline ? '<button class="btn sm" data-act="new-alert-deadline" data-org="' + org.id + '" data-projet="' + p.id + '">＋ Alerte deadline</button>' : "")
+      + '<button class="btn sm" data-act="edit-aap" data-org="' + org.id + '" data-projet="' + p.id + '">✎ Éditer</button>'
+      + '</div></div>';
+  } else {
+    aapHtml = '<p style="font-size:13px;color:#94a3b8;margin-top:8px">Aucun AAP identifié pour ce projet. <button class="org-link" style="background:none;border:0;padding:0;color:#047857;font-weight:600;text-decoration:underline" data-act="new-aap" data-org="' + org.id + '" data-projet="' + p.id + '">Ajouter un AAP</button></p>';
+  }
+
+  /* --- Financement --- */
+  var lignes = (p.financement && p.financement.lignes) || [];
+  var lignesHtml = lignes.length === 0
+    ? '<p style="font-size:13px;color:#94a3b8;margin:6px 0 0">Aucune ligne de financement. Utilisez « ＋ Ligne de financement » pour décomposer le financement (fonds région, fonds propres, fonds mécène…).</p>'
+    : '<table class="fin-table"><thead><tr><th>Source de financement</th><th class="num">Montant</th><th></th></tr></thead><tbody>'
+      + lignes.map(function (l) {
+          return '<tr><td>' + esc(l.source || "—") + (l.orgId && findOrg(l.orgId) ? ' <span class="badge">' + esc(findOrg(l.orgId).nom) + '</span>' : "") + '</td><td class="num">' + fmtE(num(l.montant)) + '</td>'
+            + '<td style="width:110px;text-align:right">'
+            + '<button class="btn sm" data-act="edit-ligne" data-org="' + org.id + '" data-projet="' + p.id + '" data-id="' + l.id + '">✎</button> '
+            + '<button class="btn sm danger" data-act="delete-ligne" data-org="' + org.id + '" data-projet="' + p.id + '" data-id="' + l.id + '">Suppr.</button></td></tr>';
+        }).join("")
+      + '</tbody></table>';
+
+  /* --- Échanges liés au projet (porteur + co-financeurs) --- */
+  var implOrgs = [org].concat((p.contributeurs || []).map(function (cid) { return findOrg(cid); }).filter(Boolean));
+  var pjHisto = [];
+  implOrgs.forEach(function (o2) {
+    (o2.historique || []).forEach(function (h) {
+      if (h.projetId === p.id) pjHisto.push(Object.assign({}, h, { orgId: o2.id, orgNom: o2.nom }));
+    });
+  });
+  pjHisto.sort(function (a, b) { return a.date < b.date ? 1 : -1; });
+  var pjHistoHtml = pjHisto.length === 0
+    ? '<p style="font-size:13px;color:#94a3b8;margin:8px 0">Aucun échange lié à ce projet pour le moment. Utilisez « ＋ Échange » pour tracer un rendez-vous, un mail, un appel…</p>'
+    : pjHisto.map(function (h) {
+        return '<div class="hist" style="cursor:pointer" data-act="edit-histo" data-org="' + h.orgId + '" data-id="' + h.id + '" title="Cliquer pour voir / modifier cet échange"><div style="flex:1">'
+          + '<div class="head"><span class="d">' + esc(formatDate(h.date)) + '</span>'
+          + '<span class="badge">' + esc(interactionInfo(h.type).label) + '</span>'
+          + (h.contact ? '<span style="font-size:11.5px;color:#64748b">avec ' + esc(h.contact) + '</span>' : "")
+          + (h.orgId !== org.id ? '<span class="badge b-sky">' + esc(h.orgNom) + '</span>' : "")
+          + '</div><p class="txt">' + esc(h.resume) + '</p></div>'
+          + '<div style="display:flex;gap:6px;align-items:center">'
+          + '<button class="btn sm" data-act="edit-histo" data-org="' + h.orgId + '" data-id="' + h.id + '">✎</button>'
+          + '<button class="btn sm danger" data-act="delete-histo" data-org="' + h.orgId + '" data-id="' + h.id + '">Suppr.</button>'
+          + '</div></div>';
+      }).join("");
+
+  return '<div>'
+    + '<div class="row between" style="margin-bottom:16px">'
+    + '<button class="btn" data-act="open-org" data-id="' + org.id + '">← Retour à l&#39;établissement</button>'
+    + '<button class="btn danger" data-act="delete-projet" data-org="' + org.id + '" data-id="' + p.id + '">Supprimer le projet</button>'
+    + '</div>'
+    + '<div class="card pad" style="padding:22px">'
+    + '<div class="row between"><div><div class="row" style="gap:10px"><h2 style="margin:0;font-size:22px">' + esc(p.nom || "Projet") + '</h2>'
+    + projStatutBadge(p.statut) + '</div>'
+    + '<p style="margin:4px 0 0;font-size:13px;color:#64748b">🏢 <button class="org-link" style="background:none;border:0;padding:0;color:#047857;font-weight:600;text-decoration:underline" data-act="open-org" data-id="' + org.id + '">' + esc(org.nom) + '</button>' + (p.annee ? " · " + esc(p.annee) : "") + '</p></div>'
+    + '<button class="btn primary" data-act="edit-projet" data-org="' + org.id + '" data-id="' + p.id + '">✎ Modifier le projet</button></div>'
+    + '<div class="info-grid">'
+    + '<div><p class="k">Coût total</p><p class="v">' + (num(p.cout) > 0 ? fmtE(num(p.cout)) : "—") + '</p></div>'
+    + '<div><p class="k">Financé</p><p class="v" style="color:#047857;font-weight:600">' + fmtE(tot) + (num(p.cout) > 0 ? " (" + pct + " %)" : "") + '</p></div>'
+    + '<div><p class="k">Reste à financer</p><p class="v" style="color:' + (reste > 0 ? "#be123c" : "#047857") + ';font-weight:600">' + fmtE(Math.max(0, reste)) + '</p></div>'
+    + '</div>'
+    + (p.description ? '<div class="note-box">' + esc(p.description) + '</div>' : "")
+    + '</div>'
+    + '<div class="card pad" style="margin-top:20px"><div class="section-head"><h3>Établissements impliqués</h3>'
+    + '<button class="btn sm" data-act="new-contrib" data-org="' + org.id + '" data-id="' + p.id + '" title="Ajouter un établissement co-financeur">＋ Établissement</button></div>'
+    + '<div class="list-row"><div style="min-width:0"><p class="t"><span class="badge b-emerald">🏢 Porteur</span> <button class="org-link" style="background:none;border:0;padding:0;color:#047857;font-weight:600;text-decoration:underline" data-act="open-org" data-id="' + org.id + '">' + esc(org.nom) + '</button></p>'
+    + '<p class="s">' + statutBadge(org.statut) + ' ' + esc(orgTypeInfo(org.type).label) + (org.region ? " · " + esc(org.region) : "") + '</p>'
+    + contactSummaryHtml(org)
+    + '</div></div>'
+    + ((p.contributeurs || []).length === 0
+        ? '<p style="font-size:13px;color:#94a3b8;margin:8px 0">Aucun co-financeur pour le moment. Ajoutez un établissement partenaire avec « ＋ Établissement ».</p>'
+        : (p.contributeurs || []).map(function (cid) {
+            var co = findOrg(cid);
+            if (!co) return "";
+            return '<div class="list-row"><div style="min-width:0"><p class="t"><span class="badge b-sky">🤝 co-financement</span> <button class="org-link" style="background:none;border:0;padding:0;color:#047857;font-weight:600;text-decoration:underline" data-act="open-org" data-id="' + co.id + '">' + esc(co.nom) + '</button></p>'
+              + '<p class="s">' + statutBadge(co.statut) + ' ' + esc(orgTypeInfo(co.type).label) + (co.region ? " · " + esc(co.region) : "") + '</p>'
+              + contactSummaryHtml(co)
+              + '</div>'
+              + '<div style="display:flex;gap:6px">'
+              + '<button class="btn sm" data-act="open-org" data-id="' + co.id + '">Fiche</button>'
+              + '<button class="btn sm danger" data-act="remove-contrib" data-org="' + org.id + '" data-id="' + p.id + '" data-cid="' + co.id + '" title="Retirer cet établissement du projet">Retirer</button>'
+              + '</div></div>';
+          }).join(""))
+    + '</div>'
+    + '<div class="card pad" style="margin-top:20px"><div class="section-head"><h3>Financement</h3>'
+    + '<button class="btn sm" data-act="new-ligne" data-org="' + org.id + '" data-projet="' + p.id + '">＋ Ligne de financement</button></div>'
+    + lignesHtml
+    + '<div class="fin-tot">'
+    + '<div><span style="color:#64748b;font-size:11px;text-transform:uppercase;font-weight:700">Coût total</span><br/><b>' + fmtE(num(p.cout)) + '</b></div>'
+    + '<div><span style="color:#64748b;font-size:11px;text-transform:uppercase;font-weight:700">Financé</span><br/><b class="ok-fin">' + fmtE(tot) + '</b></div>'
+    + '<div><span style="color:#64748b;font-size:11px;text-transform:uppercase;font-weight:700">Reste à financer</span><br/><b class="' + (reste > 0 ? "ko-fin" : "ok-fin") + '">' + fmtE(Math.max(0, reste)) + '</b></div>'
+    + '</div>'
+    + (num(p.cout) > 0 ? '<div class="bar-track" style="margin-top:12px"><div class="bar-fill" style="width:' + pct + '%;background:' + (reste > 0 ? "#fbbf24" : "#10b981") + '"></div></div><p style="font-size:11px;color:#94a3b8;margin:4px 0 0">' + pct + ' % financé</p>' : "")
+    + '</div>'
+    + '<div class="card pad" style="margin-top:20px"><div class="section-head"><h3>Échanges liés au projet (' + pjHisto.length + ')</h3>'
+    + '<button class="btn sm" data-act="new-histo" data-org="' + org.id + '" data-projet="' + p.id + '">＋ Échange</button></div>' + pjHistoHtml + '</div>'
+    + '<div class="card pad" style="margin-top:20px"><h3>Appel à projets (AAP)</h3>' + aapHtml + '</div>'
+    + '</div>';
+}
+
+/* ===================== Modales ===================== */
+
+function fld(label, inner) {
+  return '<label class="fld"><span>' + label + '</span>' + inner + '</label>';
+}
+
+function statutOptions(selected) {
+  var opts = state.statuts.map(function (s) {
+    return '<option value="' + esc(s.value) + '"' + (selected === s.value ? " selected" : "") + '>' + esc(s.label) + '</option>';
+  }).join("");
+  var known = state.statuts.some(function (s) { return s.value === selected; });
+  if (!known && selected) opts = '<option value="' + esc(selected) + '" selected>' + esc(selected) + '</option>' + opts;
+  return opts;
+}
+
+function viewModal() {
+  var m = state.modal;
+  if (!m) return "";
+  var org = m.orgId ? findOrg(m.orgId) : null;
+  var body = "";
+  var title = "";
+
+  if (m.type === "org") {
+    title = org ? "Modifier l'établissement" : "Nouvel établissement";
+    var o = org || {};
+    body = '<form id="modal-form"><div class="form-grid">'
+      + fld("Nom de la structure *", '<input id="m_nom" required value="' + esc(o.nom || "") + '" placeholder="Ex. Fondation…"/>')
+      + fld("Type", '<select id="m_type">' + TYPES_ORG.map(function (t) { return '<option value="' + t.value + '"' + ((o.type || "entreprise") === t.value ? " selected" : "") + '>' + t.icon + " " + t.label + '</option>'; }).join("") + '</select>')
+      + fld("Secteur d'activité", '<input id="m_secteur" value="' + esc(o.secteur || "") + '" placeholder="Ex. Banque, philanthropie…"/>')
+      + fld("Région / département", '<input id="m_region" value="' + esc(o.region || "") + '"/>')
+      + fld("Site web", '<input id="m_siteWeb" value="' + esc(o.siteWeb || "") + '" placeholder="https://…"/>')
+      + fld("Statut de la relation", '<select id="m_statut">' + statutOptions(o.statut || "prospect") + '</select>')
+      + fld("Montant potentiel", '<input id="m_montant" value="' + esc(o.montantPotentiel || "") + '" placeholder="Ex. 10 000 – 20 000 €"/>')
+      + '<div class="fieldset-tint fs-green full"><h4>Liens avec la LPO</h4>'
+      + '<label class="chk"><input type="checkbox" id="m_refugeLPO" data-toggle="m_refugeDetailsWrap"' + (o.refugeLPO ? " checked" : "") + '/> Refuge LPO</label>'
+      + '<div id="m_refugeDetailsWrap"' + (o.refugeLPO ? "" : ' style="display:none"') + '>' + fld("Détails refuge LPO", '<input id="m_refugeDetails" value="' + esc(o.refugeDetails || "") + '"/>') + '</div>'
+      + '</div>'
+      + '<div class="full">' + fld("Notes diverses", '<textarea id="m_notes" rows="3">' + esc(o.notes || "") + '</textarea>') + '</div>'
+      + '</div><p style="font-size:11.5px;color:#64748b;margin:10px 0 0">Les projets, leur financement et les AAP se gèrent depuis la fiche de l&#39;établissement (bouton « Nouveau projet »).</p>'
+      + '<div class="modal-foot"><button type="button" class="btn" data-act="close-modal">Annuler</button>'
+      + '<button type="submit" class="btn primary">' + (org ? "Enregistrer" : "Créer l'établissement") + '</button></div></form>';
+  }
+
+  if (m.type === "contact") {
+    title = m.contactId ? "Modifier le contact" : "Ajouter un contact";
+    var c = org ? (org.contacts || []).find(function (x) { return x.id === m.contactId; }) || {} : {};
+    body = '<form id="modal-form"><div class="form-grid">'
+      + fld("Nom complet *", '<input id="m_cnom" required value="' + esc(c.nom || "") + '"/>')
+      + fld("Fonction", '<input id="m_cfct" value="' + esc(c.fonction || "") + '"/>')
+      + fld("Email", '<input id="m_cmail" value="' + esc(c.email || "") + '"/>')
+      + fld("Téléphone", '<input id="m_ctel" value="' + esc(c.tel || "") + '"/>')
+      + '<label class="chk full"><input type="checkbox" id="m_cprincipal"' + (c.principal || (!m.contactId && org && (org.contacts || []).length === 0) ? " checked" : "") + '/> Contact principal</label>'
+      + '</div><div class="modal-foot"><button type="button" class="btn" data-act="close-modal">Annuler</button>'
+      + '<button type="submit" class="btn primary">Enregistrer</button></div></form>';
+  }
+
+  if (m.type === "contact-view") {
+    var cc = org ? (org.contacts || []).find(function (x) { return x.id === m.contactId; }) : null;
+    if (!cc) { return ""; }
+    var linked = state.orgs.filter(function (o2) {
+      return (o2.contacts || []).some(function (x) { return normNom(x.nom) === normNom(cc.nom); });
+    });
+    var echanges = [];
+    linked.forEach(function (o2) {
+      (o2.historique || []).forEach(function (h) {
+        if (normNom(h.contact) === normNom(cc.nom)) echanges.push(Object.assign({}, h, { orgId: o2.id, orgNom: o2.nom }));
+      });
+    });
+    echanges.sort(function (a, b) { return a.date < b.date ? 1 : -1; });
+    title = "👤 " + cc.nom;
+    body = '<div>'
+      + '<p style="margin:0 0 4px;font-size:13px;color:#64748b">' + esc(cc.fonction || "") + (cc.email ? " · " + esc(cc.email) : "") + (cc.tel ? " · " + esc(cc.tel) : "") + '</p>'
+      + '<div class="row" style="gap:8px;margin:10px 0 0">'
+      + '<button class="btn sm" data-act="edit-contact" data-org="' + org.id + '" data-id="' + cc.id + '">✎ Éditer ce contact</button>'
+      + '</div>'
+      + '<h4 style="margin:18px 0 8px;font-size:13px;color:#065f46">Contact sur ' + linked.length + ' fiche(s)</h4>'
+      + (linked.length === 0 ? '<p style="font-size:13px;color:#94a3b8">Aucune fiche liée.</p>'
+        : linked.map(function (o2) {
+            return '<div class="list-row"><div style="min-width:0"><p class="t">' + esc(o2.nom) + '</p>'
+              + '<p class="s">' + orgTypeInfo(o2.type).label
+              + " · " + orgProjets(o2).length + " projet(s)"
+              + '</p></div>'
+              + '<div style="display:flex;gap:6px;align-items:center">' + statutBadge(o2.statut)
+              + '<button class="btn sm" data-act="open-org" data-id="' + o2.id + '">Fiche</button></div></div>';
+          }).join(""))
+      + '<h4 style="margin:18px 0 8px;font-size:13px;color:#065f46">Ses échanges (' + echanges.length + ')</h4>'
+      + (echanges.length === 0 ? '<p style="font-size:13px;color:#94a3b8">Aucun échange enregistré avec ce contact.</p>'
+        : echanges.map(function (h) {
+            return '<div class="list-row" style="cursor:pointer" data-act="edit-histo" data-org="' + h.orgId + '" data-id="' + h.id + '" title="Cliquer pour voir / modifier cet échange"><div style="min-width:0"><p class="t" style="font-weight:600">' + esc(formatDate(h.date)) + ' <span class="badge">' + esc(interactionInfo(h.type).label) + '</span></p>'
+              + '<p class="s">' + esc(h.resume) + ' — <button class="org-link" style="background:none;border:0;padding:0;color:#047857;font-weight:600;text-decoration:underline;font-size:11.5px" data-act="open-org" data-id="' + h.orgId + '">' + esc(h.orgNom) + '</button></p></div></div>';
+          }).join(""))
+      + '<div class="modal-foot"><button type="button" class="btn" data-act="close-modal">Fermer</button></div>'
+      + '</div>';
+    return '<div class="overlay" data-overlay="1"><div class="modal"><div class="modal-head"><h2>' + esc(title) + '</h2>'
+      + '<button class="btn sm" data-act="close-modal" style="border:0;font-size:16px">✕</button></div>'
+      + '<div class="modal-body">' + body + '</div></div></div>';
+  }
+
+  if (m.type === "histo") {
+    var h0 = m.hId && org ? (org.historique || []).find(function (x) { return x.id === m.hId; }) : null;
+    title = h0 ? "Modifier l'échange" : "Ajouter un échange";
+    var contactOpts = (org ? org.contacts : []).map(function (cc2) {
+      return '<option value="' + esc(cc2.nom) + '"' + (h0 && h0.contact === cc2.nom ? " selected" : "") + '>' + esc(cc2.nom) + '</option>';
+    }).join("");
+    var hp0 = h0 ? h0.projetId || "" : (m.projetId || "");
+    var pjListH = (org ? orgProjets(org).map(function (pp) { return { id: pp.id, label: (pp.nom || "Projet") }; }) : []);
+    if (org) {
+      state.orgs.forEach(function (o2) {
+        if (o2.id === org.id) return;
+        (o2.projets || []).forEach(function (pp) {
+          if ((pp.contributeurs || []).indexOf(org.id) >= 0) pjListH.push({ id: pp.id, label: (pp.nom || "Projet") + " — chez " + o2.nom });
+        });
+      });
+    }
+    var pjOptsH = pjListH.map(function (pp) {
+      return '<option value="' + pp.id + '"' + (hp0 === pp.id ? " selected" : "") + '>' + esc(pp.label) + '</option>';
+    }).join("");
+    if (hp0 && !pjListH.some(function (pp) { return pp.id === hp0; })) {
+      var gpH = findProjetGlobal(hp0);
+      if (gpH) pjOptsH += '<option value="' + hp0 + '" selected>' + esc(gpH.projet.nom || "Projet") + '</option>';
+    }
+    body = '<form id="modal-form"><div class="form-grid">'
+      + fld("Date", '<input type="date" id="m_hdate" value="' + esc(h0 ? h0.date : today()) + '" required/>')
+      + fld("Type d'échange", '<select id="m_htype">' + TYPES_INTERACTION.map(function (t) { return '<option value="' + t.value + '"' + (h0 && h0.type === t.value ? " selected" : "") + '>' + t.label + '</option>'; }).join("") + '</select>')
+      + fld("Avec quel contact ?", '<select id="m_hcontact"><option value="">—</option>' + contactOpts + '</select>')
+      + fld("Projet concerné (optionnel)", '<select id="m_hprojet"><option value="">—</option>' + pjOptsH + '</select>')
+      + fld("Résumé de l'échange *", '<input id="m_hresume" required value="' + esc(h0 ? h0.resume : "") + '" placeholder="Ce qui a été dit, décidé, envoyé…"/>')
+      + '</div><div class="modal-foot"><button type="button" class="btn" data-act="close-modal">Annuler</button>'
+      + '<button type="submit" class="btn primary">' + (h0 ? "Enregistrer" : "Enregistrer l'échange") + '</button></div></form>';
+  }
+
+  if (m.type === "alert") {
+    var a0 = m.alertId && org ? (org.alertes || []).find(function (x) { return x.id === m.alertId; }) : null;
+    title = a0 ? "Modifier l'alerte" : "Ajouter une alerte / un rappel";
+    body = '<form id="modal-form"><div class="form-grid">'
+      + fld("Libellé de l'alerte *", '<input id="m_alib" required value="' + esc(a0 ? a0.libelle : m.presetLibelle || "") + '" placeholder="Ex. Relancer sur le dossier, appeler pour…"/>')
+      + fld("Échéance *", '<input type="date" id="m_adate" required value="' + esc(a0 ? a0.date : m.presetDate || today()) + '"/>')
+      + fld("Type de rappel", '<select id="m_atype">' + TYPES_ALERTE.map(function (t) { return '<option value="' + t.value + '"' + ((a0 ? a0.type : m.presetType) === t.value ? " selected" : "") + '>' + t.label + '</option>'; }).join("") + '</select>')
+      + fld("Notes", '<textarea id="m_anotes" rows="2">' + esc(a0 ? a0.notes || "" : "") + '</textarea>')
+      + '</div><div class="modal-foot"><button type="button" class="btn" data-act="close-modal">Annuler</button>'
+      + '<button type="submit" class="btn primary">' + (a0 ? "Enregistrer" : "Ajouter") + '</button></div></form>';
+  }
+
+  if (m.type === "aap") {
+    var pjA = m.projetId && org ? findProjet(org, m.projetId) : null;
+    var aap0 = (pjA && pjA.aap) || {};
+    title = pjA ? "AAP — " + org.nom + " · " + (pjA.nom || "projet") : "Ajouter un AAP";
+    var pjSelect = pjA ? "" : fld("Projet concerné *", '<select id="m_aapPj" required><option value="">— Choisir un projet —</option>' + allProjets().map(function (it) { return '<option value="' + it.orgId + "|" + it.projet.id + '">' + esc(it.orgNom + " — " + (it.projet.nom || "projet")) + '</option>'; }).join("") + '</select>');
+    body = '<form id="modal-form"><div class="form-grid">'
+      + (pjSelect ? '<div class="full">' + pjSelect + '</div>' : "")
+      + fld("Nom de l'AAP", '<input id="m_aapNom" value="' + esc(aap0.nom || "") + '"/>')
+      + fld("Date limite de dépôt", '<input type="date" id="m_aapDeadline" value="' + esc(aap0.deadline || "") + '"/>')
+      + fld("Budget / dotation", '<input id="m_aapMontant" value="' + esc(aap0.montant || "") + '" placeholder="Ex. 20 000 €"/>')
+      + fld("Lien vers l'AAP", '<input id="m_aapLien" value="' + esc(aap0.lien || "") + '" placeholder="https://…"/>')
+      + '</div><div class="modal-foot"><button type="button" class="btn" data-act="close-modal">Annuler</button>'
+      + '<button type="submit" class="btn primary">Enregistrer</button></div></form>';
+  }
+
+  if (m.type === "projet") {
+    var pj = m.projetId && org ? findProjet(org, m.projetId) : null;
+    title = pj ? "Modifier le projet" : "Nouveau projet";
+    var aapP = (pj && pj.aap) || {};
+    var orgSelP = org ? "" : fld("Établissement concerné *", '<select id="m_pjorg" required><option value="">— Choisir un établissement —</option>' + state.orgs.map(function (o2) { return '<option value="' + o2.id + '">' + esc(o2.nom) + '</option>'; }).join("") + '</select>');
+    body = '<form id="modal-form"><div class="form-grid">'
+      + (orgSelP ? '<div class="full">' + orgSelP + '</div>' : "")
+      + fld("Nom du projet *", '<input id="m_pjnom" required value="' + esc(pj ? pj.nom || "" : "") + '" placeholder="Ex. Restauration des zones humides"/>')
+      + fld("Statut du projet", '<select id="m_pjstatut">' + PROJET_STATUTS.map(function (s) { return '<option value="' + s.value + '"' + (pj && pj.statut === s.value ? " selected" : "") + '>' + s.label + '</option>'; }).join("") + '</select>')
+      + fld("Coût total du projet (€)", '<input id="m_pjcout" type="number" step="0.01" min="0" value="' + esc(pj ? num(pj.cout) : "") + '"/>')
+      + fld("Année / période", '<input id="m_pjannee" value="' + esc(pj ? pj.annee || "" : "") + '" placeholder="Ex. 2026, printemps 2027…"/>')
+      + '<div class="full">' + fld("Description", '<textarea id="m_pjdesc" rows="2">' + esc(pj ? pj.description || "" : "") + '</textarea>') + '</div>'
+      + '<div class="fieldset-tint fs-blue full"><label class="chk" style="margin:0"><input type="checkbox" id="m_aapExistant" data-toggle="m_aapFieldsWrap"' + (aapP.existant ? " checked" : "") + '/> <b>Un AAP (appel à projets) existe pour ce projet</b></label>'
+      + '<div id="m_aapFieldsWrap" style="margin-top:10px;' + (aapP.existant ? "" : " display:none") + '"><div class="form-grid">'
+      + fld("Nom de l'AAP", '<input id="m_aapNom" value="' + esc(aapP.nom || "") + '"/>')
+      + fld("Date limite de dépôt", '<input type="date" id="m_aapDeadline" value="' + esc(aapP.deadline || "") + '"/>')
+      + fld("Budget / dotation", '<input id="m_aapMontant" value="' + esc(aapP.montant || "") + '" placeholder="Ex. 20 000 €"/>')
+      + fld("Lien vers l'AAP", '<input id="m_aapLien" value="' + esc(aapP.lien || "") + '" placeholder="https://…"/>')
+      + '</div></div></div>'
+      + '</div><p style="font-size:11.5px;color:#64748b;margin:10px 0 0">Les lignes de financement (fonds région, fonds propres, fonds mécène…) se gèrent depuis la page du projet.</p>'
+      + '<div class="modal-foot"><button type="button" class="btn" data-act="close-modal">Annuler</button>'
+      + '<button type="submit" class="btn primary">' + (pj ? "Enregistrer" : "Créer le projet") + '</button></div></form>';
+  }
+
+  if (m.type === "ligne") {
+    var pjL = m.projetId && org ? findProjet(org, m.projetId) : null;
+    var l0 = m.ligneId && pjL ? ((pjL.financement || {}).lignes || []).find(function (x) { return x.id === m.ligneId; }) : null;
+    title = l0 ? "Modifier la ligne de financement" : "Ajouter une ligne de financement";
+    var curSrc = l0 ? l0.source || "" : "";
+    var srcOpts = SOURCES_FIN.map(function (s) {
+      return '<option value="' + esc(s) + '"' + (curSrc === s ? " selected" : "") + '>' + esc(s) + '</option>';
+    }).join("");
+    body = '<form id="modal-form"><div class="form-grid">'
+      + fld("Intitulé de la source *", '<select id="m_lsrcsel">' + srcOpts + '<option value="__custom"' + (SOURCES_FIN.indexOf(curSrc) < 0 ? " selected" : "") + '>Autre (à préciser)…</option></select>')
+      + fld("Précision / nom exact *", '<input id="m_lsrc" required value="' + esc(curSrc) + '" placeholder="Ex. Fonds région, Fonds propres LPO, Fonds mécène…"/>')
+      + fld("Établissement mécène (optionnel)", '<select id="m_lorg"><option value="">—</option>' + [org ? org.id : ""].concat(pjL ? (pjL.contributeurs || []) : []).filter(Boolean).map(function (cid) { var co = findOrg(cid); return co ? '<option value="' + co.id + '"' + (l0 && l0.orgId === co.id ? " selected" : "") + '>' + esc(co.nom) + '</option>' : ""; }).join("") + '</select>')
+      + fld("Montant (€) *", '<input id="m_lmnt" type="number" step="0.01" min="0" required value="' + esc(l0 ? num(l0.montant) : "") + '"/>')
+      + '</div><p style="font-size:11.5px;color:#64748b;margin:10px 0 0">Choisissez un intitulé prédéfini (il remplit le champ) puis ajustez si besoin, ou sélectionnez « Autre » pour un intitulé libre.</p>'
+      + '<div class="modal-foot"><button type="button" class="btn" data-act="close-modal">Annuler</button>'
+      + '<button type="submit" class="btn primary">Enregistrer</button></div></form>';
+  }
+
+  if (m.type === "mecenat") {
+    var mc0 = m.mecId && org ? (org.mecenats || []).find(function (x) { return x.id === m.mecId; }) : null;
+    title = mc0 ? "Modifier le mécénat" : "Ajouter un mécénat";
+    body = '<form id="modal-form"><div class="form-grid">'
+      + fld("Type de mécénat *", '<select id="m_mctype">' + TYPES_MECENAT.map(function (t) { return '<option value="' + t.value + '"' + (mc0 && mc0.type === t.value ? " selected" : "") + '>' + t.icon + " " + t.label + '</option>'; }).join("") + '</select>')
+      + fld("Montant / valorisation (€)", '<input id="m_mcmontant" type="number" step="0.01" min="0" value="' + esc(mc0 ? num(mc0.montant) : "") + '" placeholder="Ex. 8 000"/>')
+      + '<div class="full">' + fld("De quoi s'agit-il ? (objet du don, prestation, projet financé…)", '<input id="m_mcdesc" value="' + esc(mc0 ? mc0.description || "" : "") + '" placeholder="Ex. Don de matériel, aménagement d&#39;une mare…"/>') + '</div>'
+      + '</div>'
+      + '<div class="fieldset-tint fs-blue" style="margin-top:12px"><h4>Si mécénat de compétence — le cas échéant</h4><div class="form-grid">'
+      + fld("Poste", '<input id="m_mcposte" value="' + esc(mc0 ? mc0.poste || "" : "") + '" placeholder="Ex. Ingénieur études, menuisier…"/>')
+      + fld("Personnel mobilisé", '<input id="m_mcperso" value="' + esc(mc0 ? mc0.personnel || "" : "") + '" placeholder="Ex. 1 salarié (2 jours), équipe de volontaires…"/>')
+      + fld("Mission", '<input id="m_mcmission" value="' + esc(mc0 ? mc0.mission || "" : "") + '" placeholder="Ex. Étude du refuge, atelier pédagogique…"/>')
+      + '</div></div>'
+      + '<div class="modal-foot"><button type="button" class="btn" data-act="close-modal">Annuler</button>'
+      + '<button type="submit" class="btn primary">' + (mc0 ? "Enregistrer" : "Ajouter") + '</button></div></form>';
+  }
+
+  if (m.type === "contrib") {
+    var pjC = m.projetId && org ? findProjet(org, m.projetId) : null;
+    title = pjC ? "Ajouter un établissement co-financeur" : "Co-financement";
+    var cOpts = state.orgs.filter(function (o2) {
+      return o2.id !== (org ? org.id : "") && !(pjC && (pjC.contributeurs || []).indexOf(o2.id) >= 0);
+    }).map(function (o2) {
+      return '<option value="' + o2.id + '">' + esc(o2.nom) + '</option>';
+    }).join("");
+    body = pjC && cOpts
+      ? '<form id="modal-form"><div class="form-grid">'
+        + '<div class="full">' + fld("Établissement *", '<select id="m_corg" required>' + cOpts + '</select>') + '</div>'
+        + '</div><p style="font-size:11.5px;color:#64748b;margin:10px 0 0">L&#39;établissement sélectionné apparaîtra comme co-financeur du projet « ' + esc(pjC.nom || "Projet") + ' ». Son apport se précise ligne par ligne dans la carte Financement (champ « Établissement mécène »).</p>'
+        + '<div class="modal-foot"><button type="button" class="btn" data-act="close-modal">Annuler</button>'
+        + '<button type="submit" class="btn primary">Ajouter</button></div></form>'
+      : '<p style="font-size:13px;color:#94a3b8">Tous les autres établissements participent déjà à ce projet.</p>'
+        + '<div class="modal-foot"><button type="button" class="btn" data-act="close-modal">Fermer</button></div>';
+  }
+
+  if (m.type === "export") {
+    title = "Exporter les données";
+    body = '<div>'
+      + '<p style="margin:0 0 14px;font-size:13px;color:#64748b">Choisissez le format d&#39;export. Le fichier est téléchargé par votre navigateur.</p>'
+      + '<div style="display:flex;flex-direction:column;gap:8px">'
+      + '<button class="btn" data-act="export-json">📦 Sauvegarde JSON (réimportable)</button>'
+      + '<button class="btn" data-act="export-html">🌐 Version HTML tout-en-un (données embarquées)</button>'
+      + '<button class="btn" data-act="export-csv-orgs">📊 CSV — Établissements</button>'
+      + '<button class="btn" data-act="export-csv-projets">📁 CSV — Projets</button>'
+      + '<button class="btn" data-act="export-csv-contacts">👤 CSV — Contacts</button>'
+      + '<button class="btn" data-act="export-csv-alertes">🔔 CSV — Alertes</button>'
+      + '</div>'
+      + '<p style="font-size:11.5px;color:#94a3b8;margin:12px 0 0">CSV : séparateur « ; » et encodage UTF-8 (BOM), s&#39;ouvre directement dans Excel. HTML tout-en-un : copiez le fichier sur une clé USB ou envoyez-le par mail, il rouvre vos fiches à l&#39;identique sur n&#39;importe quel PC.</p>'
+      + '<div class="modal-foot"><button type="button" class="btn" data-act="close-modal">Fermer</button></div>'
+      + '</div>';
+  }
+
+  if (m.type === "statuts") {
+    title = "Éditer les statuts";
+    var rows = state.statuts.map(function (s, i) {
+      var used = state.orgs.filter(function (o) { return o.statut === s.value; }).length;
+      return '<div class="statut-edit-row">'
+        + '<input id="st_lbl_' + i + '" value="' + esc(s.label) + '"/>'
+        + '<select id="st_col_' + i + '">' + Object.keys(PALETTE).map(function (k) { return '<option value="' + k + '"' + (s.color === k ? " selected" : "") + '>' + PALETTE[k].label + '</option>'; }).join("") + '</select>'
+        + '<button type="button" class="btn sm danger" data-act="del-statut" data-id="' + esc(s.value) + '" title="' + used + ' fiche(s) utilisent ce statut">Suppr.</button>'
+        + '</div>';
+    }).join("");
+    body = '<form id="modal-form">'
+      + '<p style="margin:0 0 12px;font-size:12px;color:#64748b">Renomme, change la couleur, ajoute ou supprime des statuts. Un statut utilisé par une fiche apparaîtra comme inconnu si vous le supprimez.</p>'
+      + rows
+      + '<button type="button" class="btn sm" data-act="add-statut">＋ Ajouter un statut</button>'
+      + '<div class="modal-foot"><button type="button" class="btn" data-act="close-modal">Annuler</button>'
+      + '<button type="submit" class="btn primary">Enregistrer</button></div></form>';
+  }
+
+  return '<div class="overlay" data-overlay="1"><div class="modal">'
+    + '<div class="modal-head"><h2>' + esc(title) + '</h2>'
+    + '<button class="btn sm" data-act="close-modal" style="border:0;font-size:16px">✕</button></div>'
+    + '<div class="modal-body">' + body + '</div></div></div>';
+}
+
+/* ===================== Rendu ===================== */
+
+function render() {
+  navSync();
+  var app = document.getElementById("app");
+  var alerts = collectAlerts(state.orgs);
+  var pendingCount = alerts.filter(function (a) { return !a.faite; }).length;
+  var projCount = allProjets().length;
+  var aapCount = allProjets().filter(function (it) { return projAap(it.projet); }).length;
+
+  var navBtn = function (target, label, icon, badge) {
+    return '<button class="nav-btn' + (state.page === target ? " active" : "") + '" data-act="goto" data-page="' + target + '">'
+      + icon + " " + label
+      + (badge !== undefined && badge > 0 ? ' <span class="count">' + badge + '</span>' : "")
+      + '</button>';
+  };
+
+  var content = state.page === "dash" ? viewDashboard()
+    : state.page === "orgs" ? viewOrgs()
+    : state.page === "projets" ? viewProjets()
+    : state.page === "projet" ? viewProjet()
+    : state.page === "aap" ? viewAap()
+    : state.page === "alerts" ? viewAlerts()
+    : state.page === "stats" ? viewStats()
+    : viewDetail();
+
+  app.innerHTML = ''
+    + '<header class="top"><div class="wrap topbar">'
+    + '<div class="brand"><div class="logo">🌿</div><div><h1>CRM Mécénat</h1><p>Établissements, projets &amp; appels à projets</p></div></div>'
+    + '<nav class="tabs">'
+    + navBtn("dash", "Tableau de bord", "▦")
+    + navBtn("orgs", "Établissements", "🏢", state.orgs.length)
+    + navBtn("projets", "Projets", "📁", projCount)
+    + navBtn("aap", "AAP", "📢", aapCount)
+    + navBtn("alerts", "Alertes", "🔔", pendingCount)
+    + navBtn("stats", "Stats", "📊")
+    + '</nav>'
+    + '<div class="actions">'
+    + '<button class="btn sm" data-act="nav-back" title="Reculer (page précédente)"' + (nav.index > 0 ? "" : " disabled") + '>←</button>'
+    + '<button class="btn sm" data-act="nav-fwd" title="Avancer (page suivante)"' + (nav.index < nav.stack.length - 1 ? "" : " disabled") + '>→</button>'
+    + '<button class="btn sm" data-act="edit-statuts" title="Éditer les statuts">⚙ Statuts</button>'
+    + '<button class="btn sm" data-act="export">⬇ Export</button>'
+    + '<button class="btn sm" data-act="print" title="Imprimer / PDF">🖨 Imprimer</button>'
+    + '<button class="btn sm" data-act="import">⬆ Import</button>'
+    + '<button class="btn sm" data-act="reset-seed">Exemples</button>'
+    + '<input type="file" id="file-import" accept="application/json" style="display:none"/>'
+    + '</div>'
+    + '</div></header>'
+    + '<main class="wrap">' + content + '</main>'
+    + viewModal()
+    + '<footer class="foot wrap">Les données sont enregistrées dans ce navigateur. Pensez à exporter régulièrement : bouton Export (sauvegarde JSON, CSV ou HTML tout-en-un) · bouton 🖨 Imprimer pour une version papier / PDF pour les réunions.</footer>';
+
+  if (state.focusSearch) {
+    var s = document.getElementById("search");
+    if (s) { s.focus(); s.setSelectionRange(s.value.length, s.value.length); }
+    state.focusSearch = false;
+  }
+}
+
+/* ===================== Actions ===================== */
+
+function readStatutsDraft() {
+  state.statuts.forEach(function (s, i) {
+    var lbl = document.getElementById("st_lbl_" + i);
+    var col = document.getElementById("st_col_" + i);
+    if (lbl) s.label = lbl.value;
+    if (col) s.color = col.value;
+  });
+}
+
+document.addEventListener("click", function (e) {
+  var el = e.target.closest ? e.target.closest("[data-act]") : null;
+  if (!el) return;
+  var act = el.getAttribute("data-act");
+  var orgId = el.getAttribute("data-org");
+  var id = el.getAttribute("data-id");
+
+  if (act === "goto") setState({ page: el.getAttribute("data-page"), detailId: null, projetId: null });
+  else if (act === "goto-filtered") { state.fStatut = el.getAttribute("data-statut"); setState({ page: "orgs", detailId: null, projetId: null, fStatut: el.getAttribute("data-statut") }); }
+  else if (act === "open-org") setState({ page: "detail", detailId: id, projetId: null });
+  else if (act === "open-projet") setState({ page: "projet", detailId: orgId, projetId: id });
+  else if (act === "close-modal") closeModal();
+  else if (act === "nav-back") {
+    if (nav.index > 0) { nav.index--; var nb = nav.stack[nav.index]; setState({ page: nb.page, detailId: nb.detailId, projetId: nb.projetId }); }
+  }
+  else if (act === "nav-fwd") {
+    if (nav.index < nav.stack.length - 1) { nav.index++; var nf = nav.stack[nav.index]; setState({ page: nf.page, detailId: nf.detailId, projetId: nf.projetId }); }
+  }
+  else if (act === "new-org") setState({ modal: { type: "org" } });
+  else if (act === "edit-org") setState({ modal: { type: "org", orgId: id } });
+  else if (act === "delete-org") {
+    var o = findOrg(id);
+    if (o && confirm('Supprimer définitivement la fiche « ' + o.nom + ' » ?')) {
+      state.orgs = state.orgs.filter(function (x) { return x.id !== id; });
+      state.orgs.forEach(function (x) {
+        (x.projets || []).forEach(function (p) {
+          if (p.contributeurs) p.contributeurs = p.contributeurs.filter(function (c) { return c !== id; });
+          ((p.financement || {}).lignes || []).forEach(function (l) { if (l.orgId === id) l.orgId = ""; });
+        });
+      });
+      persist(); setState({ page: "orgs", detailId: null });
+    }
+  }
+  else if (act === "new-contact") setState({ modal: { type: "contact", orgId: orgId } });
+  else if (act === "edit-contact") setState({ modal: { type: "contact", orgId: orgId, contactId: id } });
+  else if (act === "view-contact") setState({ modal: { type: "contact-view", orgId: orgId, contactId: id } });
+  else if (act === "delete-contact") {
+    if (confirm("Supprimer ce contact ?")) { updateOrg(orgId, function (o) { o.contacts = o.contacts.filter(function (c) { return c.id !== id; }); return o; }); render(); }
+  }
+  else if (act === "new-histo") setState({ modal: { type: "histo", orgId: orgId, projetId: el.getAttribute("data-projet") || null } });
+  else if (act === "edit-histo") setState({ modal: { type: "histo", orgId: orgId, hId: id } });
+  else if (act === "delete-histo") {
+    if (confirm("Supprimer cet échange ?")) { updateOrg(orgId, function (o) { o.historique = o.historique.filter(function (h) { return h.id !== id; }); return o; }); render(); }
+  }
+  else if (act === "new-alert") setState({ modal: { type: "alert", orgId: orgId } });
+  else if (act === "new-alert-deadline") {
+    var o2 = findOrg(orgId);
+    var pj2 = findProjet(o2, el.getAttribute("data-projet"));
+    var aapD = pj2 && pj2.aap;
+    setState({
+      modal: {
+        type: "alert", orgId: orgId, presetType: "deadline-aap",
+        presetDate: aapD ? aapD.deadline : today(),
+        presetLibelle: "Préparer le dépôt AAP : " + (aapD ? aapD.nom || pj2.nom : "")
+      }
+    });
+  }
+  else if (act === "toggle-alert") { updateOrg(orgId, function (o) { o.alertes = o.alertes.map(function (a) { return a.id === id ? Object.assign({}, a, { faite: !a.faite }) : a; }); return o; }); render(); }
+  else if (act === "delete-alert") {
+    if (confirm("Supprimer cette alerte ?")) { updateOrg(orgId, function (o) { o.alertes = o.alertes.filter(function (a) { return a.id !== id; }); return o; }); render(); }
+  }
+  else if (act === "new-projet") setState({ modal: { type: "projet", orgId: orgId || null } });
+  else if (act === "edit-projet") setState({ modal: { type: "projet", orgId: orgId, projetId: id } });
+  else if (act === "delete-projet") {
+    var orgP = findOrg(orgId);
+    var pjD = findProjet(orgP, id);
+    if (pjD && confirm('Supprimer le projet « ' + (pjD.nom || "sans nom") + ' » ?')) {
+      updateOrg(orgId, function (o) { o.projets = (o.projets || []).filter(function (p) { return p.id !== id; }); return o; });
+      setState({ page: "detail", detailId: orgId, projetId: null });
+    }
+  }
+  else if (act === "new-aap") setState({ modal: { type: "aap", orgId: orgId || null, projetId: el.getAttribute("data-projet") || null } });
+  else if (act === "edit-aap") setState({ modal: { type: "aap", orgId: orgId, projetId: el.getAttribute("data-projet") } });
+  else if (act === "new-ligne") setState({ modal: { type: "ligne", orgId: orgId, projetId: el.getAttribute("data-projet") } });
+  else if (act === "edit-ligne") setState({ modal: { type: "ligne", orgId: orgId, projetId: el.getAttribute("data-projet"), ligneId: id } });
+  else if (act === "delete-ligne") {
+    if (confirm("Supprimer cette ligne de financement ?")) { updateOrg(orgId, function (o) {
+      var p = findProjet(o, el.getAttribute("data-projet"));
+      if (p) { p.financement = p.financement || { lignes: [] }; p.financement.lignes = (p.financement.lignes || []).filter(function (l) { return l.id !== id; }); }
+      return o;
+    }); render(); }
+  }
+  else if (act === "new-mecenat") setState({ modal: { type: "mecenat", orgId: orgId } });
+  else if (act === "edit-mecenat") setState({ modal: { type: "mecenat", orgId: orgId, mecId: id } });
+  else if (act === "delete-mecenat") {
+    if (confirm("Supprimer ce mécénat ?")) { updateOrg(orgId, function (o) { o.mecenats = (o.mecenats || []).filter(function (mc) { return mc.id !== id; }); return o; }); render(); }
+  }
+  else if (act === "edit-alert") setState({ modal: { type: "alert", orgId: orgId, alertId: id } });
+  else if (act === "edit-statuts") setState({ modal: { type: "statuts" } });
+  else if (act === "add-statut") {
+    readStatutsDraft();
+    state.statuts.push({ value: "st-" + uid(), label: "Nouveau statut", color: "gray" });
+    persist(); render();
+  }
+  else if (act === "del-statut") {
+    readStatutsDraft();
+    state.statuts = state.statuts.filter(function (s) { return s.value !== id; });
+    persist(); render();
+  }
+  else if (act === "new-contrib") setState({ modal: { type: "contrib", orgId: orgId, projetId: id } });
+  else if (act === "remove-contrib") {
+    var cid = el.getAttribute("data-cid");
+    updateOrg(orgId, function (o) {
+      var p = findProjet(o, id);
+      if (p && p.contributeurs) p.contributeurs = p.contributeurs.filter(function (x) { return x !== cid; });
+      return o;
+    });
+    render();
+  }
+  else if (act === "export") setState({ modal: { type: "export" } });
+  else if (act === "export-json") {
+    var payload = { version: 3, orgs: state.orgs, statuts: state.statuts };
+    downloadText("crm-mecenat-lpo-" + today() + ".json", JSON.stringify(payload, null, 2), "application/json", false);
+    closeModal();
+  }
+  else if (act === "export-html") {
+    var clone = document.documentElement.cloneNode(true);
+    var appC = clone.querySelector("#app"); if (appC) appC.innerHTML = "";
+    var paC = clone.querySelector("#print-area"); if (paC) paC.innerHTML = "";
+    var htmlOut = "<!doctype html>\n" + clone.outerHTML;
+    var inject = '<scr' + 'ipt>window.__CRM_EMBEDDED_DATA__ = ' + JSON.stringify({ version: 3, orgs: state.orgs, statuts: state.statuts }).replace(/<\//g, "<\\/") + ';</scr' + 'ipt>';
+    var openTag = "<scr" + "ipt>";
+    htmlOut = htmlOut.replace(openTag, function () { return inject + openTag; });
+    downloadText("crm-mecenat-lpo-" + today() + ".html", htmlOut, "text/html", false);
+    closeModal();
+  }
+  else if (act === "export-csv-orgs") {
+    var rows = [["Nom", "Type", "Secteur", "Région", "Statut", "Site web", "Montant potentiel", "Refuge", "Projets", "Contacts", "Échanges", "Mécénat valorisé €", "Notes"]];
+    state.orgs.forEach(function (o) {
+      rows.push([o.nom, orgTypeInfo(o.type).label, o.secteur || "", o.region || "", statutInfo(o.statut).label, o.siteWeb || "", o.montantPotentiel || "", o.refugeLPO ? "Oui" + (o.refugeDetails ? " — " + o.refugeDetails : "") : "Non", (o.projets || []).length, (o.contacts || []).length, (o.historique || []).length, (o.mecenats || []).reduce(function (s, mc) { return s + num(mc.montant); }, 0), o.notes || ""]);
+    });
+    downloadText("etablissements-" + today() + ".csv", toCSV(rows), "text/csv", true);
+    closeModal();
+  }
+  else if (act === "export-csv-projets") {
+    var rowsP = [["Projet", "Porteur", "Co-financeurs", "Statut", "Coût €", "Financé €", "Reste €", "Année", "AAP", "Deadline AAP", "Description"]];
+    allProjets().forEach(function (it) {
+      var p = it.projet;
+      var aap = projAap(p);
+      var cos = (p.contributeurs || []).map(function (cid) { var co = findOrg(cid); return co ? co.nom : ""; }).filter(Boolean).join(" / ");
+      rowsP.push([p.nom || "Projet", it.orgNom, cos, projStatutInfo(p.statut).label, num(p.cout), finTotal(p), Math.max(0, finReste(p)), p.annee || "", aap ? aap.nom || "Oui" : "Non", aap ? aap.deadline || "" : "", p.description || ""]);
+    });
+    downloadText("projets-" + today() + ".csv", toCSV(rowsP), "text/csv", true);
+    closeModal();
+  }
+  else if (act === "export-csv-contacts") {
+    var rowsC = [["Nom", "Fonction", "Email", "Téléphone", "Principal", "Établissement", "Statut"]];
+    state.orgs.forEach(function (o) {
+      (o.contacts || []).forEach(function (c) {
+        rowsC.push([c.nom, c.fonction || "", c.email || "", c.tel || "", c.principal ? "Oui" : "Non", o.nom, statutInfo(o.statut).label]);
+      });
+    });
+    downloadText("contacts-" + today() + ".csv", toCSV(rowsC), "text/csv", true);
+    closeModal();
+  }
+  else if (act === "export-csv-alertes") {
+    var rowsA = [["Libellé", "Type", "Échéance", "Notes", "Faite", "Établissement"]];
+    collectAlerts(state.orgs).slice().sort(function (a, b) { return a.date < b.date ? -1 : 1; }).forEach(function (a) {
+      rowsA.push([a.libelle, alerteTypeInfo(a.type).label, a.date, a.notes || "", a.faite ? "Oui" : "Non", a.orgNom]);
+    });
+    downloadText("alertes-" + today() + ".csv", toCSV(rowsA), "text/csv", true);
+    closeModal();
+  }
+  else if (act === "print") {
+    var pa = document.getElementById("print-area");
+    if (!pa) return;
+    var alertsAll = collectAlerts(state.orgs);
+    var pendingA = alertsAll.filter(function (a) { return !a.faite; });
+    var pjItems = allProjets();
+    var resteActifs = 0;
+    pjItems.forEach(function (it) { if (projetActif(it.projet)) resteActifs += Math.max(0, finReste(it.projet)); });
+    var pjRows = pjItems.map(function (it) {
+      var p = it.projet;
+      var aap = projAap(p);
+      return '<tr><td>' + esc(p.nom || "Projet") + '</td><td>' + esc(it.orgNom) + (((p.contributeurs || []).length > 0) ? " +" + p.contributeurs.length : "") + '</td><td>' + projStatutInfo(p.statut).label + '</td><td>' + (num(p.cout) > 0 ? fmtE(num(p.cout)) : "—") + '</td><td>' + (finTotal(p) > 0 ? fmtE(finTotal(p)) : "—") + '</td><td>' + (num(p.cout) > 0 ? fmtE(Math.max(0, finReste(p))) : "—") + '</td><td>' + (aap ? esc(aap.nom || "AAP") + (aap.deadline ? " — " + esc(formatDate(aap.deadline)) : "") : "—") + '</td></tr>';
+    }).join("");
+    var orgRows = state.orgs.map(function (o) {
+      var cp = (o.contacts || []).filter(function (c) { return c.principal; })[0] || (o.contacts || [])[0];
+      return '<tr><td>' + esc(o.nom) + '</td><td>' + orgTypeInfo(o.type).label + '</td><td>' + statutInfo(o.statut).label + '</td><td>' + esc(cp ? cp.nom + (cp.fonction ? " (" + cp.fonction + ")" : "") : "—") + '</td><td>' + (o.projets || []).length + '</td></tr>';
+    }).join("");
+    var alertRows = pendingA.slice().sort(function (a, b) { return a.date < b.date ? -1 : 1; }).map(function (a) {
+      return '<tr><td>' + esc(formatDate(a.date)) + '</td><td>' + esc(a.libelle) + '</td><td>' + esc(a.orgNom) + '</td></tr>';
+    }).join("");
+    pa.innerHTML = '<h1>CRM Mécénat — LPO</h1>'
+      + '<p class="p-sub">Édité le ' + esc(formatDate(today())) + ' · ' + state.orgs.length + ' établissement(s), ' + pjItems.length + ' projet(s)</p>'
+      + '<div class="p-kpis">'
+      + '<div><b>' + state.orgs.length + '</b>Établissements</div>'
+      + '<div><b>' + pjItems.length + '</b>Projets</div>'
+      + '<div><b>' + pendingA.length + '</b>Alertes en cours</div>'
+      + '<div><b>' + fmtE(resteActifs) + '</b>Reste à financer (projets actifs)</div>'
+      + '</div>'
+      + '<h2>Projets</h2>'
+      + '<table class="p-table"><thead><tr><th>Projet</th><th>Porteur</th><th>Statut</th><th>Coût</th><th>Financé</th><th>Reste</th><th>AAP</th></tr></thead><tbody>' + pjRows + '</tbody></table>'
+      + '<h2>Établissements</h2>'
+      + '<table class="p-table"><thead><tr><th>Nom</th><th>Type</th><th>Statut</th><th>Contact principal</th><th>Projets</th></tr></thead><tbody>' + orgRows + '</tbody></table>'
+      + '<h2>Alertes en cours (' + pendingA.length + ')</h2>'
+      + (alertRows ? '<table class="p-table"><thead><tr><th>Échéance</th><th>Libellé</th><th>Établissement</th></tr></thead><tbody>' + alertRows + '</tbody></table>' : '<p class="p-sub">Aucune alerte en attente.</p>');
+    window.print();
+  }
+  else if (act === "import") { var fi = document.getElementById("file-import"); if (fi) fi.click(); }
+  else if (act === "reset-seed") {
+    if (confirm("Remplacer toutes les données par les fiches d'exemple ?")) {
+      state.orgs = JSON.parse(JSON.stringify(SEED)).map(migrateOrg);
+      state.statuts = JSON.parse(JSON.stringify(DEFAULT_STATUTS));
+      persist(); setState({ page: "dash", detailId: null });
+    }
+  }
+});
+
+document.addEventListener("input", function (e) {
+  if (e.target.id === "search") {
+    state.query = e.target.value;
+    state.focusSearch = true;
+    render();
+  }
+});
+
+document.addEventListener("change", function (e) {
+  var t = e.target;
+  if (t.id === "m_lsrcsel") {
+    var srcInp = document.getElementById("m_lsrc");
+    if (srcInp) {
+      if (t.value === "__custom") { srcInp.focus(); srcInp.select(); }
+      else srcInp.value = t.value;
+    }
+    return;
+  }
+  var toggle = t.getAttribute && t.getAttribute("data-toggle");
+  if (toggle) {
+    var wrap = document.getElementById(toggle);
+    if (wrap) wrap.style.display = t.checked ? "" : "none";
+    return;
+  }
+  var f = t.getAttribute && t.getAttribute("data-filter");
+  if (!f) return;
+  var patch = {};
+  patch[f] = t.type === "checkbox" ? t.checked : t.value;
+  patch.focusSearch = false;
+  setState(patch);
+});
+
+document.addEventListener("change", function (e) {
+  if (e.target.id === "file-import") {
+    var f = e.target.files && e.target.files[0];
+    if (!f) return;
+    var reader = new FileReader();
+    reader.onload = function () {
+      try {
+        var data = JSON.parse(reader.result);
+        if (Array.isArray(data)) {
+          /* ancien format v1 : simple liste de fiches */
+          state.orgs = data.map(migrateOrg);
+          persist();
+          setState({ page: "dash", detailId: null, projetId: null });
+        } else if (data && Array.isArray(data.orgs)) {
+          state.orgs = data.orgs.map(migrateOrg);
+          if (Array.isArray(data.statuts) && data.statuts.length) state.statuts = data.statuts;
+          persist();
+          setState({ page: "dash", detailId: null, projetId: null });
+        } else {
+          alert("Fichier invalide : données non reconnues.");
+        }
+      } catch (err) { alert("Impossible de lire ce fichier JSON."); }
+    };
+    reader.readAsText(f);
+    e.target.value = "";
+  }
+});
+
+document.addEventListener("submit", function (e) {
+  if (e.target.id !== "modal-form") return;
+  e.preventDefault();
+  var m = state.modal;
+  if (!m) return;
+  var v = function (id) { var el = document.getElementById(id); return el ? el.value.trim() : ""; };
+  var chk = function (id) { var el = document.getElementById(id); return el ? el.checked : false; };
+
+  if (m.type === "org") {
+    var existing = m.orgId ? findOrg(m.orgId) : null;
+    var o = existing || { id: uid(), contacts: [], historique: [], alertes: [] };
+    o.nom = v("m_nom");
+    o.type = v("m_type");
+    o.secteur = v("m_secteur");
+    o.region = v("m_region");
+    o.siteWeb = v("m_siteWeb");
+    o.statut = v("m_statut");
+    o.montantPotentiel = v("m_montant");
+    o.refugeLPO = chk("m_refugeLPO");
+    o.refugeDetails = o.refugeLPO ? v("m_refugeDetails") : "";
+    o.mecenats = o.mecenats || [];
+    o.projets = o.projets || [];
+    o.notes = v("m_notes");
+    if (!existing) {
+      state.orgs = [o].concat(state.orgs);
+      persist();
+      setState({ modal: null, page: "detail", detailId: o.id });
+    } else {
+      persist();
+      setState({ modal: null });
+    }
+  }
+
+  else if (m.type === "contact") {
+    if (!findOrg(m.orgId)) return;
+    var c = { id: m.contactId || uid(), nom: v("m_cnom"), fonction: v("m_cfct"), email: v("m_cmail"), tel: v("m_ctel"), principal: chk("m_cprincipal") };
+    updateOrg(m.orgId, function (o) {
+      var exists = (o.contacts || []).some(function (x) { return x.id === c.id; });
+      o.contacts = exists ? o.contacts.map(function (x) { return x.id === c.id ? c : x; }) : (o.contacts || []).concat([c]);
+      if (c.principal) o.contacts = o.contacts.map(function (x) { return Object.assign({}, x, { principal: x.id === c.id }); });
+      return o;
+    });
+    setState({ modal: null });
+  }
+
+  else if (m.type === "histo") {
+    var hData = { id: m.hId || uid(), date: v("m_hdate"), type: v("m_htype"), contact: v("m_hcontact"), resume: v("m_hresume"), projetId: v("m_hprojet") };
+    if (m.hId) {
+      updateOrg(m.orgId, function (o) {
+        o.historique = (o.historique || []).map(function (h) { return h.id === m.hId ? hData : h; });
+        return o;
+      });
+    } else {
+      updateOrg(m.orgId, function (o) { o.historique = [hData].concat(o.historique || []); return o; });
+    }
+    setState({ modal: null });
+  }
+
+  else if (m.type === "alert") {
+    var aData = { libelle: v("m_alib"), type: v("m_atype"), date: v("m_adate"), notes: v("m_anotes") };
+    if (m.alertId) {
+      updateOrg(m.orgId, function (o) {
+        o.alertes = (o.alertes || []).map(function (a) { return a.id === m.alertId ? Object.assign({}, a, aData) : a; });
+        return o;
+      });
+    } else {
+      updateOrg(m.orgId, function (o) { o.alertes = (o.alertes || []).concat([Object.assign({ id: uid(), faite: false }, aData)]); return o; });
+    }
+    setState({ modal: null });
+  }
+
+  else if (m.type === "mecenat") {
+    var mcData = { type: v("m_mctype"), montant: num(v("m_mcmontant")), description: v("m_mcdesc"), poste: v("m_mcposte"), personnel: v("m_mcperso"), mission: v("m_mcmission") };
+    updateOrg(m.orgId, function (o) {
+      o.mecenats = o.mecenats || [];
+      if (m.mecId) {
+        o.mecenats = o.mecenats.map(function (mc) { return mc.id === m.mecId ? Object.assign({}, mc, mcData) : mc; });
+      } else {
+        o.mecenats = o.mecenats.concat([Object.assign({ id: uid() }, mcData)]);
+      }
+      return o;
+    });
+    setState({ modal: null });
+  }
+
+  else if (m.type === "aap") {
+    var tOrg = m.orgId, tPj = m.projetId;
+    if (!tOrg || !tPj) {
+      var parts = v("m_aapPj").split("|");
+      tOrg = parts[0];
+      tPj = parts[1];
+    }
+    if (!tOrg || !tPj) { alert("Choisissez un projet pour cet AAP."); return; }
+    updateOrg(tOrg, function (o) {
+      var p = findProjet(o, tPj);
+      if (p) p.aap = { existant: true, nom: v("m_aapNom"), deadline: v("m_aapDeadline"), montant: v("m_aapMontant"), lien: v("m_aapLien") };
+      return o;
+    });
+    setState({ modal: null });
+  }
+
+  else if (m.type === "projet") {
+    var pjOrgId = m.orgId || v("m_pjorg");
+    if (!pjOrgId || !findOrg(pjOrgId)) { alert("Choisissez un établissement pour ce projet."); return; }
+    var aapEx = chk("m_aapExistant");
+    var pjData = {
+      nom: v("m_pjnom"),
+      statut: v("m_pjstatut"),
+      cout: num(v("m_pjcout")),
+      annee: v("m_pjannee"),
+      description: v("m_pjdesc"),
+      financement: { lignes: [] },
+      aap: { existant: aapEx, nom: aapEx ? v("m_aapNom") : "", deadline: aapEx ? v("m_aapDeadline") : "", montant: aapEx ? v("m_aapMontant") : "", lien: aapEx ? v("m_aapLien") : "" }
+    };
+    updateOrg(pjOrgId, function (o) {
+      o.projets = o.projets || [];
+      if (m.projetId) {
+        var oldPj = findProjet(o, m.projetId);
+        pjData.financement = oldPj ? oldPj.financement || { lignes: [] } : { lignes: [] };
+        o.projets = o.projets.map(function (p) { return p.id === m.projetId ? Object.assign({}, p, pjData) : p; });
+      } else {
+        o.projets = o.projets.concat([Object.assign({ id: uid(), contributeurs: [] }, pjData)]);
+      }
+      return o;
+    });
+    setState({ modal: null });
+  }
+
+  else if (m.type === "ligne") {
+    var src = v("m_lsrc"), mnt = num(v("m_lmnt"));
+    updateOrg(m.orgId, function (o) {
+      var p = findProjet(o, m.projetId);
+      if (!p) return o;
+      p.financement = p.financement || { lignes: [] };
+      p.financement.lignes = p.financement.lignes || [];
+      if (m.ligneId) {
+        p.financement.lignes = p.financement.lignes.map(function (l) { return l.id === m.ligneId ? { id: l.id, source: src, montant: mnt, orgId: v("m_lorg") } : l; });
+      } else {
+        p.financement.lignes = p.financement.lignes.concat([{ id: uid(), source: src, montant: mnt, orgId: v("m_lorg") }]);
+      }
+      return o;
+    });
+    setState({ modal: null });
+  }
+
+  else if (m.type === "contrib") {
+    var cidS = v("m_corg");
+    if (!cidS || !findOrg(cidS)) return;
+    updateOrg(m.orgId, function (o) {
+      var p = findProjet(o, m.projetId);
+      if (p) {
+        p.contributeurs = p.contributeurs || [];
+        if (p.contributeurs.indexOf(cidS) < 0 && cidS !== o.id) p.contributeurs.push(cidS);
+      }
+      return o;
+    });
+    setState({ modal: null });
+  }
+
+  else if (m.type === "statuts") {
+    readStatutsDraft();
+    persist();
+    setState({ modal: null });
+  }
+});
+
+render();
+</script>
+</body>
+</html>
