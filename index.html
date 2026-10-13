@@ -238,13 +238,14 @@ input[type=file]{padding:5px;font-size:12px}
     <a class="snav" id="sn-notes" data-act="go" data-page="notes">📝 Notes</a>
     <a class="snav" id="sn-outlook" data-act="go" data-page="outlook">📧 Outlook</a>
     <a class="snav" id="sn-synchro" data-act="go" data-page="synchro">☁️ Synchro <span id="sb-dot" class="ms-dot off"></span></a>
+    <a class="snav" id="sn-crm" data-act="go" data-page="crm">🤝 CRM Mécénat</a>
   </nav>
   <div class="side-foot">
     <a class="snav" data-act="go" data-page="install">📱 Installer l’appli</a>
     <a class="snav" data-act="open-listes">⚙️ Mes listes</a>
     <a class="snav" data-act="open-export">💾 Export &amp; sauvegarde</a>
     <a class="snav" data-act="open-help">❓ Aide &amp; confidentialité</a>
-    <div class="side-note">Mon Espace v5.5 — 100 % local par défaut. Connexion Outlook et synchro chiffrée (page ☁️) optionnelles — vous décidez.</div>
+    <div class="side-note">Mon Espace v5.6 — 100 % local par défaut. Connexion Outlook et synchro chiffrée (page ☁️) optionnelles — vous décidez.</div>
   </div>
 </aside>
 <div class="wrap">
@@ -431,14 +432,14 @@ function normalize(src){
   if(d.dossiers){
     for(i=0;i<d.dossiers.length;i++){
       x=d.dossiers[i];if(!x||!x.id)continue;
-      out.dossiers.push({id:String(x.id),parentId:String(x.parentId||''),nom:String(x.nom||'Sans titre'),statut:validK(DOS_STATUTS,x.statut,'ouvert'),contexte:validK(CONTEXTES,x.contexte,'perso'),categorie:String(x.categorie||''),echeance:String(x.echeance||''),description:String(x.description||''),cree:String(x.cree||today()),maj:String(x.maj||today())});
+      out.dossiers.push({id:String(x.id),parentId:String(x.parentId||''),nom:String(x.nom||'Sans titre'),statut:validK(DOS_STATUTS,x.statut,'ouvert'),contexte:validK(CONTEXTES,x.contexte,'pro'),categorie:String(x.categorie||''),echeance:String(x.echeance||''),description:String(x.description||''),cree:String(x.cree||today()),maj:String(x.maj||today())});
     }
   }
   if(d.taches){
     for(i=0;i<d.taches.length;i++){
       x=d.taches[i];if(!x||!x.id)continue;
       var st=x.statut;if(!st){st=(x.fait?'fait':'a-faire');}
-      out.taches.push({id:String(x.id),titre:String(x.titre||'Sans titre'),statut:validK(TACHE_STATUTS,st,'a-faire'),priorite:validK(PRIORITES,x.priorite,'normale'),contexte:validK(CONTEXTES,x.contexte,'perso'),echeance:String(x.echeance||''),heure:String(x.heure||''),dossierId:String(x.dossierId||''),description:String(x.description||''),cree:String(x.cree||today()),maj:String(x.maj||today())});
+      out.taches.push({id:String(x.id),titre:String(x.titre||'Sans titre'),statut:validK(TACHE_STATUTS,st,'a-faire'),priorite:validK(PRIORITES,x.priorite,'normale'),contexte:validK(CONTEXTES,x.contexte,'pro'),echeance:String(x.echeance||''),heure:String(x.heure||''),dossierId:String(x.dossierId||''),description:String(x.description||''),cree:String(x.cree||today()),maj:String(x.maj||today())});
     }
   }
   if(d.notes){
@@ -447,7 +448,7 @@ function normalize(src){
       var tags=[];
       if(Array.isArray(x.tags)){var j;for(j=0;j<x.tags.length;j++){if(x.tags[j])tags.push(String(x.tags[j]));}}
       else if(typeof x.tags==='string'&&x.tags){var parts=x.tags.split(',');for(var k=0;k<parts.length;k++){if(parts[k].trim())tags.push(parts[k].trim());}}
-      out.notes.push({id:String(x.id),titre:String(x.titre||'Sans titre'),contenu:String(x.contenu||''),tags:tags,contexte:validK(CONTEXTES,x.contexte,'perso'),dossierId:String(x.dossierId||''),tacheId:String(x.tacheId||''),docId:String(x.docId||''),epinglee:!!x.epinglee,echeance:String(x.echeance||''),heure:String(x.heure||''),traitee:!!x.traitee,capture:!!x.capture,image:String(x.image||''),prio:validK(PRIORITES,x.prio,'normale'),origine:String(x.origine||''),autoFloat:!!x.autoFloat,trieeLe:String(x.trieeLe||''),maj:String(x.maj||today())});
+      out.notes.push({id:String(x.id),titre:String(x.titre||'Sans titre'),contenu:String(x.contenu||''),tags:tags,contexte:validK(CONTEXTES,x.contexte,'pro'),dossierId:String(x.dossierId||''),tacheId:String(x.tacheId||''),docId:String(x.docId||''),epinglee:!!x.epinglee,echeance:String(x.echeance||''),heure:String(x.heure||''),traitee:!!x.traitee,capture:!!x.capture,image:String(x.image||''),prio:validK(PRIORITES,x.prio,'normale'),origine:String(x.origine||''),autoFloat:!!x.autoFloat,trieeLe:String(x.trieeLe||''),maj:String(x.maj||today())});
     }
   }
   if(d.docs){
@@ -633,6 +634,7 @@ function render(){
   else if(state.page==='outlook')h=pageOutlook();
   else if(state.page==='install')h=pageInstall();
   else if(state.page==='synchro')h=pageSynchro();
+  else if(state.page==='crm')h=pageCrm();
   else if(state.page==='search')h=pageSearch();
   else h=page404();
   main.innerHTML=h;
@@ -647,8 +649,8 @@ function renderPageBody(){
   else if(state.page==='docs')el.innerHTML=docsBody();
 }
 function updateSidebar(){
-  var map={dash:'sn-dash',dossiers:'sn-dossiers',dossier:'sn-dossiers',taches:'sn-taches',notes:'sn-notes',note:'sn-notes',docs:'sn-docs',doc:'sn-docs',capture:'sn-capture',cal:'sn-cal',outlook:'sn-outlook',synchro:'sn-synchro'};
-  var key=map[state.page];var ids=['sn-dash','sn-dossiers','sn-docs','sn-taches','sn-capture','sn-cal','sn-notes','sn-outlook','sn-synchro'];var i;
+  var map={dash:'sn-dash',dossiers:'sn-dossiers',dossier:'sn-dossiers',taches:'sn-taches',notes:'sn-notes',note:'sn-notes',docs:'sn-docs',doc:'sn-docs',capture:'sn-capture',cal:'sn-cal',outlook:'sn-outlook',synchro:'sn-synchro',crm:'sn-crm'};
+  var key=map[state.page];var ids=['sn-dash','sn-dossiers','sn-docs','sn-taches','sn-capture','sn-cal','sn-notes','sn-outlook','sn-synchro','sn-crm'];var i;
   for(i=0;i<ids.length;i++){var el=document.getElementById(ids[i]);if(el){el.className='snav'+(ids[i]===key?' active':'');}}
   sbRefreshBadge();
 }
@@ -656,6 +658,13 @@ function updateTopbar(){
   var b=document.getElementById('btn-back'),f=document.getElementById('btn-fwd');
   if(b)b.disabled=(nav.index<=0);
   if(f)f.disabled=(nav.index>=nav.stack.length-1);
+}
+function pageCrm(){
+  var h='<div class="content"><div class="page-head"><h1 class="page-title">🤝 CRM Mécénat LPO</h1></div>';
+  h+='<div class="banner info">Le CRM s’ouvre ci-dessous dans l’onglet. Ses données sont <b>locales à ce navigateur</b> (séparées du reste de Mon Espace) et disposent de leurs propres exports CSV à l’intérieur. Vous pouvez aussi l’ouvrir directement : <a href="crm/" target="_blank" rel="noopener">page plein écran</a>.</div>';
+  h+='<iframe src="crm/" title="CRM Mécénat LPO" style="width:100%;height:calc(100vh - 210px);min-height:480px;border:1px solid var(--line);border-radius:12px;background:#fff"></iframe>';
+  h+='</div>';
+  return h;
 }
 function page404(){
   return '<div class="content"><div class="empty">Élément introuvable (peut-être supprimé).<br/><br/><button class="btn" data-act="go" data-page="dash">Retour à l’accueil</button></div></div>';
@@ -1249,6 +1258,7 @@ function pageDoc(id){
    +(x.localisation&&!/^https?:\/\//i.test(x.localisation)?'<button class="btn" data-act="doc-copy" data-id="'+x.id+'" title="Copier le chemin dans le presse-papier, puis collez-le dans l’Explorateur pour ouvrir le fichier">📋 Copier le chemin</button>':'')
    +(x.stocke?'<button class="btn" data-act="doc-open" data-id="'+x.id+'" title="Ouvrir la copie enregistrée dans un nouvel onglet">⬇️ Ouvrir la copie</button>':'')
    +'<button class="btn" data-act="new-note" data-doc="'+x.id+'">+ Note sur ce document</button>'
+   +'<button class="btn ghost" data-act="doc-float" data-id="'+x.id+'" title="Ouvrir la note compagnon de ce document en fenêtre flottante (créée automatiquement si besoin)">🪟 Note flottante</button>'
    +'<button class="btn ghost" data-act="edit-doc" data-id="'+x.id+'">✎ Modifier</button>'
    +'<button class="btn danger ghost" data-act="del-doc" data-id="'+x.id+'" title="Supprimer">🗑</button>'
    +'</div></div>';
@@ -1553,7 +1563,7 @@ function modalDossier(id,presetParent){
    +'<div class="form-row"><label>Dossier parent (pour une arborescence générale → sous-dossiers)</label><select name="parent">'+dossierParentOptions(d?d.parentId:(presetParent||''),d?d.id:'')+'</select></div>'
    +'<div class="form-row two">'
    +'<div><label>Statut</label><select name="st">'+optsHtml(DOS_STATUTS,d?d.statut:'ouvert')+'</select></div>'
-   +'<div><label>Contexte</label><select name="ctx">'+optsHtml(CONTEXTES,d?d.contexte:'perso')+'</select></div>'
+   +'<div><label>Contexte</label><select name="ctx">'+optsHtml(CONTEXTES,d?d.contexte:'pro')+'</select></div>'
    +'</div>'
    +'<div class="form-row two">'
    +'<div><label>Catégorie</label><input name="cat" maxlength="60" value="'+(d?esc(d.categorie):'')+'" placeholder="Administratif, Projet…"/></div>'
@@ -1577,7 +1587,7 @@ function modalTache(id,presetDos){
    +'<div><label>Priorité</label><select name="prio">'+optsHtml(PRIORITES,t?t.priorite:'normale')+'</select></div>'
    +'</div>'
    +'<div class="form-row two">'
-   +'<div><label>Contexte</label><select name="ctx">'+optsHtml(CONTEXTES,t?t.contexte:'perso')+'</select></div>'
+   +'<div><label>Contexte</label><select name="ctx">'+optsHtml(CONTEXTES,t?t.contexte:'pro')+'</select></div>'
    +'<div><label>Échéance</label><input type="date" name="ech" value="'+(t?t.echeance:'')+'"/></div>'
    +'</div>'
    +'<div class="form-row two">'
@@ -1598,7 +1608,7 @@ function modalNote(id,presetDos,presetDoc){
    +'<div class="form-row"><label>Contenu</label><textarea name="cont" rows="6" placeholder="Écrivez librement…">'+(n?esc(n.contenu):'')+'</textarea></div>'
    +'<div class="form-row"><label>Tags (séparés par des virgules)</label><input name="tags" maxlength="200" value="'+(n?esc((n.tags||[]).join(', ')):'')+'" placeholder="ex. : checklist, urgent"/></div>'
    +'<div class="form-row two">'
-   +'<div><label>Contexte</label><select name="ctx">'+optsHtml(CONTEXTES,n?n.contexte:'perso')+'</select></div>'
+   +'<div><label>Contexte</label><select name="ctx">'+optsHtml(CONTEXTES,n?n.contexte:'pro')+'</select></div>'
    +'<div><label>Épinglée ?</label><select name="pin"><option value="non"'+(!n||!n.epinglee?' selected':'')+'>Non</option><option value="oui"'+(n&&n.epinglee?' selected':'')+'>Oui 📌</option></select></div>'
    +'</div>'
    +'<div class="form-row two">'
@@ -2060,7 +2070,7 @@ function pageSynchro(){
   var h='<div class="content"><div class="page-head"><h1 class="page-title">☁️ Synchro multi-appareils</h1></div>';
   h+='<div class="banner info">Vos données sont <b>chiffrées de bout en bout</b> (AES-GCM 256 bits, clé dérivée de votre passphrase) avant tout envoi. Le serveur ne voit jamais le contenu, ni la passphrase — uniquement un email de compte.</div>';
   h+='<h2 class="sec-title">État</h2><div class="step">';
-  h+='<p>Version de l’appli : <b>v5.5</b></p>';
+  h+='<p>Version de l’appli : <b>v5.6</b></p>';
   h+='<p>Configuration : '+(sbReady()?'<b style="color:var(--ok)">complète ✓</b>':'<b>incomplète</b> — il manque : <b>'+sbMissing()+'</b>')+(c.email?' — compte : <b>'+esc(c.email)+'</b>':'')+'</p>';
   h+='<p>Dernière synchro : <b>'+(state.sb.last||'jamais')+'</b>'+(state.sb.busy?' (en cours…)':'')+(state.sb.err?' <span style="color:var(--danger)">⚠️ '+esc(state.sb.err)+'</span>':'')+'</p>';
   h+='<div class="toolbar" style="margin-top:8px">'
@@ -2651,7 +2661,7 @@ function saveDocForm(f){
 }
 function saveCaptureForm(f){
   var el=f.elements;
-  var n={id:uid(),titre:el.tit.value.trim()||'Idée',contenu:'',tags:[],contexte:'perso',dossierId:el.dos.value,tacheId:'',docId:'',epinglee:false,echeance:el.ech.value,traitee:false,capture:true,image:state._capImg||'',maj:today()};
+  var n={id:uid(),titre:el.tit.value.trim()||'Idée',contenu:'',tags:[],contexte:'pro',dossierId:el.dos.value,tacheId:'',docId:'',epinglee:false,echeance:el.ech.value,traitee:false,capture:true,image:state._capImg||'',maj:today()};
   state.notes.push(n);
   state._capImg='';
   save();closeModal();toast('Idée capturée ⚡');
@@ -2741,15 +2751,17 @@ function openFloatNote(nid){
    +'select,input{font-family:inherit;font-size:13px;padding:6px 8px;border:1px solid #e2e8f0;border-radius:8px;width:100%;box-sizing:border-box}'
    +'.ft-memo{display:flex;gap:6px;align-items:center;font-size:12px;color:#475569;margin:10px 0}'
    +'button{background:#4f46e5;color:#fff;border:none;border-radius:8px;padding:9px 14px;font-size:14px;cursor:pointer;width:100%}';
+  var editable=!isRich(n.contenu);
   var h='<!doctype html><html><head><meta charset="UTF-8"/><title>'+esc(n.titre)+'</title><style>'+css+'</style></head><body>'
    +'<div class="ft-titre">'+(n.epinglee?'📌 ':'')+'📝 '+esc(n.titre)+'</div>'
    +(doc?'<div class="ft-doc">📄 '+esc(doc.nom)+'</div>':'')
-   +'<div class="ft-cont">'+(String(n.contenu||'')?contenuHtml(n.contenu):'<span style="color:#94a3b8">Note vide — pensez-y pendant que vous travaillez…</span>')+'</div>'
+   +'<div class="ft-cont" id="ft-cont"'+(editable?' contenteditable="true" spellcheck="true" style="outline:none"':'')+'>'+(String(n.contenu||'')?contenuHtml(n.contenu):(editable?'':'<span style="color:#94a3b8">Note vide — pensez-y pendant que vous travaillez…</span>'))+'</div>'
    +'<div class="ft-lbl">Importance</div><select id="ft-prio">'+optsHtml(PRIORITES,n.prio||'normale')+'</select>'
    +'<div class="ft-lbl">Échéance</div><input type="date" id="ft-ech" value="'+esc(n.echeance||'')+'"/>'
    +'<div class="ft-lbl">Heure</div><input type="time" id="ft-heur" value="'+esc(n.heure||'')+'"/>'
    +(n.docId?'<label class="ft-memo"><input type="checkbox" id="ft-memo"'+(n.autoFloat?' checked':'')+' style="width:auto"/> Mémoriser pour ce document (rouvert automatiquement depuis sa fiche)</label>':'')
    +'<button id="ft-save">💾 Enregistrer et fermer</button>'
+   +(editable?'<p style="font-size:11px;color:#94a3b8;margin:8px 0 0;text-align:center">📝 Le texte ci-dessus est modifiable — il s’enregistre automatiquement pendant que vous écrivez.</p>':'')
    +'</body></html>';
   try{
     w.document.open();
@@ -2772,6 +2784,22 @@ function openFloatNote(nid){
         try{w.close();}catch(e5){}
         render();
       };
+    }
+    if(editable){
+      var cont=null;
+      try{cont=w.document.getElementById('ft-cont');}catch(e7){}
+      if(cont){
+        cont.oninput=function(){
+          try{
+            var txt=cont.innerText;
+            txt=txt.replace(/\u00a0/g,' ');
+            txt=txt.replace(/\n{3,}/g,'\n\n');
+            n.contenu=txt;
+            n.maj=today();
+            save();
+          }catch(e8){}
+        };
+      }
     }
   }catch(e6){}
 }
@@ -2908,7 +2936,7 @@ document.addEventListener('click',function(ev){
     render();
   }
   else if(a==='tag-clear'){state.filtres.no.tag='';render();}
-  else if(a==='open-doc'){navGo('doc',id);render();}
+  else if(a==='open-doc'){navGo('doc',id);render();var af=docNotes(id).filter(function(nn){return nn.autoFloat;});var k;for(k=0;k<af.length;k++){try{openFloatNote(af[k].id);}catch(ef){}}}
   else if(a==='new-doc'){modalDoc('',el.getAttribute('data-dos')||'');}
   else if(a==='edit-doc'){modalDoc(id,'');}
   else if(a==='link-doc'){modalLinkDoc(id);}
@@ -2955,6 +2983,20 @@ document.addEventListener('click',function(ev){
     }
   }
   else if(a==='note-float'){openFloatNote(id);}
+  else if(a==='doc-float'){
+    var dfl=findDoc(id);
+    if(!dfl){render();return;}
+    var dns=docNotes(id);
+    var flt=dns.filter(function(nn){return nn.autoFloat;});
+    var cible=flt.length?flt[0]:(dns.length?dns[0]:null);
+    if(!cible){
+      cible={id:uid(),titre:'Notes — '+dfl.nom,contenu:'',tags:[],contexte:'pro',dossierId:'',tacheId:'',docId:dfl.id,epinglee:false,echeance:'',heure:'',traitee:false,capture:false,image:'',prio:'normale',origine:'',autoFloat:true,trieeLe:'',maj:today()};
+      state.notes.push(cible);
+      save();
+      if(state.page==='notes')render();
+    }
+    openFloatNote(cible.id);
+  }
   else if(a==='float-open-all'){
     var j3;for(j3=0;j3<state.notes.length;j3++){if(state.notes[j3].docId===id)openFloatNote(state.notes[j3].id);}
   }
