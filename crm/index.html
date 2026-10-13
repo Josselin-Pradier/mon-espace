@@ -529,9 +529,10 @@ function statutInfo(v) {
   return s;
 }
 function pal(color) { return PALETTE[color] || PALETTE.gray; }
-function statutBadge(v) {
+function statutBadge(v, orgId) {
   var s = statutInfo(v);
   var p = pal(s.color);
+  if (orgId) return '<span class="badge" style="background:' + p.bg + ';color:' + p.fg + ';border-color:' + p.bar + ';cursor:pointer" data-act="qstatut" data-org="' + orgId + '" title="Cliquer pour changer le statut de la relation">' + esc(s.label) + ' ✎</span>';
   return '<span class="badge" style="background:' + p.bg + ';color:' + p.fg + ';border-color:' + p.bar + '">' + esc(s.label) + '</span>';
 }
 
@@ -590,7 +591,7 @@ function contactSummaryHtml(o) {
   return '<p class="s">👤 <b>' + esc(cp.nom) + '</b>' + (cp.fonction ? " (" + esc(cp.fonction) + ")" : "") + (cp.email ? " · " + esc(cp.email) : "") + (cp.tel ? " · " + esc(cp.tel) : "") + extra + '</p>';
 }
 function projStatutInfo(v) { return PROJET_STATUTS.find(function (x) { return x.value === v; }) || PROJET_STATUTS[1]; }
-function projStatutBadge(v) { var s = projStatutInfo(v); return '<span class="badge ' + s.badge + '">' + s.label + '</span>'; }
+function projStatutBadge(v, orgId, projId) { var s = projStatutInfo(v); if (orgId && projId) return '<span class="badge ' + s.badge + '" style="cursor:pointer" data-act="qprojstatut" data-org="' + orgId + '" data-id="' + projId + '" title="Cliquer pour changer le statut du projet">' + s.label + ' ✎</span>'; return '<span class="badge ' + s.badge + '">' + s.label + '</span>'; }
 function projAap(p) { return p && p.aap && p.aap.existant ? p.aap : null; }
 function projetActif(p) { return p && (p.statut === "en-cours" || p.statut === "prospection"); }
 
@@ -828,7 +829,7 @@ function viewOrgs() {
         return '<button class="card org-card" data-act="open-org" data-id="' + o.id + '">'
           + '<div class="row between"><div style="min-width:0"><p class="nom">' + esc(o.nom) + '</p>'
           + '<p class="sub">' + ti.icon + " " + ti.label + (o.secteur ? " · " + esc(o.secteur) : "") + (o.region ? " · " + esc(o.region) : "") + '</p></div>'
-          + statutBadge(o.statut) + '</div>'
+          + statutBadge(o.statut, o.id) + '</div>'
           + '<div class="tags">' + tags + '</div>'
           + '<div class="foot"><span>' + (mainContact ? "👤 " + esc(mainContact.nom) : "Aucun contact enregistré") + '</span>'
           + (nextAlert ? '<span class="pill p-' + relLabel(nextAlert.date).tone + '">⏰ ' + esc(formatDate(nextAlert.date)) + '</span>' : "")
@@ -865,7 +866,7 @@ function viewProjets() {
         return '<button class="card org-card" data-act="open-projet" data-org="' + it.orgId + '" data-id="' + p.id + '">'
           + '<div class="row between"><div style="min-width:0"><p class="nom">' + esc(p.nom || "Projet") + '</p>'
           + '<p class="sub">🏢 ' + esc(it.orgNom) + (p.annee ? " · " + esc(p.annee) : "") + ((p.contributeurs || []).length > 0 ? ' <span style="color:#0284c7">+' + (p.contributeurs || []).length + ' co-financé(s)</span>' : "") + '</p></div>'
-          + projStatutBadge(p.statut) + '</div>'
+          + projStatutBadge(p.statut, it.orgId, p.id) + '</div>'
           + '<div class="tags">'
           + (num(p.cout) > 0 ? '<span class="badge b-amber">💰 ' + fmtE(num(p.cout)) + ' · ' + pct + ' % financé</span>' : "")
           + (aap ? '<span class="badge b-sky">📢 ' + esc(aap.nom || "AAP") + (aap.deadline ? " · " + esc(formatDate(aap.deadline)) : "") + '</span>' : "")
@@ -1004,7 +1005,7 @@ function viewStats() {
     var pjActifs = pjList.filter(projetActif).length;
     return '<tr class="clickable" data-act="open-org" data-id="' + o.id + '">'
       + '<td style="font-weight:600">' + esc(o.nom) + '</td>'
-      + '<td>' + statutBadge(o.statut) + '</td>'
+      + '<td>' + statutBadge(o.statut, o.id) + '</td>'
       + '<td class="num">' + pjList.length + (pjActifs > 0 ? ' <span style="color:#b45309">(' + pjActifs + ' actif)</span>' : "") + '</td>'
       + '<td class="num">' + (o.historique || []).length + '</td>'
       + '<td class="num">' + (o.contacts || []).length + '</td>'
@@ -1021,7 +1022,7 @@ function viewStats() {
     return '<tr class="clickable" data-act="open-projet" data-org="' + it.orgId + '" data-id="' + p.id + '">'
       + '<td style="font-weight:600">' + esc(p.nom || "Projet") + '</td>'
       + '<td>' + esc(it.orgNom) + (((p.contributeurs || []).length > 0) ? ' <span class="badge b-sky">+' + p.contributeurs.length + '</span>' : "") + '</td>'
-      + '<td>' + projStatutBadge(p.statut) + '</td>'
+      + '<td>' + projStatutBadge(p.statut, it.orgId, p.id) + '</td>'
       + '<td class="num">' + (num(p.cout) > 0 ? fmtE(num(p.cout)) : "—") + '</td>'
       + '<td class="num">' + (finTotal(p) > 0 ? fmtE(finTotal(p)) : "—") + '</td>'
       + '<td class="num" style="' + (finReste(p) > 0 ? "color:#be123c" : "color:#047857;font-weight:600") + '">' + (num(p.cout) > 0 ? fmtE(Math.max(0, finReste(p))) : "—") + '</td>'
@@ -1119,7 +1120,7 @@ function viewDetail() {
         if (p.annee) sub.push(esc(p.annee));
         if (aap && aap.deadline) sub.push("AAP : " + esc(formatDate(aap.deadline)));
         return '<div class="list-row" style="cursor:pointer" data-act="open-projet" data-org="' + org.id + '" data-id="' + p.id + '" title="Ouvrir le projet"><div style="min-width:0">'
-          + '<p class="t">' + esc(p.nom || "Projet") + ' ' + projStatutBadge(p.statut) + '</p>'
+          + '<p class="t">' + esc(p.nom || "Projet") + ' ' + projStatutBadge(p.statut, org.id, p.id) + '</p>'
           + '<p class="s">' + sub.join(" · ") + '</p></div>'
           + '<div style="display:flex;gap:6px;align-items:center">'
           + '<button class="btn sm" data-act="edit-projet" data-org="' + org.id + '" data-id="' + p.id + '" title="Modifier le projet">✎</button>'
@@ -1141,7 +1142,7 @@ function viewDetail() {
         var p = it2.projet;
         var tot2 = finTotal(p);
         return '<div class="list-row" style="cursor:pointer" data-act="open-projet" data-org="' + it2.porteurId + '" data-id="' + p.id + '" title="Ouvrir le projet"><div style="min-width:0">'
-          + '<p class="t">' + esc(p.nom || "Projet") + ' ' + projStatutBadge(p.statut) + ' <span class="badge b-sky">co-financement</span></p>'
+          + '<p class="t">' + esc(p.nom || "Projet") + ' ' + projStatutBadge(p.statut, it2.porteurId, p.id) + ' <span class="badge b-sky">co-financement</span></p>'
           + '<p class="s">chez ' + esc(it2.porteurNom) + (num(p.cout) > 0 ? " · Coût : " + fmtE(num(p.cout)) : "") + (tot2 > 0 ? " · Financé : " + fmtE(tot2) : "") + '</p></div>'
           + '<div style="display:flex;gap:6px;align-items:center">'
           + '<button class="btn sm" data-act="open-projet" data-org="' + it2.porteurId + '" data-id="' + p.id + '">Ouvrir</button>'
@@ -1188,7 +1189,7 @@ function viewDetail() {
     + '</div>'
     + '<div class="card pad" style="padding:22px">'
     + '<div class="row between"><div><div class="row" style="gap:10px"><h2 style="margin:0;font-size:22px">' + esc(org.nom) + '</h2>'
-    + statutBadge(org.statut)
+    + statutBadge(org.statut, org.id)
     + '<span class="badge">' + orgTypeInfo(org.type).icon + " " + orgTypeInfo(org.type).label + '</span></div>'
     + '<p style="margin:4px 0 0;font-size:13px;color:#64748b">' + esc([org.secteur, org.region].filter(Boolean).join(" · ")) + '</p></div>'
     + '<button class="btn primary" data-act="edit-org" data-id="' + org.id + '">✎ Modifier la fiche</button></div>'
@@ -1198,7 +1199,10 @@ function viewDetail() {
     + '<div><p class="k">Refuge LPO</p><p class="v">' + (org.refugeLPO ? '<span style="color:#047857;font-weight:600">Oui' + (org.refugeDetails ? ' <span style="font-weight:400;color:#64748b">— ' + esc(org.refugeDetails) + '</span>' : "") + '</span>' : "Non") + '</p></div>'
     + '<div><p class="k">Projets</p><p class="v">' + (org.projets || []).length + ' enregistré(s)' + (coList.length > 0 ? " · " + coList.length + " co-financé(s)" : "") + '</p></div>'
     + '</div>'
-    + (org.notes ? '<div class="note-box"><b>Notes :</b> ' + esc(org.notes) + '</div>' : "")
+    + '<div class="note-box" style="padding:10px 12px;margin-top:14px">'
+    + '<p style="margin:0 0 6px;font-size:12px;font-weight:600;color:#64748b">📝 Notes libres — cliquez ci-dessous, l&#39;enregistrement est automatique en cliquant ailleurs</p>'
+    + '<div contenteditable="true" data-live="org-notes" data-org="' + org.id + '"' + (org.notes ? '' : ' data-ph="1"') + ' style="min-height:30px;outline:none;white-space:pre-wrap;font-size:13.5px;line-height:1.55">' + (org.notes ? esc(org.notes) : '<span style="color:#94a3b8">Vos notes sur cet établissement…</span>') + '</div>'
+    + '</div>'
     + '</div>'
     + '<div class="card pad" style="margin-top:20px"><div class="section-head"><h3>Projets (' + (pjList.length + coList.length) + ')</h3>'
     + '<button class="btn sm" data-act="new-projet" data-org="' + org.id + '">＋ Nouveau projet</button></div>' + projetsHtml + '</div>'
@@ -1288,7 +1292,7 @@ function viewProjet() {
     + '</div>'
     + '<div class="card pad" style="padding:22px">'
     + '<div class="row between"><div><div class="row" style="gap:10px"><h2 style="margin:0;font-size:22px">' + esc(p.nom || "Projet") + '</h2>'
-    + projStatutBadge(p.statut) + '</div>'
+    + projStatutBadge(p.statut, org.id, p.id) + '</div>'
     + '<p style="margin:4px 0 0;font-size:13px;color:#64748b">🏢 <button class="org-link" style="background:none;border:0;padding:0;color:#047857;font-weight:600;text-decoration:underline" data-act="open-org" data-id="' + org.id + '">' + esc(org.nom) + '</button>' + (p.annee ? " · " + esc(p.annee) : "") + '</p></div>'
     + '<button class="btn primary" data-act="edit-projet" data-org="' + org.id + '" data-id="' + p.id + '">✎ Modifier le projet</button></div>'
     + '<div class="info-grid">'
@@ -1296,12 +1300,15 @@ function viewProjet() {
     + '<div><p class="k">Financé</p><p class="v" style="color:#047857;font-weight:600">' + fmtE(tot) + (num(p.cout) > 0 ? " (" + pct + " %)" : "") + '</p></div>'
     + '<div><p class="k">Reste à financer</p><p class="v" style="color:' + (reste > 0 ? "#be123c" : "#047857") + ';font-weight:600">' + fmtE(Math.max(0, reste)) + '</p></div>'
     + '</div>'
-    + (p.description ? '<div class="note-box">' + esc(p.description) + '</div>' : "")
+    + '<div class="note-box" style="padding:10px 12px;margin-top:14px">'
+    + '<p style="margin:0 0 6px;font-size:12px;font-weight:600;color:#64748b">📝 Description du projet — cliquez ci-dessous pour écrire ou modifier, l&#39;enregistrement est automatique</p>'
+    + '<div contenteditable="true" data-live="projet-desc" data-org="' + org.id + '" data-projet="' + p.id + '"' + (p.description ? '' : ' data-ph="1"') + ' style="min-height:30px;outline:none;white-space:pre-wrap;font-size:13.5px;line-height:1.55">' + (p.description ? esc(p.description) : '<span style="color:#94a3b8">Décrivez le projet, son avancement, ses prochaines étapes…</span>') + '</div>'
+    + '</div>'
     + '</div>'
     + '<div class="card pad" style="margin-top:20px"><div class="section-head"><h3>Établissements impliqués</h3>'
     + '<button class="btn sm" data-act="new-contrib" data-org="' + org.id + '" data-id="' + p.id + '" title="Ajouter un établissement co-financeur">＋ Établissement</button></div>'
     + '<div class="list-row"><div style="min-width:0"><p class="t"><span class="badge b-emerald">🏢 Porteur</span> <button class="org-link" style="background:none;border:0;padding:0;color:#047857;font-weight:600;text-decoration:underline" data-act="open-org" data-id="' + org.id + '">' + esc(org.nom) + '</button></p>'
-    + '<p class="s">' + statutBadge(org.statut) + ' ' + esc(orgTypeInfo(org.type).label) + (org.region ? " · " + esc(org.region) : "") + '</p>'
+    + '<p class="s">' + statutBadge(org.statut, org.id) + ' ' + esc(orgTypeInfo(org.type).label) + (org.region ? " · " + esc(org.region) : "") + '</p>'
     + contactSummaryHtml(org)
     + '</div></div>'
     + ((p.contributeurs || []).length === 0
@@ -1310,7 +1317,7 @@ function viewProjet() {
             var co = findOrg(cid);
             if (!co) return "";
             return '<div class="list-row"><div style="min-width:0"><p class="t"><span class="badge b-sky">🤝 co-financement</span> <button class="org-link" style="background:none;border:0;padding:0;color:#047857;font-weight:600;text-decoration:underline" data-act="open-org" data-id="' + co.id + '">' + esc(co.nom) + '</button></p>'
-              + '<p class="s">' + statutBadge(co.statut) + ' ' + esc(orgTypeInfo(co.type).label) + (co.region ? " · " + esc(co.region) : "") + '</p>'
+              + '<p class="s">' + statutBadge(co.statut, co.id) + ' ' + esc(orgTypeInfo(co.type).label) + (co.region ? " · " + esc(co.region) : "") + '</p>'
               + contactSummaryHtml(co)
               + '</div>'
               + '<div style="display:flex;gap:6px">'
@@ -1356,6 +1363,27 @@ function viewModal() {
   var org = m.orgId ? findOrg(m.orgId) : null;
   var body = "";
   var title = "";
+
+  if (m.type === "qstatut") {
+    title = "Changer le statut";
+    body = '<form id="modal-form"><div class="form-grid">'
+      + fld("Établissement", '<span style="font-weight:600">' + esc(org ? org.nom : "—") + '</span>')
+      + fld("Nouveau statut de la relation", '<select id="m_qstatut">' + statutOptions(org ? org.statut : "prospect") + '</select>')
+      + '</div><p style="font-size:11.5px;color:#64748b;margin:10px 0 0">Changement immédiat après « Enregistrer » — le badge est cliquable partout dans le CRM.</p>'
+      + '<div class="modal-foot"><button type="button" class="btn" data-act="close-modal">Annuler</button>'
+      + '<button type="submit" class="btn primary">Enregistrer</button></div></form>';
+  }
+
+  if (m.type === "qprojstatut") {
+    title = "Changer le statut du projet";
+    var pq = org ? findProjet(org, m.projetId) : null;
+    body = '<form id="modal-form"><div class="form-grid">'
+      + fld("Projet", '<span style="font-weight:600">' + esc(pq ? (pq.nom || "Projet") : "—") + '</span>')
+      + fld("Nouveau statut", '<select id="m_qpstatut">' + PROJET_STATUTS.map(function (s) { return '<option value="' + s.value + '"' + (pq && pq.statut === s.value ? " selected" : "") + '>' + esc(s.label) + '</option>'; }).join("") + '</select>')
+      + '</div><p style="font-size:11.5px;color:#64748b;margin:10px 0 0">Changement immédiat après « Enregistrer » — le badge est cliquable partout dans le CRM.</p>'
+      + '<div class="modal-foot"><button type="button" class="btn" data-act="close-modal">Annuler</button>'
+      + '<button type="submit" class="btn primary">Enregistrer</button></div></form>';
+  }
 
   if (m.type === "org") {
     title = org ? "Modifier l'établissement" : "Nouvel établissement";
@@ -1661,7 +1689,7 @@ function render() {
     + '</div></header>'
     + '<main class="wrap">' + content + '</main>'
     + viewModal()
-    + '<footer class="foot wrap">Les données sont enregistrées dans ce navigateur. Pensez à exporter régulièrement : bouton Export (sauvegarde JSON, CSV ou HTML tout-en-un) · bouton 🖨 Imprimer pour une version papier / PDF pour les réunions.</footer>';
+    + '<footer class="foot wrap">CRM Mécénat LPO · <b>v2</b> — les données sont enregistrées dans ce navigateur. Pensez à exporter régulièrement : bouton Export (sauvegarde JSON, CSV ou HTML tout-en-un) · bouton 🖨 Imprimer pour une version papier / PDF pour les réunions.</footer>';
 
   if (state.focusSearch) {
     var s = document.getElementById("search");
@@ -1700,6 +1728,8 @@ document.addEventListener("click", function (e) {
     if (nav.index < nav.stack.length - 1) { nav.index++; var nf = nav.stack[nav.index]; setState({ page: nf.page, detailId: nf.detailId, projetId: nf.projetId }); }
   }
   else if (act === "new-org") setState({ modal: { type: "org" } });
+  else if (act === "qstatut") setState({ modal: { type: "qstatut", orgId: orgId } });
+  else if (act === "qprojstatut") setState({ modal: { type: "qprojstatut", orgId: orgId, projetId: id } });
   else if (act === "edit-org") setState({ modal: { type: "org", orgId: id } });
   else if (act === "delete-org") {
     var o = findOrg(id);
@@ -1958,7 +1988,15 @@ document.addEventListener("submit", function (e) {
   var v = function (id) { var el = document.getElementById(id); return el ? el.value.trim() : ""; };
   var chk = function (id) { var el = document.getElementById(id); return el ? el.checked : false; };
 
-  if (m.type === "org") {
+  if (m.type === "qstatut") {
+    updateOrg(m.orgId, function (o) { o.statut = v("m_qstatut") || o.statut; return o; });
+    setState({ modal: null });
+  }
+  else if (m.type === "qprojstatut") {
+    updateOrg(m.orgId, function (o) { var pp = findProjet(o, m.projetId); if (pp) pp.statut = v("m_qpstatut") || pp.statut; return o; });
+    setState({ modal: null });
+  }
+  else if (m.type === "org") {
     var existing = m.orgId ? findOrg(m.orgId) : null;
     var o = existing || { id: uid(), contacts: [], historique: [], alertes: [] };
     o.nom = v("m_nom");
@@ -2116,7 +2154,51 @@ document.addEventListener("submit", function (e) {
   }
 });
 
-render();
+/* ===================== Édition en direct (notes / description) ===================== */
+document.addEventListener("focus", function (e) {
+  var el = e.target.closest ? e.target.closest("[data-live]") : null;
+  if (!el || el.getAttribute("data-ph") !== "1") return;
+  el.innerHTML = "";
+  el.removeAttribute("data-ph");
+}, true);
+document.addEventListener("blur", function (e) {
+  var el = e.target.closest ? e.target.closest("[data-live]") : null;
+  if (!el) return;
+  var txt = el.innerText;
+  if (el.getAttribute("data-ph") === "1") txt = "";
+  txt = txt.replace(/\u00a0/g, " ").replace(/\n{3,}/g, "\n\n").trim();
+  var kind = el.getAttribute("data-live");
+  if (kind === "org-notes") {
+    updateOrg(el.getAttribute("data-org"), function (o) { o.notes = txt; return o; });
+  } else if (kind === "projet-desc") {
+    updateOrg(el.getAttribute("data-org"), function (o) { var pp = findProjet(o, el.getAttribute("data-projet")); if (pp) pp.description = txt; return o; });
+  }
+  if (!state.modal) render();
+}, true);
+
+/* ===================== Lien profond (menu Mon Espace) ===================== */
+function applyHash() {
+  var h = "";
+  try { h = decodeURIComponent(String(location.hash || "").replace(/^#/, "")); } catch (e) { h = String(location.hash || "").replace(/^#/, ""); }
+  if (!h) return false;
+  var parts = h.split("=");
+  var key = parts[0];
+  var val = parts[1] ? decodeURIComponent(parts[1]) : null;
+  if (key === "dash" || key === "orgs" || key === "projets" || key === "aap" || key === "alerts" || key === "stats") {
+    setState({ page: key, detailId: null, projetId: null });
+    return true;
+  }
+  if (key === "org" && val) { setState({ page: "detail", detailId: val, projetId: null }); return true; }
+  if (key === "projet" && val) {
+    var ids = val.split("|");
+    setState({ page: "projet", detailId: ids[0], projetId: ids[1] || null });
+    return true;
+  }
+  return false;
+}
+window.addEventListener("hashchange", function () { applyHash(); });
+
+if (!applyHash()) render();
 </script>
 </body>
 </html>
