@@ -222,7 +222,24 @@ input[type=file]{padding:5px;font-size:12px}
 .remind .rr.late{border-left-color:#dc2626}
 .remind .rr.soon{border-left-color:#ea580c}
 .ms-dot.late{background:#dc2626}
+/* ---- v5.9 : accès rapide fixe à gauche + listes à cocher ---- */
+#qa-root{width:200px;flex:0 0 200px;background:#f8fafc;border-right:1px solid var(--line);padding:12px 10px;display:flex;flex-direction:column;gap:10px;overflow:auto;min-height:100vh}
+#qa-root.off{width:38px;flex:0 0 38px;padding:10px 4px;align-items:center}
+.qa-strip{writing-mode:vertical-rl;text-orientation:upright;font-size:13px;letter-spacing:1px}
+#qa-root .qa-box{width:100%;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 10px;font-size:12.5px}
+#qa-root .qa-box h4{margin:0 0 6px;font-size:13px;display:flex;justify-content:space-between;align-items:center}
+#qa-root .rr{display:flex;gap:6px;align-items:center;padding:5px 8px;border-radius:6px;margin-bottom:4px;cursor:pointer;background:#fff;border:1px solid var(--line);font-size:12.5px}
+#qa-root .rr:hover{background:var(--accent-soft)}
+#qa-root .qsec{font-weight:600;margin:6px 0 4px;font-size:12px}
+.liste-box{border:1px solid var(--line);border-radius:10px;background:#fff;padding:10px 12px;margin:14px 0}
+.liste-row{display:flex;gap:8px;align-items:center;padding:5px 0;border-bottom:1px dashed var(--line)}
+.liste-row:last-of-type{border-bottom:none}
+.liste-txt{flex:1}
+.liste-txt.fait{text-decoration:line-through;color:var(--muted)}
+.liste-add{display:flex;gap:6px;margin-top:10px}
+.liste-add input{flex:1}
 @media(max-width:900px){
+ #qa-root,.qa-strip{display:none}
  #remind-root{top:auto;bottom:72px;right:8px}
  .remind{width:min(300px,86vw);max-height:22vh}
  .pinband-line .t{max-width:70vw}
@@ -249,6 +266,7 @@ input[type=file]{padding:5px;font-size:12px}
       <a class="snav" id="crm-sub-orgs" data-act="crm-go" data-crm="orgs">🏢 Établissements</a>
       <a class="snav" id="crm-sub-projets" data-act="crm-go" data-crm="projets">📁 Projets</a>
       <a class="snav" id="crm-sub-aap" data-act="crm-go" data-crm="aap">📢 AAP</a>
+      <a class="snav" id="crm-sub-agenda" data-act="crm-go" data-crm="agenda">📅 Agenda</a>
       <a class="snav" id="crm-sub-alerts" data-act="crm-go" data-crm="alerts">🔔 Alertes</a>
       <a class="snav" id="crm-sub-stats" data-act="crm-go" data-crm="stats">📊 Stats</a>
     </div>
@@ -258,9 +276,10 @@ input[type=file]{padding:5px;font-size:12px}
     <a class="snav" data-act="open-listes">⚙️ Mes listes</a>
     <a class="snav" data-act="open-export">💾 Export &amp; sauvegarde</a>
     <a class="snav" data-act="open-help">❓ Aide &amp; confidentialité</a>
-    <div class="side-note">Mon Espace v5.8 — 100 % local par défaut. Connexion Outlook et synchro chiffrée (page ☁️) optionnelles — vous décidez.</div>
+    <div class="side-note">Mon Espace v5.9 — 100 % local par défaut. Connexion Outlook et synchro chiffrée (page ☁️) optionnelles — vous décidez.</div>
   </div>
 </aside>
+<aside id="qa-root" class="off"></aside>
 <div class="wrap">
   <header class="topbar">
     <div class="navbtns">
@@ -420,7 +439,9 @@ function jourLong(){try{return new Date().toLocaleDateString('fr-FR',{weekday:'l
 function save(){
   try{
     localStorage.setItem(STORE_KEY,JSON.stringify({version:VERSION,exemple:state.exemple,dossiers:state.dossiers,taches:state.taches,notes:state.notes,docs:state.docs}));
-  }catch(e){}
+  }catch(e){
+    toast('⚠️ Enregistrement impossible (stockage plein ou refusé ?) — exportez vos données (💾 Export & sauvegarde) et supprimez les copies de documents lourdes.');
+  }
   if(!SB_APPLYING){
     try{var p=getPrefs();p.lastWriteTs=Date.now();setPrefs(p);}catch(e){}
     try{syncSoon();}catch(e){}
@@ -439,6 +460,12 @@ function needBackup(){
 
 // ===== Migration / normalisation (évolution sans casse) =====
 function nNum(v){var n=Number(v);return isFinite(n)?n:0;}
+function nListe(v){
+  if(!v||typeof v!=='object'||!v.length)return [];
+  var out=[],i;
+  for(i=0;i<v.length;i++){var r=v[i];out.push({txt:String((r&&r.txt)||''),fait:!!(r&&r.fait)});}
+  return out;
+}
 function normalize(src){
   var d=(src&&typeof src==='object')?src:{};
   var out={version:VERSION,exemple:!!d.exemple,dossiers:[],taches:[],notes:[],docs:[]};
@@ -462,7 +489,7 @@ function normalize(src){
       var tags=[];
       if(Array.isArray(x.tags)){var j;for(j=0;j<x.tags.length;j++){if(x.tags[j])tags.push(String(x.tags[j]));}}
       else if(typeof x.tags==='string'&&x.tags){var parts=x.tags.split(',');for(var k=0;k<parts.length;k++){if(parts[k].trim())tags.push(parts[k].trim());}}
-      out.notes.push({id:String(x.id),titre:String(x.titre||'Sans titre'),contenu:String(x.contenu||''),tags:tags,contexte:validK(CONTEXTES,x.contexte,'pro'),dossierId:String(x.dossierId||''),tacheId:String(x.tacheId||''),docId:String(x.docId||''),epinglee:!!x.epinglee,echeance:String(x.echeance||''),heure:String(x.heure||''),traitee:!!x.traitee,capture:!!x.capture,image:String(x.image||''),prio:validK(PRIORITES,x.prio,'normale'),origine:String(x.origine||''),autoFloat:!!x.autoFloat,trieeLe:String(x.trieeLe||''),ordre:nNum(x.ordre),ouvertLe:nNum(x.ouvertLe),maj:String(x.maj||today())});
+      out.notes.push({id:String(x.id),titre:String(x.titre||'Sans titre'),contenu:String(x.contenu||''),tags:tags,contexte:validK(CONTEXTES,x.contexte,'pro'),dossierId:String(x.dossierId||''),tacheId:String(x.tacheId||''),docId:String(x.docId||''),epinglee:!!x.epinglee,echeance:String(x.echeance||''),heure:String(x.heure||''),traitee:!!x.traitee,capture:!!x.capture,image:String(x.image||''),prio:validK(PRIORITES,x.prio,'normale'),origine:String(x.origine||''),autoFloat:!!x.autoFloat,trieeLe:String(x.trieeLe||''),ordre:nNum(x.ordre),ouvertLe:nNum(x.ouvertLe),liste:nListe(x.liste),listeOn:!!x.listeOn,maj:String(x.maj||today())});
     }
   }
   if(d.docs){
@@ -585,6 +612,17 @@ function navFwd(){if(nav.index<nav.stack.length-1){nav.index++;state.page=nav.st
 function badgeDossier(k){var s=infoOf(DOS_STATUTS,k);return '<span class="badge" style="background:'+s.c+'1a;color:'+s.c+'">'+s.l+'</span>';}
 function badgeTache(k){var s=infoOf(TACHE_STATUTS,k);return '<span class="badge" style="background:'+s.c+'1a;color:'+s.c+'">'+s.l+'</span>';}
 function badgePrio(k){var s=infoOf(PRIORITES,k);return '<span class="badge" style="background:'+s.c+'1a;color:'+s.c+'">'+s.l+'</span>';}
+// ===== v5.9 : priorité « urgente » réservée aux J-1 / jour J / retards =====
+function isUrgente(t){
+  if(!t||t.statut==='fait')return false;
+  var n=daysUntil(t.echeance);
+  return (n!==null&&n<=1);
+}
+function prioAff(t){
+  var p=String((t&&t.priorite)||'normale');
+  if(p==='urgente'&&!isUrgente(t))return 'haute';
+  return p;
+}
 function badgeCtx(k){var s=infoOf(CONTEXTES,k);return '<span class="badge" style="background:'+s.c+'1a;color:'+s.c+'">'+s.l+'</span>';}
 function badgeDocType(k){var s=infoOf(DOC_TYPES,k);return '<span class="badge" style="background:'+s.c+'1a;color:'+s.c+'">'+s.l+'</span>';}
 function badgeDocRole(k){var s=infoOf(DOC_ROLES,k);return '<span class="badge" style="background:'+s.c+'1a;color:'+s.c+'">'+s.l+'</span>';}
@@ -675,7 +713,7 @@ function render(){
   }catch(efile){}
   main.innerHTML=h;
   updateSidebar();updateTopbar();
-  applyEchStyles();renderRemind();
+  applyEchStyles();renderRemind();renderQa();
 }
 function renderPageBody(){
   var el=document.getElementById('page-body');if(!el)return;
@@ -692,7 +730,7 @@ function updateSidebar(){
   if(sub){sub.style.display=(state._crmOpen||state.page==='crm')?'block':'none';}
   var caret=document.getElementById('crm-caret');
   if(caret){caret.textContent=(state._crmOpen||state.page==='crm')?'▾':'▸';}
-  var cps=['dash','orgs','projets','aap','alerts','stats'];var j;
+  var cps=['dash','orgs','projets','aap','agenda','alerts','stats'];var j;
   for(j=0;j<cps.length;j++){var se=document.getElementById('crm-sub-'+cps[j]);if(se){se.className='snav'+((state.page==='crm'&&(state.crmPage||'dash')===cps[j])?' active':'');}}
   sbRefreshBadge();
 }
@@ -741,11 +779,13 @@ function noteRowDash(n){
 }
 function pageDash(){
   var ouverts=tachesOuvertes(),rd=retards(),se=semaine(),act=dossiersActifs();
+  var pj=getPrefs();var djp=nNum(pj.dashJours)||7;
   var h='<div class="content">';
   h+='<div class="hero"><div><h1 class="page-title">Bonjour 👋</h1><div class="muted">'+jourLong()+'</div></div><div class="toolbar">'
    +'<button class="btn primary" data-act="new-tache">+ Tâche</button>'
    +'<button class="btn" data-act="new-dossier">+ Dossier</button>'
-   +'<button class="btn" data-act="new-note">+ Note</button></div></div>';
+   +'<button class="btn" data-act="new-note">+ Note</button> '
+   +'<select id="dash-jours" title="Choisir jusqu’où regarder en avance sur l’accueil"><option value="3"'+(djp===3?' selected':'')+'>anticipation : 3 jours</option><option value="7"'+(djp===7?' selected':'')+'>anticipation : 7 jours</option><option value="14"'+(djp===14?' selected':'')+'>anticipation : 14 jours</option><option value="30"'+(djp===30?' selected':'')+'>anticipation : 30 jours</option></select></div></div>';
   if(state.exemple){
     h+='<div class="banner info">🧪 Ceci est un jeu de données d’exemple pour découvrir l’outil — modifiez-le ou effacez-le. <button class="btn sm" data-act="clear-exemple">Effacer les exemples</button></div>';
   }
@@ -786,11 +826,24 @@ function pageDash(){
       h+='<div class="row"><span class="row-title" data-act="open-dossier" data-id="'+d.id+'">📁 '+esc(d.nom)+'</span>'+badgeDossier(d.statut)+qw('dossier',d.id,'ech',echLabel(d.echeance,false))+'</div>';
     }
   }
-  // Semaine
-  if(se.length){
-    h+='<h2 class="sec-title">📅 Aujourd’hui &amp; cette semaine</h2>';
-    var j;for(j=0;j<Math.min(se.length,8);j++){h+=tacheRow(se[j]);}
-    if(se.length>8){h+='<div class="small muted" style="padding:4px 4px 0">+'+(se.length-8)+' autres — <a class="chip" data-act="go" data-page="taches">voir toutes les tâches</a></div>';}
+  // J-1 & jour J (v5.9)
+  var j1=ouverts.filter(function(t){var n=daysUntil(t.echeance);return n!==null&&n>=0&&n<=1;}).sort(function(a,b){return a.echeance<b.echeance?-1:1;});
+  if(j1.length){
+    h+='<h2 class="sec-title">🔥 J-1 &amp; jour J ('+j1.length+')</h2>';
+    var j1i;for(j1i=0;j1i<j1.length;j1i++){h+=tacheRow(j1[j1i]);}
+  }
+  // À venir sous djp jours (v5.9 — délai réglable)
+  var av=ouverts.filter(function(t){var n=daysUntil(t.echeance);return n!==null&&n>1&&n<=djp;}).sort(function(a,b){return a.echeance<b.echeance?-1:1;});
+  if(av.length){
+    h+='<h2 class="sec-title">📅 À venir sous '+djp+' jours ('+av.length+')</h2>';
+    var avi;for(avi=0;avi<av.length;avi++){h+=tacheRow(av[avi]);}
+    if(av.length>10)h+='<div class="small muted" style="padding:4px 4px 0">+'+(av.length-10)+' autres — <a class="chip" data-act="go" data-page="taches">voir toutes les tâches</a></div>';
+  }
+  // Priorités hautes plus lointaines (v5.9)
+  var ph=ouverts.filter(function(t){var n=daysUntil(t.echeance);return (n===null||n>djp)&&(t.priorite==='haute'||t.priorite==='urgente');}).sort(function(a,b){return (a.echeance||'9999')<(b.echeance||'9999')?-1:1;});
+  if(ph.length){
+    h+='<h2 class="sec-title">⭐ Priorités hautes — plus lointaines ('+ph.length+')</h2>';
+    var phi;for(phi=0;phi<ph.length;phi++){h+=tacheRow(ph[phi]);}
   }
   // Rendez-vous Outlook (si connecté)
   if(state.ms.connected&&state.ms.events.length){
@@ -836,7 +889,7 @@ function tacheRow(t){
    +'<button class="chk" title="Marquer fait / à faire" data-act="tache-toggle" data-id="'+t.id+'">'+(done?'✓':'')+'</button>'
    +'<span class="row-title" data-act="open-tache" data-id="'+t.id+'">'+esc(t.titre)+'</span>';
   if(!done&&t.statut!=='a-faire')h+=qw('tache',t.id,'statut',badgeTache(t.statut));
-  if(!done)h+=qw('tache',t.id,'prio',badgePrio(t.priorite));
+  if(!done)h+=qw('tache',t.id,'prio',badgePrio(prioAff(t)))+(isUrgente(t)&&t.priorite!=='urgente'?'<span class="badge" style="background:#fee2e2;color:#b91c1c" title="Échéance J-1, jour J ou dépassée">🔥 J-1</span>':'');
   h+=qw('tache',t.id,'ctx',badgeCtx(t.contexte));
   if(d)h+='<span class="chip" data-act="open-dossier" data-id="'+d.id+'">📁 '+esc(d.nom)+'</span>';
   h+=(t.echeance&&!done?qw('tache',t.id,'ech',echLabel(t.echeance,done,'',t.heure||'')):echLabel(t.echeance,done,'',t.heure||''));
@@ -899,6 +952,69 @@ function ordMove(kind,id,dir){
   if(triNum(list[i].ordre)===triNum(list[j].ordre)){list[j].ordre=triNum(list[i].ordre)+1;}
   save();render();
 }
+// ===== v5.9 : réordonner par glisser-déposer (façon Explorateur) =====
+function renumOrdre(kind,ids){
+  var l=ordList(kind);var z,y;
+  for(z=0;z<ids.length;z++){
+    for(y=0;y<l.length;y++){if(l[y].id===ids[z]){l[y].ordre=z+1;break;}}
+  }
+}
+function reorderTo(kind,ids,draggedId,targetId,pos){
+  var out=[],z;
+  for(z=0;z<ids.length;z++){if(ids[z]!==draggedId)out.push(ids[z]);}
+  var ti=-1,k;
+  for(k=0;k<out.length;k++){if(out[k]===targetId){ti=k;break;}}
+  if(ti<0)return false;
+  if(pos==='after')ti=ti+1;
+  out.splice(ti,0,draggedId);
+  renumOrdre(kind,out);
+  return true;
+}
+function dropZone(ev,tgt){
+  try{
+    var r=tgt.getBoundingClientRect();
+    var ry=(ev.clientY||0)-r.top;
+    var rh=r.height||1;
+    if(ry<rh*0.3)return 'before';
+    if(ry>rh*0.7)return 'after';
+  }catch(e){}
+  return 'into';
+}
+function displayIdsFromDom(kind){
+  var attr=(kind==='dossier')?'dos':(kind==='tache')?'tac':(kind==='note')?'not':'doc';
+  var out=[],sels=null,i;
+  try{sels=document.querySelectorAll('[data-drag]');}catch(e){}
+  if(sels){
+    for(i=0;i<sels.length;i++){
+      var v=String(sels[i].getAttribute('data-drag')||'');
+      if(v.indexOf(attr+':')===0)out.push(v.slice(attr.length+1));
+    }
+  }
+  return out;
+}
+function dossiersOrderList(){
+  var f=state.filtres.dos;
+  var q=f.q.trim().toLowerCase();
+  var list=state.dossiers.filter(function(d){
+    if(d.parentId)return false;
+    if(f.statut&&d.statut!==f.statut)return false;
+    if(f.ctx&&d.contexte!==f.ctx)return false;
+    if(q){
+      var hay=(d.nom+' '+d.categorie+' '+d.description).toLowerCase();
+      if(hay.indexOf(q)<0)return false;
+    }
+    return true;
+  });
+  var ordre={ouvert:0,'en-cours':1,attente:2,termine:3,archive:4};
+  list.sort(function(a,b){var d=ordre[a.statut]-ordre[b.statut];return d!==0?d:(a.maj>b.maj?-1:1);});
+  triApply(list,f.tri,'nom','echeance','');
+  if(list.some(function(d){return d.epingle;})){
+    var pins=[],others=[],z;
+    for(z=0;z<list.length;z++){if(list[z].epingle)pins.push(list[z]);else others.push(list[z]);}
+    list=pins.concat(others);
+  }
+  return list;
+}
 function qaTouch(kind,id,label){
   if(!kind||!id)return;
   var p=getPrefs();
@@ -918,30 +1034,44 @@ function qaLabel(kind,item){
   return item.t||'';
 }
 function renderQa(){
-  var root=document.getElementById('remind-root');
+  var root=document.getElementById('qa-root');
   if(!root)return;
   var p=getPrefs();
+  if(p.qaOff){root.className='off';root.innerHTML='<button class="btn sm ghost qa-strip" data-act="qa-toggle" title="Ouvrir le panneau ⭐ Accès rapide">⭐</button>';return;}
+  root.className='';
   var dosP=state.dossiers.filter(function(d){return d.epingle;});
   var notP=state.notes.filter(function(n){return n.epinglee&&!n.capture;});
   var qa=p.qa||[];
   var i;
   for(i=qa.length-1;i>=0;i--){if(!qaLabel(qa[i].k,qa[i]))qa.splice(i,1);}
-  var hasAny=dosP.length||notP.length||qa.length;
-  if(p.qaOff||!hasAny)return '';
-  var h='<div class="remind qa-box">';
-  h+='<h4>⭐ Accès rapide<button class="btn sm ghost" data-act="qa-toggle" title="Réduire">✕</button></h4>';
-  if(dosP.length){h+='<div class="small" style="font-weight:600;margin-bottom:4px">📌 Dossiers épinglés</div>';
-    for(i=0;i<Math.min(dosP.length,5);i++){h+='<div class="rr" data-act="open-dossier" data-id="'+dosP[i].id+'" title="Ouvrir"><span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">📁 '+esc(dosP[i].nom)+'</span></div>';}
+  var h='<div class="qa-box">';
+  h+='<h4>⭐ Accès rapide<button class="btn sm ghost" data-act="qa-toggle" title="Réduire (le bouton ⭐ le rouvre)">–</button></h4>';
+  if(dosP.length){h+='<div class="qsec">📌 Dossiers épinglés</div>';
+    for(i=0;i<Math.min(dosP.length,6);i++){h+='<div class="rr" data-act="open-dossier" data-id="'+dosP[i].id+'" title="Ouvrir"><span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">📁 '+esc(dosP[i].nom)+'</span></div>';}
   }
-  if(notP.length){h+='<div class="small" style="font-weight:600;margin:6px 0 4px">📌 Notes épinglées</div>';
-    for(i=0;i<Math.min(notP.length,5);i++){h+='<div class="rr" data-act="open-note" data-id="'+notP[i].id+'" title="Ouvrir"><span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">📝 '+esc(notP[i].titre)+'</span></div>';}
+  if(notP.length){h+='<div class="qsec">📌 Notes épinglées</div>';
+    for(i=0;i<Math.min(notP.length,6);i++){h+='<div class="rr" data-act="open-note" data-id="'+notP[i].id+'" title="Ouvrir"><span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">📝 '+esc(notP[i].titre)+'</span></div>';}
   }
-  if(qa.length){h+='<div class="small" style="font-weight:600;margin:6px 0 4px">⏱ Derniers consultés</div>';
-    for(i=0;i<Math.min(qa.length,6);i++){var qk=qa[i].k;var ico=qk==='dossier'?'📁':(qk==='doc'?'📄':(qk==='note'?'📝':'✅'));var act=qk==='tache'?'qa-go':'open-'+qk;
+  if(qa.length){h+='<div class="qsec">⏱ Derniers consultés</div>';
+    for(i=0;i<Math.min(qa.length,8);i++){var qk=qa[i].k;var ico=qk==='dossier'?'📁':(qk==='doc'?'📄':(qk==='note'?'📝':'✅'));var act=qk==='tache'?'qa-go':'open-'+qk;
       h+='<div class="rr" data-act="'+act+'" data-k="'+qk+'" data-id="'+qa[i].i+'" title="Ouvrir"><span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+ico+' '+esc(qaLabel(qk,qa[i]))+'</span></div>';}
   }
+  if(!dosP.length&&!notP.length&&!qa.length){h+='<div class="tiny muted" style="line-height:1.5">Épinglez des dossiers (📍) ou des notes (📌) : ils apparaîtront ici, avec vos derniers consultés.</div>';}
   h+='</div>';
-  return h;
+  root.innerHTML=h;
+}
+// ===== v5.9 : raccourci .url vers le dossier du document (l’Explorateur ne peut pas être lancé par un site web) =====
+function urlShortcutFor(x){
+  if(!x)return;
+  var loc=String(x.localisation||'');
+  var dossier='';
+  var i=Math.max(loc.lastIndexOf('\\'),loc.lastIndexOf('/'));
+  if(i>0)dossier=loc.slice(0,i);
+  if(!dossier){toast('Aucun chemin de dossier à ouvrir pour ce document.');return;}
+  var url='file:///'+dossier.replace(/\\/g,'/').replace(/^\/+/,'').replace(/ /g,'%20');
+  var nm=(dossier.split(/[\\\/]/).pop()||'dossier')+'.url';
+  downloadText(nm,'[InternetShortcut]\r\nURL='+url+'\r\n','application/internet-shortcut');
+  toast('Raccourci « '+nm+' » téléchargé ✓ — double-cliquez-le : l’Explorateur s’ouvre sur le dossier du document. (Un site web ne peut pas lancer l’Explorateur directement : c’est la méthode la plus proche de Windows+E.)');
 }
 function docFloatFor(did){
   var dfl=findDoc(did);
@@ -974,27 +1104,13 @@ function filtersDossiers(){
    +'</div>';
 }
 function dossiersBody(){
-  var f=state.filtres.dos;
-  var q=f.q.trim().toLowerCase();
-  var list=state.dossiers.filter(function(d){
-    if(f.statut&&d.statut!==f.statut)return false;
-    if(f.ctx&&d.contexte!==f.ctx)return false;
-    if(q){
-      var hay=(d.nom+' '+d.categorie+' '+d.description).toLowerCase();
-      if(hay.indexOf(q)<0)return false;
-    }
-    return true;
-  });
-  var ordre={ouvert:0,'en-cours':1,attente:2,termine:3,archive:4};
-  list.sort(function(a,b){var d=ordre[a.statut]-ordre[b.statut];return d!==0?d:(a.maj>b.maj?-1:1);});
-  triApply(list,f.tri,'nom','echeance','');
-  if(list.some(function(d){return d.epingle;})){
-    var pins=[],others=[],z;
-    for(z=0;z<list.length;z++){if(list[z].epingle)pins.push(list[z]);else others.push(list[z]);}
-    list=pins.concat(others);
-  }
+  var list=dossiersOrderList();
   if(!list.length)return '<div class="empty">Aucun dossier ne correspond. <button class="btn sm" data-act="new-dossier">Créer un dossier</button></div>';
-  var h='<div class="cards">';var i;
+  var nbSous=0,z1;
+  for(z1=0;z1<state.dossiers.length;z1++){if(state.dossiers[z1].parentId)nbSous++;}
+  var h='';
+  if(nbSous){h+='<div class="banner info" style="margin-bottom:12px">🗂 Vue « explorateur » : seuls les dossiers <b>racine</b> sont listés ici. Les sous-dossiers vivent dans la fiche de leur dossier parent — ouvrez un dossier pour les voir, ou glissez-y un dossier pour l’y ranger.</div>';}
+  h+='<div class="cards">';var i;
   for(i=0;i<list.length;i++){h+=dossierCard(list[i]);}
   h+='</div>';
   return h;
@@ -1137,8 +1253,9 @@ function tachesListe(){
   if(plus.length){h+='<h2 class="sec-title">⏳ Plus tard ('+plus.length+')</h2>';var c;for(c=0;c<plus.length;c++){h+=tacheRow(plus[c]);}}
   if(sans.length){h+='<h2 class="sec-title">📋 Sans échéance ('+sans.length+')</h2>';var d;for(d=0;d<sans.length;d++){h+=tacheRow(sans[d]);}}
   if(faites.length){
-    h+='<h2 class="sec-title">✓ Terminées ('+faites.length+')</h2>';
-    var e;for(e=0;e<Math.min(faites.length,10);e++){h+=tacheRow(faites[e]);}
+    h+='<h2 class="sec-title">✓ Terminées ('+faites.length+') <button class="btn sm ghost" data-act="voir-faites" title="Dérouler / réduire l’historique des tâches terminées">'+(state._voirFaites?'Réduire −':'Dérouler ▾')+'</button></h2>';
+    if(state._voirFaites){var e;for(e=0;e<faites.length;e++){h+=tacheRow(faites[e]);}}
+    else{h+='<div class="small muted" style="padding:2px 4px 6px">Tâches terminées masquées — cliquez « Dérouler » pour consulter l’historique.</div>';}
   }
   return h;
 }
@@ -1162,7 +1279,7 @@ function kcard(t){
   var d=findDossier(t.dossierId);
   var h='<div class="kcard" draggable="true" data-id="'+t.id+'">'
    +'<span class="row-title" data-act="open-tache" data-id="'+t.id+'">'+esc(t.titre)+'</span>'
-   +'<div class="sub">'+qw('tache',t.id,'prio',badgePrio(t.priorite))+qw('tache',t.id,'ctx',badgeCtx(t.contexte));
+   +'<div class="sub">'+qw('tache',t.id,'prio',badgePrio(prioAff(t)))+(isUrgente(t)&&t.priorite!=='urgente'?'<span class="badge" style="background:#fee2e2;color:#b91c1c">🔥 J-1</span>':'')+qw('tache',t.id,'ctx',badgeCtx(t.contexte));
   if(d)h+='<span class="chip" data-act="open-dossier" data-id="'+d.id+'">📁 '+esc(d.nom)+'</span>';
   h+=(t.echeance&&t.statut!=='fait'?qw('tache',t.id,'ech',echLabel(t.echeance,t.statut==='fait','',t.heure||'')):echLabel(t.echeance,t.statut==='fait','',t.heure||''));
   h+='</div></div>';
@@ -1533,9 +1650,17 @@ function pageCapture(){
   }else{
     h+='<div class="empty small">Rien à trier pour l’instant.</div>';
   }
-  h+='<h2 class="sec-title">📚 Historique — post-its devenus notes ('+historique.length+')</h2>';
+  // v5.9 : post-its cochés « traités » — visibles en historique déroulant
+  var capFaites=caps.filter(function(n){return n.traitee;}).sort(function(a,b){return a.maj>b.maj?-1:1;});
+  if(capFaites.length){
+    h+='<h2 class="sec-title">✓ Post-its traités ('+capFaites.length+') <button class="btn sm ghost" data-act="voir-capfaites" title="Dérouler / réduire les post-its cochés comme traités">'+(state._voirCapFaites?'Réduire −':'Dérouler ▾')+'</button></h2>';
+    if(state._voirCapFaites){var cf;for(cf=0;cf<capFaites.length;cf++){h+=captureRow(capFaites[cf]);}}
+    else{h+='<div class="small muted" style="padding:2px 4px 6px">Post-its cochés ✓ masqués — cliquez « Dérouler » pour les retrouver.</div>';}
+  }
+  h+='<h2 class="sec-title">📚 Historique — post-its devenus notes ('+historique.length+')'+(historique.length>12?' <button class="btn sm ghost" data-act="voir-caphist">'+(state._voirCapHist?'Réduire −':'Tout dérouler ▾')+'</button>':'')+'</h2>';
   if(historique.length){
-    h+='<div class="notes-grid">';var j;for(j=0;j<Math.min(historique.length,12);j++){h+=noteCard(historique[j]);}h+='</div>';
+    var nbHist=state._voirCapHist?historique.length:Math.min(historique.length,12);
+    h+='<div class="notes-grid">';var j;for(j=0;j<nbHist;j++){h+=noteCard(historique[j]);}h+='</div>';
     h+='<p class="tiny muted" style="margin-top:8px">Ces post-its triés sont devenus de vraies notes : modifiables dans 📝 Notes, jamais perdues.</p>';
   }else{
     h+='<div class="empty small">Aucun post-it trié pour l’instant.</div>';
@@ -1636,7 +1761,7 @@ function noteCard(n,extra){
    +(n.epinglee?'<span class="pin">📌</span>':'')
    +'<div class="card-title">'+esc(n.titre)+'</div>'
    +'<div class="note-extrait">'+esc(ex)+'</div>'
-   +'<div class="badges">'+qw('note',n.id,'ctx',badgeCtx(n.contexte))+(n.capture?'<span class="badge" style="background:#fffbeb;color:#b45309">⚡</span>':'')+(n.image?'<span class="badge" style="background:#f5f3ff;color:#6d28d9">🖼</span>':'')+(n.traitee?'<span class="badge" style="background:#d1fae5;color:#065f46">✓ traitée</span>':'')
+   +'<div class="badges">'+qw('note',n.id,'ctx',badgeCtx(n.contexte))+(n.capture?'<span class="badge" style="background:#fffbeb;color:#b45309">⚡</span>':'')+(n.image?'<span class="badge" style="background:#f5f3ff;color:#6d28d9">🖼</span>':'')+((n.liste&&n.liste.length)?'<span class="badge" style="background:#f0fdf4;color:#166534">🛒 '+n.liste.length+'</span>':'')+(n.traitee?'<span class="badge" style="background:#d1fae5;color:#065f46">✓ traitée</span>':'')
    +((n.prio&&n.prio!=='normale')?qw('note',n.id,'prio',badgePrio(n.prio)):'')
    +(n.echeance&&!n.traitee?qw('note',n.id,'ech',echLabel(n.echeance,n.traitee,'Traitée',n.heure||'')):echLabel(n.echeance,n.traitee,'Traitée',n.heure||''));
   var i;var tg=n.tags||[];
@@ -1688,6 +1813,20 @@ function pageNote(id){
    +'<span class="tiny muted">Le contenu se modifie directement — enregistré automatiquement.</span>'
    +'</div>';
   h+='<div class="content-pre" id="note-cont"'+(String(n.contenu||'').length?'':' data-ph="1"')+' data-id="'+n.id+'" contenteditable="true" style="min-height:130px">'+(String(n.contenu||'').length?contenuHtml(n.contenu):'<span class="muted">Note vide — écrivez ici…</span>')+'</div>';
+  // v5.9 : liste à cocher (façon liste de courses)
+  if(n.listeOn){
+    var li=(n.liste||[]);
+    var nbFait=0,l1;
+    for(l1=0;l1<li.length;l1++){if(li[l1].fait)nbFait++;}
+    h+='<h2 class="sec-title">🛒 Liste ('+nbFait+'/'+li.length+')</h2>';
+    h+='<div class="liste-box" id="liste-box" data-id="'+n.id+'">';
+    for(l1=0;l1<li.length;l1++){
+      h+='<div class="liste-row"><button class="chk" data-act="nl-toggle" data-id="'+n.id+'" data-i="'+l1+'" title="Cocher / décocher">'+(li[l1].fait?'✓':'')+'</button><span class="liste-txt'+(li[l1].fait?' fait':'')+'">'+esc(li[l1].txt)+'</span><button class="btn sm ghost" data-act="nl-del" data-id="'+n.id+'" data-i="'+l1+'" title="Retirer cette ligne">🗑</button></div>';
+    }
+    if(!li.length){h+='<div class="tiny muted" style="padding:2px 0 4px">Liste vide — ajoutez vos articles ci-dessous (ils se cochent et se barrent).</div>';}
+    h+='<div class="liste-add"><input id="nl-new" placeholder="Ajouter un article… (Entrée pour valider)"/><button class="btn sm" data-act="nl-add" data-id="'+n.id+'">＋ Ajouter</button></div>';
+    h+='</div>';
+  }
   h+='</div>';
   return h;
 }
@@ -1805,6 +1944,7 @@ function modalNote(id,presetDos,presetDoc){
    +'<input type="hidden" name="id" value="'+(n?n.id:'')+'"/>'
    +'<div class="form-row"><label>Titre *</label><input name="tit" required maxlength="160" value="'+(n?esc(n.titre):'')+'"/></div>'
    +'<div class="form-row"><label>Contenu</label><textarea name="cont" rows="6" placeholder="Écrivez librement…">'+(n?esc(n.contenu):'')+'</textarea></div>'
+   +'<div class="form-row"><label><input type="checkbox" name="lst"'+((n&&n.listeOn)?' checked':'')+'/> 🛒 Ajouter une liste à cocher (façon liste de courses)</label></div>'
    +'<div class="form-row"><label>Tags (séparés par des virgules)</label><input name="tags" maxlength="200" value="'+(n?esc((n.tags||[]).join(', ')):'')+'" placeholder="ex. : checklist, urgent"/></div>'
    +'<div class="form-row two">'
    +'<div><label>Contexte</label><select name="ctx">'+optsHtml(CONTEXTES,n?n.contexte:'pro')+'</select></div>'
@@ -1865,6 +2005,7 @@ function modalExport(){
    +'<button class="btn" data-act="export-csv-no">📊 CSV Notes<br/><span class="tiny muted">ouvre dans Excel</span></button>'
    +'<button class="btn" data-act="export-csv-doc">📊 CSV Documents<br/><span class="tiny muted">ouvre dans Excel</span></button>'
    +'<button class="btn" data-act="load-demo" title="Remplace tout par un jeu de données d’exemple riche (dossiers hiérarchiques, tâches, notes, captures, documents) — un export JSON de sauvegarde est téléchargé avant">🧪 Charger les exemples<br/><span class="tiny muted">remplace tout — export auto avant</span></button>'
+   +'<button class="btn" data-act="merge-demo" title="Ajoute le jeu de données d’exemple à vos données actuelles, SANS rien effacer">➕ Ajouter les exemples<br/><span class="tiny muted">fusionne sans écraser</span></button>'
    +'</div>'
    +'<div class="form-row"><label>Importer une sauvegarde JSON (remplace tout)</label><input type="file" id="imp-json" accept=".json,application/json"/></div>'
    +'<p class="tiny muted">⚠️ L’import remplace l’ensemble des données actuelles.</p>'
@@ -1894,6 +2035,9 @@ function modalHelp(){
    +'<p style="margin-top:8px"><b>Relances (v5)</b> — Le panneau 🔔 en haut à droite liste en continu les échéances en retard (rouge) et proches (orange), toutes natures confondues (tâches, notes, dossiers). Réductible d’un clic, il reste discret quand tout va bien.</p>'
    +'<p style="margin-top:8px"><b>Raccourcis &amp; liens SharePoint (v5)</b> — Déposez un fichier .url ou .lnk sur la zone d’import : la cible est lue automatiquement. Les liens http(s) (SharePoint, OneDrive, web) s’ouvrent depuis la fiche via 🔗 — un document SharePoint s’ouvre dans Office Online et s’y réenregistre. Pour un fichier local (C:\\…), le navigateur ne peut pas l’ouvrir seul : cliquez 📋 pour copier le chemin, puis collez-le dans l’Explorateur.</p>'
    +'<p style="margin-top:8px"><b>Synchro chiffrée multi-appareils (v5)</b> — Page ☁️ : après une configuration unique (projet Supabase, compte, passphrase), vos données sont chiffrées de bout en bout sur l’appareil puis envoyées dans le cloud ; l’autre appareil les récupère automatiquement au chargement ou au retour sur l’onglet. Conflit ? Un choix vous est proposé, avec export de sauvegarde avant remplacement.</p>'
+   +'<p style="margin-top:8px"><b>Listes à cocher (v5.9)</b> — Dans une note, cochez « 🛒 Ajouter une liste à cocher » : un espace Liste apparaît sous le contenu, façon liste de courses — ajoutez des lignes, cochez-les, elles se barrent.</p>'
+   +'<p style="margin-top:8px"><b>Glisser-déposer façon Explorateur (v5.9)</b> — Sur les listes Dossiers, Documents, Tâches et Notes, déplacez un élément : le haut d’une carte le place <b>avant</b>, le bas <b>après</b> (l’ordre devient « Personnalisé » automatiquement), le centre le range <b>dedans</b> (dossier) ou le déplace. L’onglet Dossiers n’affiche que les dossiers racine, comme l’Explorateur Windows.</p>'
+   +'<p style="margin-top:8px"><b>Accès rapide (v5.9)</b> — Le panneau ⭐ est désormais fixe à gauche, juste après le menu. Réduisez-le avec « – », rouvrez-le avec le bouton ⭐ vertical : il liste vos dossiers et notes épinglés et vos derniers consultés.</p>'
    +'</div>'
    +'<div class="modal-foot" style="margin-top:12px"><button class="btn ghost" data-act="modal-close">Fermer</button></div>';
   openModal(h);
@@ -2029,7 +2173,7 @@ function renderRemind(){
   if(!root)return;
   var p=getPrefs();
   var items=remindItems();
-  if(p.remindOff||!items.length){root.innerHTML=(items.length?'<button class="btn sm remind-toggle" data-act="remind-toggle" title="Afficher le panneau des relances">🔔 '+items.length+'</button>':'')+renderQa();return;}
+  if(p.remindOff||!items.length){root.innerHTML=(items.length?'<button class="btn sm remind-toggle" data-act="remind-toggle" title="Afficher le panneau des relances">🔔 '+items.length+'</button>':'');return;}
   var lat=[],son=[],i;
   for(i=0;i<items.length;i++){if(items[i].cls==='late')lat.push(items[i]);else son.push(items[i]);}
   var h='<div class="remind">';
@@ -2041,7 +2185,7 @@ function renderRemind(){
     for(i=0;i<Math.min(son.length,15);i++){h+='<div class="rr soon" data-act="open-'+son[i].kind+'" data-id="'+son[i].id+'" title="Ouvrir"><span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(son[i].lab)+'</span><span class="tiny muted" style="flex:0 0 auto">'+esc(son[i].sub)+'</span></div>';}
   }
   h+='</div>';
-  root.innerHTML=h+renderQa();
+  root.innerHTML=h;
 }
 
 // ===== Presse-papier (v5) =====
@@ -2269,7 +2413,7 @@ function pageSynchro(){
   var h='<div class="content"><div class="page-head"><h1 class="page-title">☁️ Synchro multi-appareils</h1></div>';
   h+='<div class="banner info">Vos données sont <b>chiffrées de bout en bout</b> (AES-GCM 256 bits, clé dérivée de votre passphrase) avant tout envoi. Le serveur ne voit jamais le contenu, ni la passphrase — uniquement un email de compte.</div>';
   h+='<h2 class="sec-title">État</h2><div class="step">';
-  h+='<p>Version de l’appli : <b>v5.8</b></p>';
+  h+='<p>Version de l’appli : <b>v5.9</b></p>';
   h+='<p>Configuration : '+(sbReady()?'<b style="color:var(--ok)">complète ✓</b>':'<b>incomplète</b> — il manque : <b>'+sbMissing()+'</b>')+(c.email?' — compte : <b>'+esc(c.email)+'</b>':'')+'</p>';
   h+='<p>Dernière synchro : <b>'+(state.sb.last||'jamais')+'</b>'+(state.sb.busy?' (en cours…)':'')+(state.sb.err?' <span style="color:var(--danger)">⚠️ '+esc(state.sb.err)+'</span>':'')+'</p>';
   h+='<div class="toolbar" style="margin-top:8px">'
@@ -2813,6 +2957,8 @@ function saveNoteForm(f){
   if(!n){n={id:uid(),maj:today()};state.notes.push(n);}
   n.titre=el.tit.value.trim()||'Sans titre';
   n.contenu=el.cont.value;
+  n.listeOn=!!(el.lst&&el.lst.checked);
+  if(n.listeOn&&!n.liste)n.liste=[];
   var raw=el.tags.value.split(',');
   var tags=[],i;
   for(i=0;i<raw.length;i++){var tg=raw[i].trim();if(tg)tags.push(tg);}
@@ -3029,7 +3175,7 @@ document.addEventListener('click',function(ev){
   else if(a==='nav-back'){navBack();render();}
   else if(a==='nav-fwd'){navFwd();render();}
   else if(a==='open-dossier'){var dd0=findDossier(id);if(dd0){dd0.ouvertLe=Date.now();qaTouch('dossier',id,dd0.nom);}navGo('dossier',id);render();renderRemind();}
-  else if(a==='open-tache'){var tt0=findTache(id);if(tt0){tt0.ouvertLe=Date.now();qaTouch('tache',id,tt0.titre);renderRemind();}modalTache(id,'');}
+  else if(a==='open-tache'){var tt0=findTache(id);if(tt0){tt0.ouvertLe=Date.now();qaTouch('tache',id,tt0.titre);renderRemind();renderQa();}modalTache(id,'');}
   else if(a==='open-note'){var nn0=findNote(id);if(nn0){nn0.ouvertLe=Date.now();qaTouch('note',id,nn0.titre);}navGo('note',id);render();renderRemind();}
   else if(a==='new-tache'){modalTache('',el.getAttribute('data-dos')||'');}
   else if(a==='new-dossier'){modalDossier('');}
@@ -3261,7 +3407,7 @@ document.addEventListener('click',function(ev){
   else if(a==='new-doc-link'){modalDoc('','','lien');}
   else if(a==='doc-copy'){
     var x5=findDoc(id);
-    if(x5&&x5.localisation){copyText(x5.localisation);docFloatFor(id);}
+    if(x5&&x5.localisation){copyText(x5.localisation);docFloatFor(id);urlShortcutFor(x5);}
     else{toast('Aucune localisation enregistrée pour ce document.');}
   }
   else if(a==='doc-openlink'){
@@ -3275,16 +3421,47 @@ document.addEventListener('click',function(ev){
   }
   else if(a==='ord-up'){ordMove(el.getAttribute('data-kind')||'',id,-1);}
   else if(a==='ord-down'){ordMove(el.getAttribute('data-kind')||'',id,1);}
-  else if(a==='qa-toggle'){var pqa=getPrefs();pqa.qaOff=!pqa.qaOff;setPrefs(pqa);renderRemind();}
+  else if(a==='qa-toggle'){var pqa=getPrefs();pqa.qaOff=!pqa.qaOff;setPrefs(pqa);renderRemind();renderQa();}
   else if(a==='qa-go'){
     var qk2=el.getAttribute('data-k')||'tache';
     var qi2=findTache(id);
-    if(qk2==='tache'&&qi2){qi2.ouvertLe=Date.now();qaTouch('tache',id,qi2.titre);renderRemind();modalTache(id,'');}
+    if(qk2==='tache'&&qi2){qi2.ouvertLe=Date.now();qaTouch('tache',id,qi2.titre);renderRemind();renderQa();modalTache(id,'');}
     else if(qk2==='dossier'){var qd2=findDossier(id);if(qd2){qd2.ouvertLe=Date.now();qaTouch('dossier',id,qd2.nom);}navGo('dossier',id);render();renderRemind();}
     else if(qk2==='doc'){var qx2=findDoc(id);if(qx2){qx2.ouvertLe=Date.now();qaTouch('doc',id,(qx2.description?String(qx2.description).split('\n')[0]:qx2.nom));}navGo('doc',id);render();renderRemind();}
     else if(qk2==='note'){var qn2=findNote(id);if(qn2){qn2.ouvertLe=Date.now();qaTouch('note',id,qn2.titre);}navGo('note',id);render();renderRemind();}
   }
   else if(a==='remind-toggle'){var pr3=getPrefs();pr3.remindOff=!pr3.remindOff;setPrefs(pr3);renderRemind();}
+  // ===== v5.9 : historiques déroulants, listes à cocher, exemples fusionnés =====
+  else if(a==='voir-faites'){state._voirFaites=!state._voirFaites;renderPageBody();}
+  else if(a==='voir-capfaites'){state._voirCapFaites=!state._voirCapFaites;render();}
+  else if(a==='voir-caphist'){state._voirCapHist=!state._voirCapHist;render();}
+  else if(a==='nl-add'){
+    var inpNl=document.getElementById('nl-new');
+    var nvNl=inpNl?String(inpNl.value||'').trim():'';
+    if(!nvNl){toast('Écrivez d’abord un article dans la liste.');return;}
+    var ln1=findNote(id);
+    if(ln1){if(!ln1.liste)ln1.liste=[];ln1.liste.push({txt:nvNl,fait:false});ln1.maj=today();save();render();}
+  }
+  else if(a==='nl-toggle'){
+    var ln2=findNote(id);var ixNl=nNum(el.getAttribute('data-i'));
+    if(ln2&&ln2.liste&&ln2.liste[ixNl]){ln2.liste[ixNl].fait=!ln2.liste[ixNl].fait;ln2.maj=today();save();render();}
+  }
+  else if(a==='nl-del'){
+    var ln3=findNote(id);var ixNl2=nNum(el.getAttribute('data-i'));
+    if(ln3&&ln3.liste&&ln3.liste[ixNl2]){ln3.liste.splice(ixNl2,1);ln3.maj=today();save();render();}
+  }
+  else if(a==='merge-demo'){
+    if(confirm('Ajouter le jeu de données d’exemple à vos données actuelles ?\n\nRien ne sera effacé : les dossiers, tâches, notes et documents d’exemple seront AJOUTÉS aux vôtres. Vous pourrez les supprimer ensuite comme n’importe quel élément.')){
+      var md=normalize(seedData());
+      var mdK;
+      for(mdK=0;mdK<md.dossiers.length;mdK++){state.dossiers.push(md.dossiers[mdK]);}
+      for(mdK=0;mdK<md.taches.length;mdK++){state.taches.push(md.taches[mdK]);}
+      for(mdK=0;mdK<md.notes.length;mdK++){state.notes.push(md.notes[mdK]);}
+      for(mdK=0;mdK<md.docs.length;mdK++){state.docs.push(md.docs[mdK]);}
+      state.exemple=false;
+      save();closeModal();toast('Exemples ajoutés ✓ ('+md.dossiers.length+' dossiers, '+md.taches.length+' tâches, '+md.notes.length+' notes/captures, '+md.docs.length+' documents) — aucune donnée effacée');render();
+    }
+  }
   else if(a==='open-ech'){modalEchances();}
   else if(a==='load-demo'){
     if(confirm('Charger le jeu de données d’exemple ?\n\n⚠️ Vos données actuelles seront REMPLACÉES. Un export JSON de sauvegarde sera téléchargé automatiquement avant.')){
@@ -3345,14 +3522,15 @@ document.addEventListener('click',function(ev){
 document.addEventListener('submit',function(ev){
   var f=ev.target;
   if(!f||!f.id)return;
-  if(f.id==='f-dossier'){ev.preventDefault();saveDossierForm(f);}
-  else if(f.id==='f-tache'){ev.preventDefault();saveTacheForm(f);}
-  else if(f.id==='f-note'){ev.preventDefault();saveNoteForm(f);}
-  else if(f.id==='f-doc'){ev.preventDefault();saveDocForm(f);}
-  else if(f.id==='f-capture'){ev.preventDefault();saveCaptureForm(f);}
-  else if(f.id==='f-qedit'){ev.preventDefault();saveQeditForm(f);}
-  else if(f.id==='f-ech'){ev.preventDefault();saveEchForm(f);}
-  else if(f.id==='f-synchro'){ev.preventDefault();saveSynchroForm(f);}
+  ev.preventDefault();
+  var wrap={'f-dossier':saveDossierForm,'f-tache':saveTacheForm,'f-note':saveNoteForm,'f-doc':saveDocForm,'f-capture':saveCaptureForm,'f-qedit':saveQeditForm,'f-ech':saveEchForm,'f-synchro':saveSynchroForm};
+  var fn=wrap[f.id];
+  if(!fn)return;
+  try{fn(f);}
+  catch(eSave){
+    try{console.error(eSave);}catch(eC){}
+    toast('⚠️ Erreur à l’enregistrement : '+(eSave&&eSave.message?eSave.message:String(eSave)));
+  }
 });
 function setFilter(key,val){
   var parts=key.split('.');
@@ -3383,6 +3561,7 @@ document.addEventListener('change',function(ev){
   if(el.id==='cal-pick'){state.calSel=el.value||today();render();return;}
   if(el.id==='rt-color'){try{document.execCommand('foreColor',false,el.value||'');}catch(e){}el.value='';return;}
   if(el.id==='rt-size'){try{document.execCommand('fontSize',false,el.value||'3');}catch(e){}el.value='';return;}
+  if(el.id==='dash-jours'){var pD=getPrefs();pD.dashJours=nNum(el.value)||7;setPrefs(pD);render();return;}
   var k=el.getAttribute('data-chg');
   if(!k)return;
   setFilter(k,el.value);
@@ -3396,7 +3575,7 @@ document.addEventListener('focusin',function(ev){
 });
 document.addEventListener('focusout',function(ev){
   var el=ev.target;
-  if(!el||!el.getAttribute||!el.id)return;
+  if(!el||!el.getAttribute)return;
   if(el.id==='note-cont'){
     var html=String(el.innerHTML||'');
     if(html.indexOf('Note vide — écrivez ici')>=0)html='';
@@ -3423,6 +3602,13 @@ document.addEventListener('keydown',function(ev){
       if(typeof f.requestSubmit==='function'){f.requestSubmit();}
       else if(f.dispatchEvent){f.dispatchEvent(new Event('submit',{cancelable:true}));}
     }
+    return;
+  }
+  if(ev.key==='Enter'&&!ev.ctrlKey&&!ev.altKey&&!ev.metaKey&&ev.target&&ev.target.id==='nl-new'){
+    ev.preventDefault();
+    var nlB=null;
+    try{nlB=document.querySelector('[data-act="nl-add"]');}catch(eNl){}
+    if(nlB&&nlB.click)nlB.click();
     return;
   }
   if(ev.ctrlKey||ev.altKey||ev.metaKey)return;
@@ -3467,16 +3653,21 @@ document.addEventListener('dragover',function(ev){
   var c=ev.target.closest?ev.target.closest('.kcol'):null;
   if(c){ev.preventDefault();return;}
   var dp=ev.target.closest?ev.target.closest('[data-drop]'):null;
-  if(dp){ev.preventDefault();try{ev.dataTransfer.dropEffect='move';}catch(e){}if(dp.classList&&dp.classList.add)dp.classList.add('drop-on');}
+  if(dp){ev.preventDefault();try{ev.dataTransfer.dropEffect='move';}catch(e){}if(dp.classList&&dp.classList.add)dp.classList.add('drop-on');return;}
+  var dg=ev.target.closest?ev.target.closest('[data-drag]'):null;
+  if(dg){ev.preventDefault();try{ev.dataTransfer.dropEffect='move';}catch(e){}if(dg.classList&&dg.classList.add)dg.classList.add('drop-on');}
 });
 document.addEventListener('dragleave',function(ev){
   var dp=ev.target.closest?ev.target.closest('[data-drop]'):null;
   if(dp&&dp.classList&&dp.classList.remove)dp.classList.remove('drop-on');
+  var dg=ev.target.closest?ev.target.closest('[data-drag]'):null;
+  if(dg&&dg.classList&&dg.classList.remove)dg.classList.remove('drop-on');
 });
 document.addEventListener('drop',function(ev){
   var dz=ev.target.closest?ev.target.closest('#dz-docs'):null;
   if(dz){ev.preventDefault();dz.className='dropzone';importFiles(ev.dataTransfer.files,dz.getAttribute('data-dos')||'');return;}
   var tgt=ev.target.closest?ev.target.closest('[data-drop]'):null;
+  if(!tgt){tgt=ev.target.closest?ev.target.closest('[data-drag]'):null;}
   if(tgt){
     ev.preventDefault();
     if(tgt.classList&&tgt.classList.remove)tgt.classList.remove('drop-on');
@@ -3487,6 +3678,33 @@ document.addEventListener('drop',function(ev){
     var pk=pl.split(':');
     var kind=pk[0],sid=pk[1];
     var tid=tgt.getAttribute('data-drop');
+    // v5.9 : dépôt sur une carte de même nature → réordonner façon Explorateur (haut de carte = avant, bas = après, centre = déplacer dedans)
+    var zone=dropZone(ev,tgt);
+    var tgtDrag=tgt.getAttribute('data-drag')||'';
+    if(kind==='dos'&&tgtDrag.indexOf('dos:')===0&&zone!=='into'){
+      if(sid===tid)return;
+      var ids1=displayIdsFromDom('dossier');
+      if(reorderTo('dossier',ids1,sid,tid,zone)){
+        state.filtres.dos.tri='perso';
+        save();render();
+        toast('Ordre enregistré — le tri passe en « Personnalisé »');
+      }
+      return;
+    }
+    if((kind==='tac'&&tgtDrag.indexOf('tac:')===0)||(kind==='not'&&tgtDrag.indexOf('not:')===0)||(kind==='doc'&&tgtDrag.indexOf('doc:')===0)){
+      var tid2=(tgtDrag.split(':')[1])||'';
+      if(!tid2||sid===tid2)return;
+      var kindF=(kind==='tac')?'tache':(kind==='not'?'note':'doc');
+      var filtreKey=(kind==='tac')?'ta':(kind==='not'?'no':'dc');
+      var ids2=displayIdsFromDom(kindF);
+      if(reorderTo(kindF,ids2,sid,tid2,(zone==='before')?'before':'after')){
+        state.filtres[filtreKey].tri='perso';
+        save();render();
+        toast('Ordre enregistré — le tri passe en « Personnalisé »');
+      }
+      return;
+    }
+    if(!tid)return;
     if(kind==='dos'){
       if(sid===tid)return;
       var mvd=findDossier(sid);var cible=findDossier(tid);
