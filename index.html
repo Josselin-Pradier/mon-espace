@@ -1864,25 +1864,29 @@ function sbSalt(){
   }
   return b64ToBytes(s);
 }
-function sbDerive(pass){
+function sbDerive(pass,salt){
   return crypto.subtle.importKey('raw',new TextEncoder().encode(pass),'PBKDF2',false,['deriveKey']).then(function(km){
-    return crypto.subtle.deriveKey({name:'PBKDF2',salt:sbSalt(),iterations:120000,hash:'SHA-256'},km,{name:'AES-GCM',length:256},false,['encrypt','decrypt']);
+    return crypto.subtle.deriveKey({name:'PBKDF2',salt:salt||sbSalt(),iterations:120000,hash:'SHA-256'},km,{name:'AES-GCM',length:256},false,['encrypt','decrypt']);
   });
 }
 function sbEncrypt(json,pass){
+  var salt=sbSalt();
   var iv=new Uint8Array(12);
   try{crypto.getRandomValues(iv);}catch(e){var i1;for(i1=0;i1<12;i1++){iv[i1]=i1;}}
-  return sbDerive(pass).then(function(key){
+  return sbDerive(pass,salt).then(function(key){
     return crypto.subtle.encrypt({name:'AES-GCM',iv:iv},key,new TextEncoder().encode(json));
   }).then(function(buf){
-    return b64FromBytes(iv)+':'+b64FromBytes(buf);
+    return b64FromBytes(salt)+':'+b64FromBytes(iv)+':'+b64FromBytes(buf);
   });
 }
 function sbDecrypt(blob,pass){
   var parts=String(blob||'').split(':');
   if(parts.length<2)return Promise.reject(new Error('blob illisible'));
-  return sbDerive(pass).then(function(key){
-    return crypto.subtle.decrypt({name:'AES-GCM',iv:b64ToBytes(parts[0])},key,b64ToBytes(parts.slice(1).join(':')));
+  var salt,iv,cipher;
+  if(parts.length>=3){salt=b64ToBytes(parts[0]);iv=b64ToBytes(parts[1]);cipher=parts.slice(2).join(':');}
+  else{salt=sbSalt();iv=b64ToBytes(parts[0]);cipher=parts.slice(1).join(':');}
+  return sbDerive(pass,salt).then(function(key){
+    return crypto.subtle.decrypt({name:'AES-GCM',iv:iv},key,b64ToBytes(cipher));
   }).then(function(buf){
     return new TextDecoder().decode(buf);
   });
@@ -2999,11 +3003,13 @@ document.addEventListener('click',function(ev){
   else if(a==='sync-push'){
     sbReadForm();
     if(!sbReady()){toast('Synchro impossible — renseignez d’abord : '+sbMissing()+'.');return;}
+    if(state.sb.busy){toast('Synchro déjà en cours — patientez une seconde puis réessayez.');return;}
     syncPush(false);
   }
   else if(a==='sync-pull'){
     sbReadForm();
     if(!sbReady()){toast('Synchro impossible — renseignez d’abord : '+sbMissing()+'.');return;}
+    if(state.sb.busy){toast('Synchro déjà en cours — patientez une seconde puis réessayez.');return;}
     syncPull(false);
   }
   else if(a==='sync-logout'){
