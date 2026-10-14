@@ -284,7 +284,7 @@ input[type=file]{padding:5px;font-size:12px}
     <a class="snav" data-act="open-listes">⚙️ Mes listes</a>
     <a class="snav" data-act="open-export">💾 Export &amp; sauvegarde</a>
     <a class="snav" data-act="open-help">❓ Aide &amp; confidentialité</a>
-    <div class="side-note">Mon Espace v5.12 — 100 % local par défaut. Connexion Outlook et synchro chiffrée (page ☁️) optionnelles — vous décidez.</div>
+    <div class="side-note">Mon Espace v5.13 — 100 % local par défaut. Connexion Outlook et synchro chiffrée (page ☁️) optionnelles — vous décidez.</div>
   </div>
 </aside>
 <aside id="qa-root" class="off"></aside>
@@ -361,6 +361,9 @@ var DOC_ROLES=[
 // ===== Listes déroulantes personnalisables (v4) =====
 var LISTES_KEY='gestion-dnt-listes-v1';
 var LISTES_MAP={statuts:DOS_STATUTS,taches:TACHE_STATUTS,priorites:PRIORITES,contextes:CONTEXTES,types:DOC_TYPES,roles:DOC_ROLES};
+// v5.13 : copie pristine des valeurs de base (pour afficher/restaurer celles retirées) + valeur par défaut non retirable de chaque liste
+var LISTES_BASE={statuts:DOS_STATUTS.slice(),taches:TACHE_STATUTS.slice(),priorites:PRIORITES.slice(),contextes:CONTEXTES.slice(),types:DOC_TYPES.slice(),roles:DOC_ROLES.slice()};
+var LISTES_DEFAUT={statuts:'ouvert',taches:'a-faire',priorites:'normale',contextes:'pro',types:'autre',roles:'livrable'};
 function slugTxt(s){return String(s||'').toLowerCase().replace(/[àáâãä]/g,'a').replace(/[èéêë]/g,'e').replace(/[ìíîï]/g,'i').replace(/[òóôõö]/g,'o').replace(/[ùúûü]/g,'u').replace(/ç/g,'c').replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');}
 function getListes(){try{var r=localStorage.getItem(LISTES_KEY);return r?JSON.parse(r):{};}catch(e){return {};}}
 function setListes(o){try{localStorage.setItem(LISTES_KEY,JSON.stringify(o||{}));}catch(e){}}
@@ -370,13 +373,30 @@ function applyCustomLists(){
   for(name in LISTES_MAP){
     if(!Object.prototype.hasOwnProperty.call(LISTES_MAP,name))continue;
     var arr=LISTES_MAP[name];
-    var keep=[],i;
-    for(i=0;i<arr.length;i++){if(!arr[i]._c)keep.push(arr[i]);}
+    // v5.13 : reconstruit depuis la copie pristine des valeurs de base (permet la RESTAURATION)
+    var off=(lst&&Array.isArray(lst[name+'__off']))?lst[name+'__off']:[];
+    var baseP=LISTES_BASE[name]||[];
     arr.length=0;
-    for(i=0;i<keep.length;i++)arr.push(keep[i]);
+    var i;
+    for(i=0;i<baseP.length;i++){
+      if(baseP[i]._c)continue;
+      if(off.indexOf(baseP[i].k)>=0)continue;
+      arr.push(baseP[i]);
+    }
     var cust=(lst&&Array.isArray(lst[name]))?lst[name]:[];
     for(i=0;i<cust.length;i++){arr.push({k:'c-'+slugTxt(cust[i]),l:String(cust[i]),_c:true});}
   }
+}
+// v5.13 : compte les éléments de données utilisant une valeur de liste (garde-fou avant retrait)
+function listeUsage(name,k){
+  var n=0,i;
+  if(name==='statuts'){for(i=0;i<state.dossiers.length;i++){if(state.dossiers[i].statut===k)n++;}}
+  else if(name==='taches'){for(i=0;i<state.taches.length;i++){if(state.taches[i].statut===k)n++;}}
+  else if(name==='priorites'){for(i=0;i<state.taches.length;i++){if(state.taches[i].priorite===k)n++;}for(i=0;i<state.notes.length;i++){if((state.notes[i].prio||'')===k)n++;}}
+  else if(name==='contextes'){for(i=0;i<state.dossiers.length;i++){if(state.dossiers[i].contexte===k)n++;}for(i=0;i<state.taches.length;i++){if(state.taches[i].contexte===k)n++;}for(i=0;i<state.notes.length;i++){if(state.notes[i].contexte===k)n++;}}
+  else if(name==='types'){for(i=0;i<state.docs.length;i++){if(state.docs[i].type===k)n++;}}
+  else if(name==='roles'){for(i=0;i<state.docs.length;i++){if(state.docs[i].role===k)n++;}}
+  return n;
 }
 
 // ===== État =====
@@ -487,7 +507,7 @@ function normalize(src){
   if(d.dossiers){
     for(i=0;i<d.dossiers.length;i++){
       x=d.dossiers[i];if(!x||!x.id)continue;
-      out.dossiers.push({id:String(x.id),parentId:String(x.parentId||''),nom:String(x.nom||'Sans titre'),statut:validK(DOS_STATUTS,x.statut,'ouvert'),contexte:validK(CONTEXTES,x.contexte,'pro'),categorie:String(x.categorie||''),echeance:String(x.echeance||''),description:String(x.description||''),epingle:!!x.epingle,ordre:nNum(x.ordre),ouvertLe:nNum(x.ouvertLe),cree:String(x.cree||today()),maj:String(x.maj||today())});
+      out.dossiers.push({id:String(x.id),parentId:String(x.parentId||''),nom:String(x.nom||'Sans titre'),statut:validK(DOS_STATUTS,x.statut,'ouvert'),contexte:validK(CONTEXTES,x.contexte,'pro'),categorie:String(x.categorie||''),echeance:String(x.echeance||''),description:String(x.description||''),epingle:!!x.epingle,termLe:String(x.termLe||''),ordre:nNum(x.ordre),ouvertLe:nNum(x.ouvertLe),cree:String(x.cree||today()),maj:String(x.maj||today())});
     }
   }
   if(d.taches){
@@ -503,7 +523,7 @@ function normalize(src){
       var tags=[];
       if(Array.isArray(x.tags)){var j;for(j=0;j<x.tags.length;j++){if(x.tags[j])tags.push(String(x.tags[j]));}}
       else if(typeof x.tags==='string'&&x.tags){var parts=x.tags.split(',');for(var k=0;k<parts.length;k++){if(parts[k].trim())tags.push(parts[k].trim());}}
-      out.notes.push({id:String(x.id),titre:String(x.titre||'Sans titre'),contenu:String(x.contenu||''),tags:tags,contexte:validK(CONTEXTES,x.contexte,'pro'),dossierId:String(x.dossierId||''),tacheId:String(x.tacheId||''),docId:String(x.docId||''),epinglee:!!x.epinglee,echeance:String(x.echeance||''),heure:String(x.heure||''),traitee:!!x.traitee,traiteeLe:String(x.traiteeLe||''),capture:!!x.capture,image:String(x.image||''),images:nImages(x.images),prio:validK(PRIORITES,x.prio,'normale'),origine:String(x.origine||''),autoFloat:!!x.autoFloat,trieeLe:String(x.trieeLe||''),ordre:nNum(x.ordre),ouvertLe:nNum(x.ouvertLe),liste:nListe(x.liste),listeOn:!!x.listeOn,maj:String(x.maj||today())});
+      out.notes.push({id:String(x.id),titre:String(x.titre||'Sans titre'),contenu:String(x.contenu||''),tags:tags,contexte:validK(CONTEXTES,x.contexte,'pro'),dossierId:String(x.dossierId||''),tacheId:String(x.tacheId||''),docId:String(x.docId||''),epinglee:!!x.epinglee,echeance:String(x.echeance||''),heure:String(x.heure||''),traitee:!!x.traitee,traiteeLe:String(x.traiteeLe||''),capture:!!x.capture,image:String(x.image||''),images:nImages(x.images),prio:validK(PRIORITES,x.prio,'normale'),origine:String(x.origine||''),autoFloat:!!x.autoFloat,trieeLe:String(x.trieeLe||''),ordre:nNum(x.ordre),ouvertLe:nNum(x.ouvertLe),liste:nListe(x.liste),listeOn:!!x.listeOn,maj:String(x.maj||today()),archivee:!!x.archivee,archiveeLe:String(x.archiveeLe||'')});
     }
   }
   if(d.docs){
@@ -699,7 +719,7 @@ function clipPaste(targetId){
     var n=findNote(cl.id);if(!n)return;
     if(cl.mode==='cut'){n.dossierId=(targetId||'');n.maj=today();toast((n.capture?'Post-it':'Note')+' « '+n.titre+' » déplacé'+(targetId?' ✓':' à la racine'));state._clip=null;}
     else{
-      var cn={id:uid(),titre:n.titre+' (copie)',contenu:n.contenu,tags:(n.tags||[]).slice(),contexte:n.contexte,dossierId:(targetId||''),tacheId:'',docId:'',epinglee:false,echeance:n.echeance,heure:n.heure,traitee:n.traitee,traiteeLe:n.traiteeLe,capture:n.capture,image:n.image,images:(n.images||[]).slice(),prio:n.prio,origine:'',autoFloat:false,trieeLe:'',ordre:0,ouvertLe:0,liste:(n.liste||[]).slice(),listeOn:n.listeOn,maj:today()};
+      var cn={id:uid(),titre:n.titre+' (copie)',contenu:n.contenu,tags:(n.tags||[]).slice(),contexte:n.contexte,dossierId:(targetId||''),tacheId:'',docId:'',epinglee:false,echeance:n.echeance,heure:n.heure,traitee:n.traitee,traiteeLe:n.traiteeLe,capture:n.capture,image:n.image,images:(n.images||[]).slice(),prio:n.prio,origine:'',autoFloat:false,trieeLe:'',ordre:0,ouvertLe:0,liste:(n.liste||[]).slice(),listeOn:n.listeOn,maj:today(),archivee:false,archiveeLe:''};
       state.notes.push(cn);
       toast('Copie de la note créée : « '+cn.titre+' »');
     }
@@ -810,7 +830,7 @@ function vueKanbanCards(kind,val){
       if(val!=='*'&&!matchKanbanVal(kind,list[i],val))continue;
       count++;
       var d=list[i];
-      h+='<div class="kcard" draggable="true" data-id="kv:dos:'+d.id+'"><span class="row-title" data-act="open-dossier" data-id="'+d.id+'">'+esc(d.nom)+'</span><div class="sub">'+qw('dossier',d.id,'statut',badgeDossier(d.statut))+qw('dossier',d.id,'ctx',badgeCtx(d.contexte))+(d.echeance?qw('dossier',d.id,'ech',echLabel(d.echeance,d.statut==='termine')):'')+'</div></div>';
+      h+='<div class="kcard" draggable="true" data-id="kv:dos:'+d.id+'"><span class="row-title" data-act="open-dossier" data-id="'+d.id+'">'+esc(d.nom)+'</span><div class="sub">'+qw('dossier',d.id,'statut',badgeDossier(d.statut))+qw('dossier',d.id,'ctx',badgeCtx(d.contexte))+(d.echeance?qw('dossier',d.id,'ech',echLabel(d.echeance,(d.statut==='termine'||d.statut==='archive'))):'')+'</div></div>';
     }
   }else if(kind==='doc'){
     var dl=docsFilteredList();
@@ -839,6 +859,8 @@ function matchKanbanVal(kind,item,val){
 function notesKanbanList(kind){
   return state.notes.filter(function(n){
     if(kind==='cap')return n.capture;
+    // v5.13 : les notes archivées ne passent pas au kanban
+    if(n.archivee)return false;
     return !n.capture;
   }).sort(function(a,b){return a.maj>b.maj?-1:1;});
 }
@@ -1048,6 +1070,8 @@ function noteRowDash(n){
    +qw('note',n.id,'ctx',badgeCtx(n.contexte))
    +((n.prio&&n.prio!=='normale')?qw('note',n.id,'prio',badgePrio(n.prio)):'')
    +(n.capture?'<span class="badge" style="background:#fffbeb;color:#b45309">⚡</span>':'')
+   // v5.13 : marqueur des notes archivées (recherche, résultats)
+   +(n.archivee?'<span class="badge" style="background:#e2e8f0;color:#475569">📦 archivée</span>':'')
    +(n.image?'<span class="badge" style="background:#f5f3ff;color:#6d28d9">🖼</span>':'')
    +(n.echeance?qw('note',n.id,'ech',echLabel(n.echeance,n.traitee,'Traitée',n.heure||'')):'')
    +(ex?'<span class="tiny muted" style="margin-left:auto;flex:0 0 auto;max-width:38%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(ex)+'</span>':'')
@@ -1119,7 +1143,8 @@ function pageDash(){
     var tD=it.kind==='tache'?findTache(it.id):null;
     return '<div class="row"><span class="row-title" data-act="'+act+'" data-id="'+it.id+'"'+(it.kind==='crm'?' data-hash="'+esc(it.crmHash)+'" title="Ouvrir dans le CRM"':'')+'>'+ico+' '+esc(it.titre)+'</span>'
      +(it.heure?'<span class="chip">🕒 '+esc(it.heure)+'</span>':'')
-     +'<span class="chip">'+esc(relEch(it.date,false,''))+'</span>'
+     // v5.13 : bulle d’échéance colorée (retard=rouge, proche=orange…), comme partout ailleurs
+     +'<span class="eco '+echClass(it.date,false)+'">'+esc(relEch(it.date,false,''))+'</span>'
      +(it.prio&&it.kind!=='dossier'?badgePrio(it.prio):'')
      +(tD?'<button type="button" class="mini-btn" style="margin-left:auto" data-act="tac-pin" data-id="'+tD.id+'" title="'+(tD.epingle?'Détacher du panneau ⭐ Accès rapide':'Épingler — visible dans le panneau ⭐ Accès rapide')+'">'+(tD.epingle?'📌':'📍')+'</button>':'')
      +'</div>';
@@ -1166,7 +1191,7 @@ function pageDash(){
     if(caps.length>5)h+='<div class="small muted" style="padding:4px 4px 0">+'+(caps.length-5)+' autres — <a class="chip" data-act="go" data-page="capture">ouvrir la boîte de capture</a></div>';
   }
   // Notes récentes (épinglées incluses)
-  var notesRecentes=state.notes.filter(function(n){return !n.capture;}).sort(function(a,b){return a.maj>b.maj?-1:1;});
+  var notesRecentes=state.notes.filter(function(n){return !n.capture&&!n.archivee;}).sort(function(a,b){return a.maj>b.maj?-1:1;});
   h+='<h2 class="sec-title">📝 Notes récentes</h2>';
   if(notesRecentes.length){
     var q2;for(q2=0;q2<Math.min(notesRecentes.length,8);q2++){h+=noteRowDash(notesRecentes[q2]);}
@@ -1355,7 +1380,7 @@ function renderQa(){
   root.className='';
   var dosP=state.dossiers.filter(function(d){return d.epingle;});
   var tacP=state.taches.filter(function(t){return t.epingle;});
-  var notP=state.notes.filter(function(n){return n.epinglee&&!n.capture;});
+  var notP=state.notes.filter(function(n){return n.epinglee&&!n.capture&&!n.archivee;});
   var qa=p.qa||[];
   var i;
   for(i=qa.length-1;i>=0;i--){if(!qaLabel(qa[i].k,qa[i]))qa.splice(i,1);}
@@ -1454,7 +1479,7 @@ function dossierCard(d){
   if(enf)meta.push(enf+' sous-dossier'+(enf>1?'s':''));
   var par=d.parentId?findDossier(d.parentId):null;
   return '<div class="card" data-act="open-dossier" data-id="'+d.id+'" draggable="true" data-drag="dos:'+d.id+'" data-drop="'+d.id+'" title="Ouvrir — ou glissez-la sur un autre dossier pour la déplacer dedans">'
-   +'<div class="card-top">'+qw('dossier',d.id,'statut',badgeDossier(d.statut))+qw('dossier',d.id,'ctx',badgeCtx(d.contexte))+(par?'<span class="chip" data-act="open-dossier" data-id="'+par.id+'" title="Dossier parent">⬑ '+esc(par.nom)+'</span>':'')+'<button class="btn sm ghost" data-act="dos-pin" data-id="'+d.id+'" title="'+(d.epingle?'Détacher du haut de la liste':'Épingler en haut de la liste')+'">'+(d.epingle?'📌':'📍')+'</button></div>'
+   +'<div class="card-top">'+qw('dossier',d.id,'statut',badgeDossier(d.statut))+((d.statut==='termine'||d.statut==='archive')&&d.termLe?'<span class="badge" style="background:#e2e8f0;color:#475569" title="Date de passage en statut final">le '+fmtDate(d.termLe)+'</span>':'')+qw('dossier',d.id,'ctx',badgeCtx(d.contexte))+(par?'<span class="chip" data-act="open-dossier" data-id="'+par.id+'" title="Dossier parent">⬑ '+esc(par.nom)+'</span>':'')+'<button class="btn sm ghost" data-act="dos-pin" data-id="'+d.id+'" title="'+(d.epingle?'Détacher du haut de la liste':'Épingler en haut de la liste')+'">'+(d.epingle?'📌':'📍')+'</button></div>'
    +'<div class="card-title">'+(d.epingle?'📌 ':'')+esc(d.nom)+'</div>'
    +'<div class="card-meta">'+meta.join(' · ')+'</div>'
    +(d.echeance?qw('dossier',d.id,'ech',echLabel(d.echeance,done)):'')
@@ -1494,8 +1519,8 @@ function pageDossier(id){
   var ci;for(ci=0;ci<chemin.length;ci++){var dernier=(ci===chemin.length-1);
     h+=' <a class="chip"'+(dernier?' style="font-weight:700;background:var(--accent-soft)"':'')+' data-act="open-dossier" data-id="'+chemin[ci].id+'" data-drop="'+chemin[ci].id+'" title="Ouvrir — ou déposez-y un élément pour le déplacer dans ce dossier">📁 '+esc(chemin[ci].nom)+'</a>';}
   h+='</div>';
-  h+='<div class="page-head"><div><h1 class="page-title">'+esc(d.nom)+'</h1><div class="badges">'+qw('dossier',d.id,'statut',badgeDossier(d.statut))+qw('dossier',d.id,'ctx',badgeCtx(d.contexte))
-   +(d.categorie?'<span class="badge gray">'+esc(d.categorie)+'</span>':'')+(d.echeance?qw('dossier',d.id,'ech',echLabel(d.echeance,d.statut==='termine')):'')+'</div></div>'
+  h+='<div class="page-head"><div><h1 class="page-title">'+esc(d.nom)+'</h1><div class="badges">'+qw('dossier',d.id,'statut',badgeDossier(d.statut))+((d.statut==='termine'||d.statut==='archive')&&d.termLe?'<span class="badge" style="background:#e2e8f0;color:#475569" title="Date de passage en statut final">le '+fmtDate(d.termLe)+'</span>':'')+qw('dossier',d.id,'ctx',badgeCtx(d.contexte))
+   +(d.categorie?'<span class="badge gray">'+esc(d.categorie)+'</span>':'')+(d.echeance?qw('dossier',d.id,'ech',echLabel(d.echeance,(d.statut==='termine'||d.statut==='archive'))):'')+'</div></div>'
    +'<div class="toolbar">'
    +'<button class="btn" data-act="new-tache" data-dos="'+d.id+'">+ Tâche</button>'
    +'<button class="btn" data-act="new-note" data-dos="'+d.id+'">+ Note</button>'
@@ -1723,7 +1748,7 @@ function crmDated(){
 function allDated(){
   var out=[],i;
   for(i=0;i<state.taches.length;i++){var t=state.taches[i];if(t.echeance)out.push({kind:'tache',id:t.id,date:t.echeance,heure:t.heure||'',titre:t.titre,prio:t.priorite,done:t.statut==='fait'});}
-  for(i=0;i<state.notes.length;i++){var n=state.notes[i];if(n.echeance)out.push({kind:(n.capture?'capture':'note'),id:n.id,date:n.echeance,heure:n.heure||'',titre:n.titre,prio:n.prio||'',done:n.traitee});}
+  for(i=0;i<state.notes.length;i++){var n=state.notes[i];if(n.echeance)out.push({kind:(n.capture?'capture':'note'),id:n.id,date:n.echeance,heure:n.heure||'',titre:n.titre,prio:n.prio||'',done:(n.traitee||n.archivee)});}
   for(i=0;i<state.dossiers.length;i++){var d=state.dossiers[i];if(d.echeance)out.push({kind:'dossier',id:d.id,date:d.echeance,heure:'',titre:d.nom,prio:'',done:(d.statut==='termine'||d.statut==='archive')});}
   var crm=crmDated();
   for(i=0;i<crm.length;i++)out.push(crm[i]);
@@ -2100,6 +2125,8 @@ function notesBody(){
   var q=f.q.trim().toLowerCase();
   var list=state.notes.filter(function(n){
     if(n.capture)return false;
+    // v5.13 : les notes archivées quittent la liste active (section dédiée plus bas)
+    if(n.archivee)return false;
     if(f.tr==='todo'&&n.traitee)return false;
     if(f.tr==='done'&&!n.traitee)return false;
     if(f.ctx&&n.contexte!==f.ctx)return false;
@@ -2125,11 +2152,19 @@ function notesBody(){
     triApply(othersN,f.tri,'titre','echeance','prio');
     list=pinsN.concat(othersN);
   }
-  if(!list.length)return '<div class="empty">Aucune note ne correspond. <button class="btn sm" data-act="new-note">Créer une note</button></div>';
-  var h='<div class="notes-grid">';var i;
-  for(i=0;i<list.length;i++){h+=noteCard(list[i]);}
-  h+='</div>';
-  return h;
+  // v5.13 : notes archivées — section repliable façon « ✓ Terminées » des tâches
+  var h='';
+  var arch=state.notes.filter(function(n){return !n.capture&&n.archivee;});
+  arch.sort(function(a,b){return a.archiveeLe<b.archiveeLe?1:(a.archiveeLe>b.archiveeLe?-1:0);});
+  if(arch.length){
+    h+='<h2 class="sec-title" style="margin-top:16px">📦 Archivées ('+arch.length+') <button class="btn sm ghost" data-act="voir-arch" title="Dérouler / réduire les notes archivées">'+(state._voirArch?'Réduire −':'Dérouler ▾')+'</button></h2>';
+    if(state._voirArch){var aA;for(aA=0;aA<arch.length;aA++){h+=noteCard(arch[aA],'<button class="btn sm ghost" data-act="note-arch" data-id="'+arch[aA].id+'" title="Remettre cette note dans la liste active">↩ Désarchiver</button>');}}
+  }
+  if(!list.length&&!arch.length)return '<div class="empty">Aucune note ne correspond. <button class="btn sm" data-act="new-note">Créer une note</button></div>';
+  var hGrid='<div class="notes-grid">';var i;
+  for(i=0;i<list.length;i++){hGrid+=noteCard(list[i]);}
+  hGrid+='</div>';
+  return (list.length?hGrid:'<div class="empty">Aucune note active ne correspond. <button class="btn sm" data-act="new-note">Créer une note</button></div>')+h;
 }
 function noteCard(n,extra){
   var d=findDossier(n.dossierId);
@@ -2139,9 +2174,9 @@ function noteCard(n,extra){
    +(n.epinglee?'<span class="pin">📌</span>':'')
    +'<div class="card-title">'+esc(n.titre)+'</div>'
    +'<div class="note-extrait">'+esc(ex)+'</div>'
-   +'<div class="badges">'+qw('note',n.id,'ctx',badgeCtx(n.contexte))+(n.capture?'<span class="badge" style="background:#fffbeb;color:#b45309">⚡</span>':'')+(noteImgCount(n)?'<span class="badge" style="background:#f5f3ff;color:#6d28d9">🖼 '+noteImgCount(n)+'</span>':'')+((n.liste&&n.liste.length)?'<span class="badge" style="background:#f0fdf4;color:#166534">🛒 '+n.liste.length+'</span>':'')+(n.traitee?'<span class="badge" style="background:#d1fae5;color:#065f46">✓ traitée'+(n.traiteeLe?' le '+fmtDate(n.traiteeLe):'')+'</span>':'')
+   +'<div class="badges">'+qw('note',n.id,'ctx',badgeCtx(n.contexte))+(n.capture?'<span class="badge" style="background:#fffbeb;color:#b45309">⚡</span>':'')+(noteImgCount(n)?'<span class="badge" style="background:#f5f3ff;color:#6d28d9">🖼 '+noteImgCount(n)+'</span>':'')+((n.liste&&n.liste.length)?'<span class="badge" style="background:#f0fdf4;color:#166534">🛒 '+n.liste.length+'</span>':'')+(n.traitee?'<span class="badge" style="background:#d1fae5;color:#065f46">✓ '+(n.capture?'traitée':'terminée')+(n.traiteeLe?' le '+fmtDate(n.traiteeLe):'')+'</span>':'')+(n.archivee?'<span class="badge" style="background:#e2e8f0;color:#475569">📦 archivée'+(n.archiveeLe?' le '+fmtDate(n.archiveeLe):'')+'</span>':'')
    +((n.prio&&n.prio!=='normale')?qw('note',n.id,'prio',badgePrio(n.prio)):'')
-   +(n.echeance&&!n.traitee?qw('note',n.id,'ech',echLabel(n.echeance,n.traitee,'Traitée',n.heure||'')):echLabel(n.echeance,n.traitee,'Traitée',n.heure||''));
+   +(n.echeance&&!n.traitee?qw('note',n.id,'ech',echLabel(n.echeance,n.traitee,(n.capture?'Traitée':'Terminée'),n.heure||'')):echLabel(n.echeance,n.traitee,(n.capture?'Traitée':'Terminée'),n.heure||''));
   var i;var tg=n.tags||[];
   for(i=0;i<tg.length;i++){h+='<span class="badge gray">#'+esc(tg[i])+'</span>';}
   if(d)h+='<span class="chip">📁 '+esc(d.nom)+'</span>';
@@ -2158,13 +2193,18 @@ function pageNote(id){
   var h='<div class="content note-view">';
   h+='<div class="crumbs"><a class="chip" data-act="go" data-page="notes">← Notes</a></div>';
   h+='<div class="page-head"><div><h1 class="page-title">'+(n.epinglee?'📌 ':'')+esc(n.titre)+'</h1><div class="badges">'+qw('note',n.id,'ctx',badgeCtx(n.contexte))
-   +(n.traitee?'<span class="badge" style="background:#d1fae5;color:#065f46">✓ traitée'+(n.traiteeLe?' le '+fmtDate(n.traiteeLe):'')+'</span>':((n.echeance||n.capture)?qw('note',n.id,'tr','<span class="badge" style="background:#fef3c7;color:#92400e">à traiter</span>','Marquer traitée d’un clic'):''))+(n.echeance&&!n.traitee?qw('note',n.id,'ech',echLabel(n.echeance,n.traitee,'Traitée',n.heure||'')):echLabel(n.echeance,n.traitee,'Traitée',n.heure||''))
+   +(n.traitee?'<span class="badge" style="background:#d1fae5;color:#065f46">✓ '+(n.capture?'traitée':'terminée')+(n.traiteeLe?' le '+fmtDate(n.traiteeLe):'')+'</span>':((n.echeance||n.capture)?qw('note',n.id,'tr','<span class="badge" style="background:#fef3c7;color:#92400e">'+(n.capture?'à traiter':'à terminer')+'</span>','Marquer '+(n.capture?'traitée':'terminée')+' d’un clic'):''))+(n.echeance&&!n.traitee?qw('note',n.id,'ech',echLabel(n.echeance,n.traitee,(n.capture?'Traitée':'Terminée'),n.heure||'')):echLabel(n.echeance,n.traitee,(n.capture?'Traitée':'Terminée'),n.heure||''))
+   +(n.archivee?'<span class="badge" style="background:#e2e8f0;color:#475569" title="Archivée — visible dans la section « Archivées » de l’onglet Notes">📦 archivée'+(n.archiveeLe?' le '+fmtDate(n.archiveeLe):'')+'</span>':'')
    +(n.maj?'<span class="badge gray">modifiée le '+fmtDate(n.maj)+'</span>':'')+'</div></div>'
    +'<div class="toolbar">'
    +'<button class="btn ghost" data-act="pin-note" data-id="'+n.id+'">'+(n.epinglee?'Détacher 📌':'Épingler 📌')+'</button>'
    +'<button class="btn ghost" data-act="note-float" data-id="'+n.id+'" title="Ouvrir en fenêtre flottante — reste visible pendant que vous travaillez">🪟 Flottante</button>'
    +'<button class="btn ghost" data-act="note-to-outlook" data-id="'+n.id+'" title="Créer un rappel dans votre calendrier Outlook">📅 Outlook</button>'
-   +'<button class="btn ghost" data-act="note-traitee" data-id="'+n.id+'">'+(n.traitee?'↩ À traiter':'✓ Traitée')+'</button>'
+   +'<button class="btn ghost" data-act="note-traitee" data-id="'+n.id+'" title="Marquer la note comme terminée (ou la rouvrir)">'+(n.traitee?'↩ À traiter':'✓ '+(n.capture?'Traitée':'Terminée'))+'</button>'
+   // v5.13 : date de passage en « terminée » visible directement à côté du bouton
+   +(n.traitee&&n.traiteeLe?'<span class="badge" style="background:#d1fae5;color:#065f46">le '+fmtDate(n.traiteeLe)+'</span>':'')
+   // v5.13 : archivage des notes (comme les tâches terminées quittent la liste active)
+   +(n.capture?'':'<button class="btn ghost" data-act="note-arch" data-id="'+n.id+'" title="Archiver : la note quitte la liste active et rejoint la section « Archivées » (onglet Notes)">'+(n.archivee?'↩ Désarchiver':'📦 Archiver')+'</button>'+(n.archivee&&n.archiveeLe?'<span class="badge" style="background:#e2e8f0;color:#475569">le '+fmtDate(n.archiveeLe)+'</span>':''))
    +'<button class="btn ghost" data-act="edit-note" data-id="'+n.id+'">✎ Modifier</button>'
    +'<button class="btn danger ghost" data-act="del-note" data-id="'+n.id+'" title="Supprimer">🗑</button>'
    +'</div></div>';
@@ -2316,6 +2356,8 @@ function modalTache(id,presetDos){
    +'<div><label>Statut</label><select name="st">'+optsHtml(TACHE_STATUTS,t?t.statut:'a-faire')+'</select></div>'
    +'<div><label>Priorité</label><select name="prio">'+optsHtml(PRIORITES,t?t.priorite:'normale')+'</select></div>'
    +'</div>'
+   // v5.13 : date de passage en « fait » affichée à côté du statut
+   +(t&&t.statut==='fait'&&t.faitLe?'<p class="small muted" style="margin:2px 0 10px">✓ Passée en « fait » le <b>'+fmtDate(t.faitLe)+'</b></p>':'')
    +'<div class="form-row two">'
    +'<div><label>Contexte</label><select name="ctx">'+optsHtml(CONTEXTES,t?t.contexte:'pro')+'</select></div>'
    +'<div><label>Échéance</label><input type="date" name="ech" value="'+(t?t.echeance:'')+'"/></div>'
@@ -2366,19 +2408,33 @@ function modalNote(id,presetDos,presetDoc){
 }
 function modalListes(){
   var h='<h3>⚙️ Mes listes</h3>'
-   +'<p class="small muted">Complétez tous les menus déroulants de l’appli avec vos propres valeurs. Elles s’ajoutent aux choix de base et restent enregistrées sur cet appareil.</p>';
+   +'<p class="small muted">Complétez tous les menus déroulants de l’appli avec vos propres valeurs, ou retirez celles que vous n’utilisez pas (elles restent restaurables). Tout est enregistré sur cet appareil.</p>';
   var names={statuts:'Statuts de dossier',taches:'Statuts de tâche',priorites:'Priorités',contextes:'Contextes',types:'Types de document',roles:'Rôles de document'};
+  var lstAll=getListes();
   var name;
   for(name in LISTES_MAP){
     if(!Object.prototype.hasOwnProperty.call(LISTES_MAP,name))continue;
     var arr=LISTES_MAP[name];
-    var cust=[],i;
-    for(i=0;i<arr.length;i++){if(arr[i]._c)cust.push(arr[i]);}
-    h+='<div class="form-row"><label>'+names[name]+'</label><div>';
-    for(i=0;i<cust.length;i++){
-      h+='<div class="row" style="padding:5px 8px;margin-bottom:4px"><span class="row-title">'+esc(cust[i].l)+'</span><button class="btn sm ghost" data-act="liste-del" data-liste="'+name+'" data-val="'+esc(cust[i].l)+'">retirer</button></div>';
+    var cust=[],base=[],i;
+    for(i=0;i<arr.length;i++){if(arr[i]._c)cust.push(arr[i]);else base.push(arr[i]);}
+    // v5.13 : valeurs de base retirées → proposées à la restauration
+    var offKeys=(Array.isArray(lstAll[name+'__off']))?lstAll[name+'__off']:[];
+    var offVals=[];
+    for(i=0;i<LISTES_BASE[name].length;i++){
+      if(!LISTES_BASE[name][i]._c&&offKeys.indexOf(LISTES_BASE[name][i].k)>=0)offVals.push(LISTES_BASE[name][i]);
     }
-    if(!cust.length)h+='<span class="tiny muted">Aucune valeur personnelle pour l’instant.</span>';
+    h+='<div class="form-row"><label>'+names[name]+'</label><div>';
+    for(i=0;i<base.length;i++){
+      var defB=(LISTES_DEFAUT[name]===base[i].k);
+      h+='<div class="row" style="padding:5px 8px;margin-bottom:4px"><span class="row-title">'+esc(base[i].l)+(defB?' <span class="tiny muted">(valeur par défaut)</span>':'')+'</span><button class="btn sm ghost" data-act="liste-del" data-liste="'+name+'" data-k="'+esc(base[i].k)+'" title="'+(defB?'Valeur par défaut — non retirable':'Retirer cette valeur des menus déroulants')+'">retirer</button></div>';
+    }
+    for(i=0;i<cust.length;i++){
+      h+='<div class="row" style="padding:5px 8px;margin-bottom:4px"><span class="row-title">'+esc(cust[i].l)+' <span class="tiny muted">(ajoutée par vous)</span></span><button class="btn sm ghost" data-act="liste-del" data-liste="'+name+'" data-val="'+esc(cust[i].l)+'">retirer</button></div>';
+    }
+    for(i=0;i<offVals.length;i++){
+      h+='<div class="row" style="padding:5px 8px;margin-bottom:4px"><span class="row-title muted">'+esc(offVals[i].l)+' <span class="tiny muted">(retirée)</span></span><button class="btn sm ghost" data-act="liste-restore" data-liste="'+name+'" data-k="'+esc(offVals[i].k)+'" title="Remettre cette valeur dans les menus déroulants">↩ restaurer</button></div>';
+    }
+    if(!base.length&&!cust.length)h+='<span class="tiny muted">Aucune valeur pour l’instant.</span>';
     h+='</div><div style="display:flex;gap:6px;margin-top:6px"><input id="liste-inp-'+name+'" placeholder="Ajouter une valeur…" style="max-width:280px"/><button class="btn sm" data-act="liste-add" data-liste="'+name+'">＋ Ajouter</button></div></div>';
   }
   h+='<div class="modal-foot"><button class="btn ghost" data-act="modal-close">Fermer</button><button class="btn" data-act="open-ech" title="Couleurs et seuils des badges d’échéance (retard, très proche, bientôt)">🎯 Couleurs &amp; seuils des échéances</button></div>';
@@ -2430,6 +2486,7 @@ function modalHelp(){
    +'<p style="margin-top:8px"><b>Listes à cocher (v5.9)</b> — Dans une note, cochez « 🛒 Ajouter une liste à cocher » : un espace Liste apparaît sous le contenu, façon liste de courses — ajoutez des lignes, cochez-les, elles se barrent.</p>'
    +'<p style="margin-top:8px"><b>Glisser-déposer façon Explorateur (v5.9)</b> — Sur les listes Dossiers, Documents, Tâches et Notes, déplacez un élément : le haut d’une carte le place <b>avant</b>, le bas <b>après</b> (l’ordre devient « Personnalisé » automatiquement), le centre le range <b>dedans</b> (dossier) ou le déplace. L’onglet Dossiers n’affiche que les dossiers racine, comme l’Explorateur Windows.</p>'
    +'<p style="margin-top:8px"><b>Accès rapide (v5.9)</b> — Le panneau ⭐ est désormais fixe à gauche, juste après le menu. Réduisez-le avec « – », rouvrez-le avec le bouton ⭐ vertical : il liste vos dossiers, tâches et notes épinglés et vos derniers consultés.</p>'
+   +'<p style="margin-top:8px"><b>Nouveautés v5.13</b> — notes archivables : bouton « 📦 Archiver » sur chaque note (elle quitte la liste active et rejoint la section repliable « 📦 Archivées » de l’onglet Notes, désarchivable à tout moment) · notes « ✓ Terminée » (bouton et date « le jj/mm » affichés à côté) · date de passage en « fait » affichée dans la fiche tâche et tenue à jour partout (même via le clic rapide sur le badge statut) · dossiers : date « le jj/mm » affichée à côté du statut Terminé / Archivé · accueil : bulles d’échéance enfin colorées (retard = rouge, proche = orange — vos réglages 🎯 s’appliquent) · ⚙️ Mes listes : les valeurs de base peuvent aussi être retirées (restaurables via « ↩ restaurer ») ; une valeur utilisée par des éléments ou valeur par défaut est protégée.</p>'
    +'<p style="margin-top:8px"><b>Nouveautés v5.12</b> — correctif définitif du bouton Enregistrer (identification du formulaire réparée — un champ caché « id » perturbait Firefox) · clic sur une suggestion de l’autocomplétion réparé · épinglage 📍 visible aussi sur les lignes de l’accueil · cases jaunes des épinglées encore plus compactes · bouton Enregistrer fiabilisé (appel direct, le clic fonctionne quel que soit le navigateur) · boutons ✂ couper / ⧉ copier / 📥 coller directement dans l’arborescence des dossiers (plus le bouton « Coller à la racine ») · accueil allégé : épinglées regroupées en une seule boîte compacte, sélecteur d’anticipation plus discret à côté des boutons « + », sections En retard / Proches / À venir regroupant TOUS les types d’éléments avec leur picto (✅ tâches, 📝 notes, ⚡ captures, 📁 dossiers), « Toutes les échéances » devient un simple lien vers le calendrier, nouveau compteur « Tâches aujourd’hui » (cliquable) · bouton d’épinglage 📍 plus discret, aligné à droite des lignes · « Dossier lié » / « Tâche liée » / « Document lié » : barre de recherche avec autocomplétion à la place du déroulant.</p>'
    +'</div>'
    +'<div class="modal-foot" style="margin-top:12px"><button class="btn ghost" data-act="modal-close">Fermer</button></div>';
@@ -2491,18 +2548,25 @@ function saveQeditForm(f){
   var heur=(el.heur&&el.heur.value)?el.heur.value:'';
   if(kind==='tache'){
     var t=findTache(id);if(!t)return;
-    if(field==='ech'){t.echeance=v;t.heure=heur;}else{t[field]=v;}
+    if(field==='ech'){t.echeance=v;t.heure=heur;}
+    // v5.13 : le changement de statut via clic rapide gère la date « fait le » (comme le formulaire)
+    else if(field==='statut'){if(v==='fait'&&t.statut!=='fait')t.faitLe=today();if(v!=='fait')t.faitLe='';t.statut=v;}
+    else{t[field]=v;}
     t.maj=today();
   }else if(kind==='note'){
     var n=findNote(id);if(!n)return;
     if(field==='ech'){n.echeance=v;n.heure=heur;}
-    else if(field==='tr'){n.traitee=(v==='oui');}
+    // v5.13 : la date « terminée le » est tenue à jour aussi via le clic rapide
+    else if(field==='tr'){if(v==='oui'&&!n.traitee)n.traiteeLe=today();if(v!=='oui')n.traiteeLe='';n.traitee=(v==='oui');}
     else if(field==='prio'){n.prio=v;}
     else{n[field]=v;}
     n.maj=today();
   }else if(kind==='dossier'){
     var d=findDossier(id);if(!d)return;
-    if(field==='ech'){d.echeance=v;}else{d[field]=v;}
+    if(field==='ech'){d.echeance=v;}
+    // v5.13 : mémorise la date de passage en statut final (Terminé / Archivé)
+    else if(field==='statut'){d.statut=v;d.termLe=((v==='termine'||v==='archive')?today():'');}
+    else{d[field]=v;}
     d.maj=today();
   }
   save();closeModal();render();
@@ -2552,13 +2616,13 @@ function remindItems(){
   for(i=0;i<rd.length;i++)items.push({grp:'late',kind:'tache',id:rd[i].id,lab:'✅ '+rd[i].titre,sub:relEch(rd[i].echeance,false,''),date:rd[i].echeance});
   var dosRd=dossiersActifs().filter(function(d){return d.echeance&&daysUntil(d.echeance)<0;});
   for(i=0;i<dosRd.length;i++)items.push({grp:'late',kind:'dossier',id:dosRd[i].id,lab:'📁 '+dosRd[i].nom,sub:relEch(dosRd[i].echeance,false,''),date:dosRd[i].echeance});
-  var noRd=state.notes.filter(function(n){return !n.traitee&&n.echeance&&daysUntil(n.echeance)<0;});
+  var noRd=state.notes.filter(function(n){return !n.traitee&&!n.archivee&&n.echeance&&daysUntil(n.echeance)<0;});
   for(i=0;i<noRd.length;i++)items.push({grp:'late',kind:'note',id:noRd[i].id,lab:(noRd[i].capture?'⚡ ':'📝 ')+noRd[i].titre,sub:relEch(noRd[i].echeance,false,''),date:noRd[i].echeance});
   var tSe=semaine();
   for(i=0;i<tSe.length;i++)items.push({grp:grp(daysUntil(tSe[i].echeance)),kind:'tache',id:tSe[i].id,lab:'✅ '+tSe[i].titre,sub:relEch(tSe[i].echeance,false,''),date:tSe[i].echeance});
   var dosSe=dossiersActifs().filter(function(d){return d.echeance&&daysUntil(d.echeance)>=0&&daysUntil(d.echeance)<=echSeuil7();});
   for(i=0;i<dosSe.length;i++)items.push({grp:grp(daysUntil(dosSe[i].echeance)),kind:'dossier',id:dosSe[i].id,lab:'📁 '+dosSe[i].nom,sub:relEch(dosSe[i].echeance,false,''),date:dosSe[i].echeance});
-  var noSe=state.notes.filter(function(n){return !n.traitee&&n.echeance&&daysUntil(n.echeance)>=0&&daysUntil(n.echeance)<=echSeuil7();});
+  var noSe=state.notes.filter(function(n){return !n.traitee&&!n.archivee&&n.echeance&&daysUntil(n.echeance)>=0&&daysUntil(n.echeance)<=echSeuil7();});
   for(i=0;i<noSe.length;i++)items.push({grp:grp(daysUntil(noSe[i].echeance)),kind:'note',id:noSe[i].id,lab:(noSe[i].capture?'⚡ ':'📝 ')+noSe[i].titre,sub:relEch(noSe[i].echeance,false,''),date:noSe[i].echeance});
   return items;
 }
@@ -2834,7 +2898,7 @@ function pageSynchro(){
   var h='<div class="content"><div class="page-head"><h1 class="page-title">☁️ Synchro multi-appareils</h1></div>';
   h+='<div class="banner info">Vos données sont <b>chiffrées de bout en bout</b> (AES-GCM 256 bits, clé dérivée de votre passphrase) avant tout envoi. Le serveur ne voit jamais le contenu, ni la passphrase — uniquement un email de compte.</div>';
   h+='<h2 class="sec-title">État</h2><div class="step">';
-  h+='<p>Version de l’appli : <b>v5.12</b></p>';
+  h+='<p>Version de l’appli : <b>v5.13</b></p>';
   h+='<p>Configuration : '+(sbReady()?'<b style="color:var(--ok)">complète ✓</b>':'<b>incomplète</b> — il manque : <b>'+sbMissing()+'</b>')+(c.email?' — compte : <b>'+esc(c.email)+'</b>':'')+'</p>';
   h+='<p>Dernière synchro : <b>'+(state.sb.last||'jamais')+'</b>'+(state.sb.busy?' (en cours…)':'')+(state.sb.err?' <span style="color:var(--danger)">⚠️ '+esc(state.sb.err)+'</span>':'')+'</p>';
   h+='<div class="toolbar" style="margin-top:8px">'
@@ -3149,7 +3213,7 @@ function pageOutlook(){
 
 // ===== PWA (installation en tant qu'application) =====
 var SW_SRC=[
-'var C="espace-cache-v15";',
+'var C="espace-cache-v16";',
 'self.addEventListener("install",function(e){self.skipWaiting();});',
 'self.addEventListener("activate",function(e){e.waitUntil(self.clients.claim());});',
 'self.addEventListener("fetch",function(e){',
@@ -3344,6 +3408,9 @@ function saveDossierForm(f){
   d.nom=el.n.value.trim()||'Sans titre';
   d.parentId=el.parent?String(el.parent.value||''):'';
   d.statut=el.st.value;
+  // v5.13 : date de passage en statut final (Terminé / Archivé) tenue à jour
+  if((d.statut==='termine'||d.statut==='archive')&&!d.termLe)d.termLe=today();
+  if(d.statut!=='termine'&&d.statut!=='archive')d.termLe='';
   d.contexte=el.ctx.value;
   d.categorie=el.cat.value.trim();
   d.echeance=el.ech.value;
@@ -3378,7 +3445,7 @@ function saveNoteForm(f){
   var id=el.id.value;
   var n=id?findNote(id):null;
   var nouveau=!n;
-  if(!n){n={id:uid(),maj:today()};state.notes.push(n);}
+  if(!n){n={id:uid(),maj:today(),archivee:false,archiveeLe:''};state.notes.push(n);}
   n.titre=el.tit.value.trim()||'Sans titre';
   n.contenu=el.cont.value;
   n.listeOn=!!(el.lst&&el.lst.checked);
@@ -3438,7 +3505,7 @@ function saveDocForm(f){
 function saveCaptureForm(f){
   var el=f.elements;
   var imgs=(state._capImgs||[]).slice();
-  var n={id:uid(),titre:el.tit.value.trim()||'Idée',contenu:'',tags:[],contexte:'pro',dossierId:el.dos.value,tacheId:'',docId:'',epinglee:false,echeance:el.ech.value,traitee:false,traiteeLe:'',capture:true,image:(imgs.length?imgs[0]:''),images:imgs,prio:'normale',origine:'',autoFloat:false,trieeLe:'',liste:[],listeOn:false,maj:today()};
+  var n={id:uid(),titre:el.tit.value.trim()||'Idée',contenu:'',tags:[],contexte:'pro',dossierId:el.dos.value,tacheId:'',docId:'',epinglee:false,echeance:el.ech.value,traitee:false,traiteeLe:'',capture:true,image:(imgs.length?imgs[0]:''),images:imgs,prio:'normale',origine:'',autoFloat:false,trieeLe:'',liste:[],listeOn:false,maj:today(),archivee:false,archiveeLe:''};
   state.notes.push(n);
   state._capImgs=[];state._capImg='';
   save();closeModal();toast('Idée capturée ⚡'+(imgs.length?' ('+imgs.length+' image(s))':''));
@@ -3674,10 +3741,33 @@ document.addEventListener('click',function(ev){
     }
   }
   else if(a==='liste-del'){
-    var lname2=el.getAttribute('data-liste');var val2=el.getAttribute('data-val');
+    var lname2=el.getAttribute('data-liste');
+    var bkey2=el.getAttribute('data-k');
+    // v5.13 : retrait d’une valeur DE BASE du menu déroulant
+    if(bkey2){
+      if(LISTES_DEFAUT[lname2]===bkey2){toast('Valeur par défaut de ce menu — elle ne peut pas être retirée.');return;}
+      var nbUse=listeUsage(lname2,bkey2);
+      if(nbUse>0){toast('Impossible de retirer cette valeur : '+nbUse+' élément'+(nbUse>1?'s':'')+' l’utilise'+(nbUse>1?'nt':'')+' encore — modifiez-les d’abord.');return;}
+      var arrChk=LISTES_MAP[lname2];var nbVis=0,iChk;
+      for(iChk=0;iChk<arrChk.length;iChk++){if(!arrChk[iChk]._c)nbVis++;}
+      if(nbVis<=1){toast('Impossible : ce menu doit garder au moins une valeur.');return;}
+      var lstOff=getListes();var offA=(Array.isArray(lstOff[lname2+'__off']))?lstOff[lname2+'__off']:[];
+      if(offA.indexOf(bkey2)<0){offA.push(bkey2);lstOff[lname2+'__off']=offA;setListes(lstOff);applyCustomLists();toast('Valeur retirée du menu ✓ — restaurable ici même via « ↩ restaurer ».');}
+      modalListes();
+      return;
+    }
+    var val2=el.getAttribute('data-val');
     var lst2=getListes();
     var ix2=Array.isArray(lst2[lname2])?lst2[lname2].indexOf(val2):-1;
     if(ix2>=0){lst2[lname2].splice(ix2,1);setListes(lst2);applyCustomLists();}
+    modalListes();
+  }
+  else if(a==='liste-restore'){
+    // v5.13 : remettre une valeur de base retirée
+    var lname3=el.getAttribute('data-liste');var bkey3=el.getAttribute('data-k');
+    var lst3=getListes();var off3=(Array.isArray(lst3[lname3+'__off']))?lst3[lname3+'__off']:[];
+    var ix3=off3.indexOf(bkey3);
+    if(ix3>=0){off3.splice(ix3,1);lst3[lname3+'__off']=off3;setListes(lst3);applyCustomLists();toast('Valeur restaurée dans le menu ✓');}
     modalListes();
   }
   else if(a==='modal-close'){closeModal();}
@@ -3816,6 +3906,16 @@ document.addEventListener('click',function(ev){
   else if(a==='quick-capture'){modalCapture();}
   else if(a==='note-traitee'){
     var n3=findNote(id);if(n3){n3.traitee=!n3.traitee;n3.traiteeLe=(n3.traitee?today():'');n3.maj=today();save();render();renderRemind();}
+  }
+  else if(a==='note-arch'){
+    // v5.13 : archiver / désarchiver une note (quitte la liste active, rejoint « Archivées »)
+    var nAr=findNote(id);
+    if(nAr){nAr.archivee=!nAr.archivee;nAr.archiveeLe=(nAr.archivee?today():'');nAr.maj=today();save();render();renderRemind();renderQa();
+      toast(nAr.archivee?'Note archivée ✓ — visible dans la section « 📦 Archivées » de l’onglet Notes.':'Note désarchivée ✓ — de retour dans la liste active.');}
+  }
+  else if(a==='voir-arch'){
+    // v5.13 : dérouler / réduire la section Notes archivées
+    state._voirArch=!state._voirArch;renderPageBody();
   }
   else if(a==='note-delimg'){
     var n4=findNote(id);if(n4){n4.image='';n4.images=[];n4.maj=today();save();modalNote(id,'','');render();}
@@ -4371,7 +4471,7 @@ document.addEventListener('drop',function(ev){
       var kvKind=kvParts[1],kvId=kvParts.slice(2).join(':');
       var kvField=c.getAttribute('data-kkind'),kvVal=c.getAttribute('data-kval');
       if(kvField===kvKind||(kvKind==='not'&&kvField==='not')){
-        if(kvKind==='dos'){var kd=findDossier(kvId);if(kd){kd.statut=kvVal;kd.maj=today();save();}}
+        if(kvKind==='dos'){var kd=findDossier(kvId);if(kd){kd.statut=kvVal;kd.termLe=((kvVal==='termine'||kvVal==='archive')?today():'');kd.maj=today();save();}}
         else if(kvKind==='doc'){var kx=findDoc(kvId);if(kx){kx.role=kvVal;kx.maj=today();save();}}
         else if(kvKind==='not'){var kn=findNote(kvId);if(kn){var nvTr=(kvVal==='done');if(nvTr&&!kn.traitee)kn.traiteeLe=today();if(!nvTr)kn.traiteeLe='';kn.traitee=nvTr;kn.maj=today();save();}}
       }
