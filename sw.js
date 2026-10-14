@@ -1,4 +1,4 @@
-var C="espace-cache-test-1";
+var C="espace-cache-v20";
 self.addEventListener("install",function(e){self.skipWaiting();});
 self.addEventListener("activate",function(e){e.waitUntil(self.clients.claim());});
 self.addEventListener("fetch",function(e){
@@ -15,4 +15,4 @@ self.addEventListener("fetch",function(e){
     })
   );
 });
-// rebuild trigger 13/10/2026
+// rebuild trigger 14/10/2026
