@@ -284,7 +284,7 @@ input[type=file]{padding:5px;font-size:12px}
     <a class="snav" data-act="open-listes">⚙️ Mes listes</a>
     <a class="snav" data-act="open-export">💾 Export &amp; sauvegarde</a>
     <a class="snav" data-act="open-help">❓ Aide &amp; confidentialité</a>
-    <div class="side-note">Mon Espace v5.13 — 100 % local par défaut. Connexion Outlook et synchro chiffrée (page ☁️) optionnelles — vous décidez.</div>
+    <div class="side-note">Mon Espace v5.14 — 100 % local par défaut. Connexion Outlook et synchro chiffrée (page ☁️) optionnelles — vous décidez.</div>
   </div>
 </aside>
 <aside id="qa-root" class="off"></aside>
@@ -507,14 +507,14 @@ function normalize(src){
   if(d.dossiers){
     for(i=0;i<d.dossiers.length;i++){
       x=d.dossiers[i];if(!x||!x.id)continue;
-      out.dossiers.push({id:String(x.id),parentId:String(x.parentId||''),nom:String(x.nom||'Sans titre'),statut:validK(DOS_STATUTS,x.statut,'ouvert'),contexte:validK(CONTEXTES,x.contexte,'pro'),categorie:String(x.categorie||''),echeance:String(x.echeance||''),description:String(x.description||''),epingle:!!x.epingle,termLe:String(x.termLe||''),ordre:nNum(x.ordre),ouvertLe:nNum(x.ouvertLe),cree:String(x.cree||today()),maj:String(x.maj||today())});
+      out.dossiers.push({id:String(x.id),parentId:String(x.parentId||''),nom:String(x.nom||'Sans titre'),statut:validK(DOS_STATUTS,x.statut,'ouvert'),contexte:validK(CONTEXTES,x.contexte,'pro'),categorie:String(x.categorie||''),echeance:String(x.echeance||''),description:String(x.description||''),epingle:!!x.epingle,termLe:String(x.termLe||''),demo:!!x.demo,ordre:nNum(x.ordre),ouvertLe:nNum(x.ouvertLe),cree:String(x.cree||today()),maj:String(x.maj||today())});
     }
   }
   if(d.taches){
     for(i=0;i<d.taches.length;i++){
       x=d.taches[i];if(!x||!x.id)continue;
       var st=x.statut;if(!st){st=(x.fait?'fait':'a-faire');}
-      out.taches.push({id:String(x.id),titre:String(x.titre||'Sans titre'),statut:validK(TACHE_STATUTS,st,'a-faire'),priorite:validK(PRIORITES,x.priorite,'normale'),contexte:validK(CONTEXTES,x.contexte,'pro'),echeance:String(x.echeance||''),heure:String(x.heure||''),dossierId:String(x.dossierId||''),description:String(x.description||''),epingle:!!x.epingle,faitLe:String(x.faitLe||''),ordre:nNum(x.ordre),ouvertLe:nNum(x.ouvertLe),cree:String(x.cree||today()),maj:String(x.maj||today())});
+      out.taches.push({id:String(x.id),titre:String(x.titre||'Sans titre'),statut:validK(TACHE_STATUTS,st,'a-faire'),priorite:validK(PRIORITES,x.priorite,'normale'),contexte:validK(CONTEXTES,x.contexte,'pro'),echeance:String(x.echeance||''),heure:String(x.heure||''),dossierId:String(x.dossierId||''),description:String(x.description||''),epingle:!!x.epingle,faitLe:String(x.faitLe||''),demo:!!x.demo,ordre:nNum(x.ordre),ouvertLe:nNum(x.ouvertLe),cree:String(x.cree||today()),maj:String(x.maj||today())});
     }
   }
   if(d.notes){
@@ -523,7 +523,7 @@ function normalize(src){
       var tags=[];
       if(Array.isArray(x.tags)){var j;for(j=0;j<x.tags.length;j++){if(x.tags[j])tags.push(String(x.tags[j]));}}
       else if(typeof x.tags==='string'&&x.tags){var parts=x.tags.split(',');for(var k=0;k<parts.length;k++){if(parts[k].trim())tags.push(parts[k].trim());}}
-      out.notes.push({id:String(x.id),titre:String(x.titre||'Sans titre'),contenu:String(x.contenu||''),tags:tags,contexte:validK(CONTEXTES,x.contexte,'pro'),dossierId:String(x.dossierId||''),tacheId:String(x.tacheId||''),docId:String(x.docId||''),epinglee:!!x.epinglee,echeance:String(x.echeance||''),heure:String(x.heure||''),traitee:!!x.traitee,traiteeLe:String(x.traiteeLe||''),capture:!!x.capture,image:String(x.image||''),images:nImages(x.images),prio:validK(PRIORITES,x.prio,'normale'),origine:String(x.origine||''),autoFloat:!!x.autoFloat,trieeLe:String(x.trieeLe||''),ordre:nNum(x.ordre),ouvertLe:nNum(x.ouvertLe),liste:nListe(x.liste),listeOn:!!x.listeOn,maj:String(x.maj||today()),archivee:!!x.archivee,archiveeLe:String(x.archiveeLe||'')});
+      out.notes.push({id:String(x.id),titre:String(x.titre||'Sans titre'),contenu:String(x.contenu||''),tags:tags,contexte:validK(CONTEXTES,x.contexte,'pro'),dossierId:String(x.dossierId||''),tacheId:String(x.tacheId||''),docId:String(x.docId||''),epinglee:!!x.epinglee,echeance:String(x.echeance||''),heure:String(x.heure||''),traitee:!!x.traitee,traiteeLe:String(x.traiteeLe||''),capture:!!x.capture,image:String(x.image||''),images:nImages(x.images),prio:validK(PRIORITES,x.prio,'normale'),origine:String(x.origine||''),autoFloat:!!x.autoFloat,trieeLe:String(x.trieeLe||''),ordre:nNum(x.ordre),ouvertLe:nNum(x.ouvertLe),liste:nListe(x.liste),listeOn:!!x.listeOn,maj:String(x.maj||today()),archivee:!!x.archivee,archiveeLe:String(x.archiveeLe||''),demo:!!x.demo});
     }
   }
   if(d.docs){
@@ -531,7 +531,7 @@ function normalize(src){
       x=d.docs[i];if(!x||!x.id)continue;
       var dIds=[];
       if(Array.isArray(x.dossiers)){var w2;for(w2=0;w2<x.dossiers.length;w2++){if(x.dossiers[w2])dIds.push(String(x.dossiers[w2]));}}
-      out.docs.push({id:String(x.id),nom:String(x.nom||'Sans nom'),type:validK(DOC_TYPES,x.type,'autre'),role:validK(DOC_ROLES,x.role,'livrable'),localisation:String(x.localisation||''),description:String(x.description||''),dossiers:dIds,stocke:!!x.stocke,ordre:nNum(x.ordre),ouvertLe:nNum(x.ouvertLe),cree:String(x.cree||today()),maj:String(x.maj||today())});
+      out.docs.push({id:String(x.id),nom:String(x.nom||'Sans nom'),type:validK(DOC_TYPES,x.type,'autre'),role:validK(DOC_ROLES,x.role,'livrable'),localisation:String(x.localisation||''),description:String(x.description||''),dossiers:dIds,stocke:!!x.stocke,demo:!!x.demo,ordre:nNum(x.ordre),ouvertLe:nNum(x.ouvertLe),cree:String(x.cree||today()),maj:String(x.maj||today())});
     }
   }
   return out;
@@ -620,6 +620,56 @@ function seedData(){
       {id:g[9],nom:'Support formation oiseaux du jardin.pptx',type:'ppt',role:'livrable',localisation:'https://sharepoint.exemple.fr/Formations/oiseaux-du-jardin-support.pptx',description:'Support pédagogique pour les interventions scolaires : espèces communes, chants, quiz, fabrication de mangeoirs.',dossiers:[d11],stocke:false,cree:today(),maj:today()}
     ]
   };
+}
+// ===== Détection / retrait ciblé des éléments d'exemple (v5.14) =====
+function seedTitles(){
+  var sd=seedData(),out={dos:{},ta:{},no:{},doc:{}},i;
+  for(i=0;i<sd.dossiers.length;i++)out.dos[sd.dossiers[i].nom]=1;
+  for(i=0;i<sd.taches.length;i++)out.ta[sd.taches[i].titre]=1;
+  for(i=0;i<sd.notes.length;i++)out.no[sd.notes[i].titre]=1;
+  for(i=0;i<sd.docs.length;i++)out.doc[sd.docs[i].nom]=1;
+  return out;
+}
+function exempleItems(){
+  var st=seedTitles();
+  var out={dossiers:[],taches:[],notes:[],docs:[]},i;
+  for(i=0;i<state.dossiers.length;i++){var d=state.dossiers[i];if(d.demo||st.dos[d.nom])out.dossiers.push(d);}
+  for(i=0;i<state.taches.length;i++){var t=state.taches[i];if(t.demo||st.ta[t.titre])out.taches.push(t);}
+  for(i=0;i<state.notes.length;i++){var n=state.notes[i];if(n.demo||st.no[n.titre])out.notes.push(n);}
+  for(i=0;i<state.docs.length;i++){var x=state.docs[i];if(x.demo||st.doc[x.nom])out.docs.push(x);}
+  return out;
+}
+function cleanDemoItems(){
+  // v5.14 : retire UNIQUEMENT les éléments issus du jeu d'exemple (drapeau demo ou titre du jeu
+  // d'exemple) — les éléments créés par l'utilisateur sont conservés. Sauvegarde JSON auto avant.
+  var ex=exempleItems();
+  var nd=ex.dossiers.length,nt=ex.taches.length,nn=ex.notes.length,ng=ex.docs.length;
+  var tot=nd+nt+nn+ng;
+  if(!tot){toast('Aucun élément d’exemple détecté — rien à retirer.');return;}
+  if(confirm('Retirer les éléments d’exemple ?\n\n'+nd+' dossier(s), '+nt+' tâche(s), '+nn+' note(s)/post-it et '+ng+' document(s) d’exemple seront supprimés.\nVos propres éléments (titres différents) sont conservés.\n\n⚠️ Une sauvegarde JSON est téléchargée avant l’opération. Confirmer ?')){
+    exportJson();
+    var rmDos={},rmTa={},rmNo={},rmDoc={},i;
+    for(i=0;i<ex.dossiers.length;i++)rmDos[ex.dossiers[i].id]=1;
+    for(i=0;i<ex.taches.length;i++)rmTa[ex.taches[i].id]=1;
+    for(i=0;i<ex.notes.length;i++)rmNo[ex.notes[i].id]=1;
+    for(i=0;i<ex.docs.length;i++)rmDoc[ex.docs[i].id]=1;
+    state.dossiers=state.dossiers.filter(function(d){return !rmDos[d.id];});
+    state.taches=state.taches.filter(function(t){return !rmTa[t.id];});
+    state.notes=state.notes.filter(function(n){return !rmNo[n.id];});
+    state.docs=state.docs.filter(function(x){return !rmDoc[x.id];});
+    // nettoyage des liens pointant vers des éléments supprimés
+    for(i=0;i<state.dossiers.length;i++){if(rmDos[state.dossiers[i].parentId])state.dossiers[i].parentId='';}
+    for(i=0;i<state.taches.length;i++){if(rmDos[state.taches[i].dossierId])state.taches[i].dossierId='';}
+    for(i=0;i<state.notes.length;i++){
+      if(rmDos[state.notes[i].dossierId])state.notes[i].dossierId='';
+      if(rmTa[state.notes[i].tacheId])state.notes[i].tacheId='';
+      if(rmDoc[state.notes[i].docId])state.notes[i].docId='';
+    }
+    for(i=0;i<state.docs.length;i++){state.docs[i].dossiers=state.docs[i].dossiers.filter(function(z){return !rmDos[z];});}
+    state.exemple=false;
+    save();closeModal();render();renderRemind();renderQa();
+    toast('Exemples retirés ✓ ('+nd+' dossier(s), '+nt+' tâche(s), '+nn+' note(s), '+ng+' document(s)) — vos données sont conservées');
+  }
 }
 function load(){
   var raw=null;
@@ -1087,8 +1137,11 @@ function pageDash(){
    +'<button class="btn" data-act="new-dossier">+ Dossier</button>'
    +'<button class="btn" data-act="new-note">+ Note</button> '
    +'<select id="dash-jours" title="Choisir jusqu’où regarder en avance sur l’accueil" style="max-width:170px;font-size:12.5px;padding:4px 6px;flex:0 0 auto"><option value="3"'+(djp===3?' selected':'')+'>anticipation : 3 jours</option><option value="7"'+(djp===7?' selected':'')+'>anticipation : 7 jours</option><option value="14"'+(djp===14?' selected':'')+'>anticipation : 14 jours</option><option value="30"'+(djp===30?' selected':'')+'>anticipation : 30 jours</option></select></div></div>';
-  if(state.exemple){
-    h+='<div class="banner info">🧪 Ceci est un jeu de données d’exemple pour découvrir l’outil — modifiez-le ou effacez-le. <button class="btn sm" data-act="clear-exemple">Effacer les exemples</button></div>';
+  // v5.14 : bandeau visible dès que des éléments d'exemple sont détectés (même si le drapeau a été perdu)
+  var exDet=exempleItems();
+  var exN=exDet.dossiers.length+exDet.taches.length+exDet.notes.length+exDet.docs.length;
+  if(state.exemple||exN>0){
+    h+='<div class="banner info">🧪 '+(state.exemple&&!exN?'Ceci est un jeu de données d’exemple pour découvrir l’outil — modifiez-le ou effacez-le.':'Des données d’exemple sont présentes'+(exN?' ('+exN+' élément'+(exN>1?'s':'')+')':'')+' — « Effacer les exemples » ne retire QUE les exemples, vos propres éléments sont conservés (sauvegarde JSON auto).')+' <button class="btn sm" data-act="clear-exemple">Effacer les exemples</button></div>';
   }
   if(needBackup()){
     h+='<div class="banner warn">💾 Dernière sauvegarde : <b>'+lastSavedLabel()+'</b>. Exportez vos données pour éviter toute perte. '
@@ -2454,6 +2507,8 @@ function modalExport(){
    +'<button class="btn" data-act="export-csv-doc">📊 CSV Documents<br/><span class="tiny muted">ouvre dans Excel</span></button>'
    +'<button class="btn" data-act="load-demo" title="Remplace tout par un jeu de données d’exemple riche (dossiers hiérarchiques, tâches, notes, captures, documents) — un export JSON de sauvegarde est téléchargé avant">🧪 Charger les exemples<br/><span class="tiny muted">remplace tout — export auto avant</span></button>'
    +'<button class="btn" data-act="merge-demo" title="Ajoute le jeu de données d’exemple à vos données actuelles, SANS rien effacer">➕ Ajouter les exemples<br/><span class="tiny muted">fusionne sans écraser</span></button>'
+   +'<button class="btn" data-act="clean-demo" title="Supprime UNIQUEMENT les éléments issus du jeu d’exemple (dossiers, tâches, notes, documents) — vos propres éléments sont conservés. Sauvegarde JSON automatique avant.">🧹 Retirer les éléments d’exemple<br/><span class="tiny muted">vos données conservées</span></button>'
+   +'<button class="btn danger" data-act="wipe-all" title="Tout effacer pour repartir de zéro (exemples ET vos données) — sauvegarde JSON téléchargée avant">🗑 Tout effacer<br/><span class="tiny muted">repartir de zéro</span></button>'
    +'</div>'
    +'<div class="form-row"><label>Importer une sauvegarde JSON (remplace tout)</label><input type="file" id="imp-json" accept=".json,application/json"/></div>'
    +'<p class="tiny muted">⚠️ L’import remplace l’ensemble des données actuelles.</p>'
@@ -2486,6 +2541,7 @@ function modalHelp(){
    +'<p style="margin-top:8px"><b>Listes à cocher (v5.9)</b> — Dans une note, cochez « 🛒 Ajouter une liste à cocher » : un espace Liste apparaît sous le contenu, façon liste de courses — ajoutez des lignes, cochez-les, elles se barrent.</p>'
    +'<p style="margin-top:8px"><b>Glisser-déposer façon Explorateur (v5.9)</b> — Sur les listes Dossiers, Documents, Tâches et Notes, déplacez un élément : le haut d’une carte le place <b>avant</b>, le bas <b>après</b> (l’ordre devient « Personnalisé » automatiquement), le centre le range <b>dedans</b> (dossier) ou le déplace. L’onglet Dossiers n’affiche que les dossiers racine, comme l’Explorateur Windows.</p>'
    +'<p style="margin-top:8px"><b>Accès rapide (v5.9)</b> — Le panneau ⭐ est désormais fixe à gauche, juste après le menu. Réduisez-le avec « – », rouvrez-le avec le bouton ⭐ vertical : il liste vos dossiers, tâches et notes épinglés et vos derniers consultés.</p>'
+   +'<p style="margin-top:8px"><b>Nouveautés v5.14</b> — retrait ciblé des données d’exemple : le bandeau 🧪 de l’accueil détecte les éléments d’exemple même après des fusions ou restaurations, et « Effacer les exemples » ne supprime QUE les exemples (vos tâches, notes et dossiers personnels sont conservés, sauvegarde JSON automatique avant) · nouveau bouton « 🧹 Retirer les éléments d’exemple » dans 💾 Export &amp; sauvegarde · nouveau bouton « 🗑 Tout effacer » (repartir de zéro, sauvegarde auto avant) · les jeux d’exemple ajoutés via « ➕ Ajouter les exemples » sont désormais marqués et retrouvables.</p>'
    +'<p style="margin-top:8px"><b>Nouveautés v5.13</b> — notes archivables : bouton « 📦 Archiver » sur chaque note (elle quitte la liste active et rejoint la section repliable « 📦 Archivées » de l’onglet Notes, désarchivable à tout moment) · notes « ✓ Terminée » (bouton et date « le jj/mm » affichés à côté) · date de passage en « fait » affichée dans la fiche tâche et tenue à jour partout (même via le clic rapide sur le badge statut) · dossiers : date « le jj/mm » affichée à côté du statut Terminé / Archivé · accueil : bulles d’échéance enfin colorées (retard = rouge, proche = orange — vos réglages 🎯 s’appliquent) · ⚙️ Mes listes : les valeurs de base peuvent aussi être retirées (restaurables via « ↩ restaurer ») ; une valeur utilisée par des éléments ou valeur par défaut est protégée.</p>'
    +'<p style="margin-top:8px"><b>Nouveautés v5.12</b> — correctif définitif du bouton Enregistrer (identification du formulaire réparée — un champ caché « id » perturbait Firefox) · clic sur une suggestion de l’autocomplétion réparé · épinglage 📍 visible aussi sur les lignes de l’accueil · cases jaunes des épinglées encore plus compactes · bouton Enregistrer fiabilisé (appel direct, le clic fonctionne quel que soit le navigateur) · boutons ✂ couper / ⧉ copier / 📥 coller directement dans l’arborescence des dossiers (plus le bouton « Coller à la racine ») · accueil allégé : épinglées regroupées en une seule boîte compacte, sélecteur d’anticipation plus discret à côté des boutons « + », sections En retard / Proches / À venir regroupant TOUS les types d’éléments avec leur picto (✅ tâches, 📝 notes, ⚡ captures, 📁 dossiers), « Toutes les échéances » devient un simple lien vers le calendrier, nouveau compteur « Tâches aujourd’hui » (cliquable) · bouton d’épinglage 📍 plus discret, aligné à droite des lignes · « Dossier lié » / « Tâche liée » / « Document lié » : barre de recherche avec autocomplétion à la place du déroulant.</p>'
    +'</div>'
@@ -2898,7 +2954,7 @@ function pageSynchro(){
   var h='<div class="content"><div class="page-head"><h1 class="page-title">☁️ Synchro multi-appareils</h1></div>';
   h+='<div class="banner info">Vos données sont <b>chiffrées de bout en bout</b> (AES-GCM 256 bits, clé dérivée de votre passphrase) avant tout envoi. Le serveur ne voit jamais le contenu, ni la passphrase — uniquement un email de compte.</div>';
   h+='<h2 class="sec-title">État</h2><div class="step">';
-  h+='<p>Version de l’appli : <b>v5.13</b></p>';
+  h+='<p>Version de l’appli : <b>v5.14</b></p>';
   h+='<p>Configuration : '+(sbReady()?'<b style="color:var(--ok)">complète ✓</b>':'<b>incomplète</b> — il manque : <b>'+sbMissing()+'</b>')+(c.email?' — compte : <b>'+esc(c.email)+'</b>':'')+'</p>';
   h+='<p>Dernière synchro : <b>'+(state.sb.last||'jamais')+'</b>'+(state.sb.busy?' (en cours…)':'')+(state.sb.err?' <span style="color:var(--danger)">⚠️ '+esc(state.sb.err)+'</span>':'')+'</p>';
   h+='<div class="toolbar" style="margin-top:8px">'
@@ -3213,7 +3269,7 @@ function pageOutlook(){
 
 // ===== PWA (installation en tant qu'application) =====
 var SW_SRC=[
-'var C="espace-cache-v16";',
+'var C="espace-cache-v17";',
 'self.addEventListener("install",function(e){self.skipWaiting();});',
 'self.addEventListener("activate",function(e){e.waitUntil(self.clients.claim());});',
 'self.addEventListener("fetch",function(e){',
@@ -3801,10 +3857,14 @@ document.addEventListener('click',function(ev){
       var nd2=new Date();state.calY=nd2.getFullYear();state.calM=nd2.getMonth();renderPageBody();
     }
   }
-  else if(a==='clear-exemple'){
-    if(confirm('Effacer toutes les données d’exemple ?')){
+  else if(a==='clear-exemple'){cleanDemoItems();}
+  else if(a==='clean-demo'){cleanDemoItems();}
+  else if(a==='wipe-all'){
+    // v5.14 : repartir de zéro (tout effacer, exemples ET données perso) — sauvegarde auto avant
+    if(confirm('⚠️ TOUT EFFACER pour repartir de zéro ?\n\nDossiers, tâches, notes et documents seront supprimés — les vôtres compris.\n\nUne sauvegarde JSON est téléchargée avant. Confirmer ?')){
+      exportJson();
       state.dossiers=[];state.taches=[];state.notes=[];state.docs=[];state.exemple=false;
-      save();toast('Données d’exemple effacées');render();
+      save();closeModal();toast('Données effacées — appli vide, prête pour vos vraies données');render();renderRemind();renderQa();
     }
   }
   else if(a==='backup-ok'){markSaved();toast('Sauvegarde marquée comme faite');render();}
@@ -4135,10 +4195,11 @@ document.addEventListener('click',function(ev){
     if(confirm('Ajouter le jeu de données d’exemple à vos données actuelles ?\n\nRien ne sera effacé : les dossiers, tâches, notes et documents d’exemple seront AJOUTÉS aux vôtres. Vous pourrez les supprimer ensuite comme n’importe quel élément.')){
       var md=normalize(seedData());
       var mdK;
-      for(mdK=0;mdK<md.dossiers.length;mdK++){state.dossiers.push(md.dossiers[mdK]);}
-      for(mdK=0;mdK<md.taches.length;mdK++){state.taches.push(md.taches[mdK]);}
-      for(mdK=0;mdK<md.notes.length;mdK++){state.notes.push(md.notes[mdK]);}
-      for(mdK=0;mdK<md.docs.length;mdK++){state.docs.push(md.docs[mdK]);}
+      // v5.14 : les éléments d'exemple sont marqués demo → retrouvables pour un retrait ciblé
+      for(mdK=0;mdK<md.dossiers.length;mdK++){md.dossiers[mdK].demo=true;state.dossiers.push(md.dossiers[mdK]);}
+      for(mdK=0;mdK<md.taches.length;mdK++){md.taches[mdK].demo=true;state.taches.push(md.taches[mdK]);}
+      for(mdK=0;mdK<md.notes.length;mdK++){md.notes[mdK].demo=true;state.notes.push(md.notes[mdK]);}
+      for(mdK=0;mdK<md.docs.length;mdK++){md.docs[mdK].demo=true;state.docs.push(md.docs[mdK]);}
       state.exemple=false;
       save();closeModal();toast('Exemples ajoutés ✓ ('+md.dossiers.length+' dossiers, '+md.taches.length+' tâches, '+md.notes.length+' notes/captures, '+md.docs.length+' documents) — aucune donnée effacée');render();
     }
@@ -4148,6 +4209,12 @@ document.addEventListener('click',function(ev){
     if(confirm('Charger le jeu de données d’exemple ?\n\n⚠️ Vos données actuelles seront REMPLACÉES. Un export JSON de sauvegarde sera téléchargé automatiquement avant.')){
       exportJson();
       var sd=normalize(seedData());
+      var sdK;
+      // v5.14 : marquage demo des éléments d'exemple
+      for(sdK=0;sdK<sd.dossiers.length;sdK++)sd.dossiers[sdK].demo=true;
+      for(sdK=0;sdK<sd.taches.length;sdK++)sd.taches[sdK].demo=true;
+      for(sdK=0;sdK<sd.notes.length;sdK++)sd.notes[sdK].demo=true;
+      for(sdK=0;sdK<sd.docs.length;sdK++)sd.docs[sdK].demo=true;
       state.dossiers=sd.dossiers;state.taches=sd.taches;state.notes=sd.notes;state.docs=sd.docs;state.exemple=true;
       save();closeModal();toast('Exemples chargés ✓');render();
     }
