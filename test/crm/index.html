@@ -165,7 +165,32 @@
     #print-area .p-table td { border-bottom: 1px solid #ddd; padding: 4px 6px; vertical-align: top; }
   }
 
-  @media (max-width: 640px) { .form-grid { grid-template-columns: 1fr; } .stats-table { display: block; overflow-x: auto; } }
+  /* Sélecteur de type de mécénat (v4.1) */
+  .mectype-cards { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 4px; }
+  .mectype-card { flex: 1; min-width: 140px; background: #fff; border: 2px solid #e2e8f0; border-radius: 12px; padding: 10px 12px; cursor: pointer; text-align: left; font: inherit; transition: border-color .15s, background .15s; }
+  .mectype-card:hover { border-color: #94a3b8; }
+  .mectype-card .mtc-ico { font-size: 20px; }
+  .mectype-card .mtc-lbl { display: block; font-weight: 700; font-size: 12.5px; margin-top: 3px; }
+  .mectype-card .mtc-desc { display: block; font-size: 11px; color: #64748b; margin-top: 3px; line-height: 1.4; }
+  .mectype-card.active.mtc-fin { border-color: #059669; background: #ecfdf5; }
+  .mectype-card.active.mtc-nat { border-color: #d97706; background: #fffbeb; }
+  .mectype-card.active.mtc-comp { border-color: #0284c7; background: #f0f9ff; }
+  .mc-method { border-radius: 10px; padding: 10px 12px; font-size: 12.5px; line-height: 1.55; margin: 10px 0 2px; }
+  .mc-method b { font-weight: 700; }
+  .mc-preview { font-size: 12.5px; font-weight: 600; padding: 8px 10px; border-radius: 8px; margin-top: 10px; background: #f1f5f9; color: #334155; }
+  /* Documents (v4.1) */
+  .dropzone { border: 2px dashed #cbd5e1; border-radius: 12px; padding: 18px 14px; text-align: center; color: #64748b; font-size: 13px; background: #fff; margin: 10px 0; transition: border-color .15s, background .15s; }
+  .dropzone.drag-over { border-color: #0f766e; background: #f0fdfa; color: #0f766e; }
+  .doc-row { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border: 1px solid #e2e8f0; border-radius: 10px; margin-top: 8px; background: #fff; }
+  .doc-row .d-nom { font-weight: 600; font-size: 13px; overflow-wrap: anywhere; }
+  .doc-row .d-sub { font-size: 11.5px; color: #64748b; }
+  .doc-row select { font-size: 12px; padding: 3px 6px; border: 1px solid #cbd5e1; border-radius: 7px; background: #fff; color: #334155; }
+  .mc-note-box { border-radius: 10px; padding: 10px 12px; font-size: 12.5px; line-height: 1.55; background: #f8fafc; border: 1px solid #e2e8f0; color: #475569; margin-top: 12px; }
+  .mc-note-box summary { cursor: pointer; font-weight: 700; color: #334155; font-size: 12.5px; }
+  .mc-note-box ul { margin: 8px 0 0; padding-left: 18px; }
+  .mc-note-box li { margin-bottom: 5px; }
+
+  @media (max-width: 640px) { .form-grid { grid-template-columns: 1fr; } .stats-table { display: block; overflow-x: auto; } .mectype-card { min-width: 100%; } }
 </style>
 </head>
 <body>
@@ -358,10 +383,20 @@ var TYPES_ORG = [
 ];
 
 var TYPES_MECENAT = [
-  { value: "financier", label: "Mécénat financier", icon: "💶", badge: "b-emerald" },
-  { value: "nature", label: "Mécénat en nature", icon: "🎁", badge: "b-amber" },
-  { value: "competence", label: "Mécénat de compétence", icon: "🧠", badge: "b-sky" }
+  { value: "financier", label: "Mécénat financier", icon: "💶", badge: "b-emerald", accent: "#059669", desc: "Don en argent (virement, chèque). Montant en € = argent réel encaissé." },
+  { value: "nature", label: "Mécénat en nature", icon: "🎁", badge: "b-amber", accent: "#d97706", desc: "Don de biens : matériel, locaux, véhicules… Quantité + valeur estimée." },
+  { value: "competence", label: "Mécénat de compétence", icon: "🧠", badge: "b-sky", accent: "#0284c7", desc: "Mise à disposition de personnel : montant valorisé = heures × taux horaire." }
 ];
+
+var TYPES_DOC = [
+  { value: "convention", label: "Convention / contrat", icon: "📜", badge: "b-emerald" },
+  { value: "devis", label: "Devis", icon: "🧾", badge: "b-sky" },
+  { value: "facture", label: "Facture", icon: "💸", badge: "b-amber" },
+  { value: "rapport", label: "Rapport / attestation", icon: "📄", badge: "b-sky" },
+  { value: "autre", label: "Autre", icon: "📎", badge: "" }
+];
+var DOC_MAX_FILE = 1500000;   /* octets, ~1,5 Mo par fichier */
+var DOC_MAX_TOTAL = 3000000;  /* octets, ~3 Mo de documents au total */
 
 var SOURCES_FIN = [
   "Fonds région",
@@ -489,6 +524,115 @@ function addMonths(dateStr, n) {
   return y + "-" + String(mo).padStart(2, "0") + "-" + String(d).padStart(2, "0");
 }
 
+function docInfo(c) { return TYPES_DOC.find(function (x) { return x.value === c; }) || TYPES_DOC[4]; }
+function fmtTaille(b) {
+  if (b >= 1000000) { return (Math.round(b / 100000) / 10).toString().replace(".", ",") + " Mo"; }
+  if (b >= 1000) { return Math.round(b / 1000) + " Ko"; }
+  return b + " o";
+}
+function dataUrlBytes(dataUrl) {
+  if (!dataUrl || dataUrl.indexOf("base64,") < 0) return 0;
+  var b64 = dataUrl.split("base64,")[1] || "";
+  var pad = 0; if (b64.endsWith("==")) pad = 2; else if (b64.endsWith("=")) pad = 1;
+  return Math.max(0, Math.floor(b64.length * 3 / 4) - pad);
+}
+function docBytes(doc) { return num(doc.taille) || dataUrlBytes(doc.data); }
+function allDocsSize() {
+  var tot = 0;
+  state.orgs.forEach(function (o) {
+    (o.docs || []).forEach(function (d) { tot += docBytes(d); });
+    (o.projets || []).forEach(function (p) { (p.docs || []).forEach(function (d2) { tot += docBytes(d2); }); });
+  });
+  return tot;
+}
+function docTarget(orgId, projetId) {
+  var o = findOrg(orgId);
+  if (!o) return null;
+  if (projetId) { var p = findProjet(o, projetId); return p ? { cont: p, org: o } : null; }
+  return { cont: o, org: o };
+}
+function addDocData(orgId, projetId, doc) {
+  var tgt = docTarget(orgId, projetId);
+  if (!tgt) return false;
+  var octets = docBytes(doc);
+  if (octets > DOC_MAX_FILE) { alert("Fichier trop volumineux (" + fmtTaille(octets) + ") : maximum " + fmtTaille(DOC_MAX_FILE) + " par document. Conservez l&#39;original ailleurs et déposez une version allégée."); return false; }
+  if (allDocsSize() + octets > DOC_MAX_TOTAL) { alert("Espace documents plein (" + fmtTaille(allDocsSize()) + " utilisés sur " + fmtTaille(DOC_MAX_TOTAL) + "). Supprimez des documents ou exportez-les pour libérer de la place."); return false; }
+  tgt.cont.docs = tgt.cont.docs || [];
+  tgt.cont.docs = tgt.cont.docs.concat([Object.assign({ id: uid() }, doc)]);
+  updateOrg(orgId, function (o) { return o; });
+  return true;
+}
+function readFilesAsDocs(files, orgId, projetId, cat) {
+  var list = files && files.length ? Array.prototype.slice.call(files) : [];
+  if (list.length === 0) return;
+  var traites = 0;
+  list.forEach(function (f) {
+    var reader = new FileReader();
+    reader.onload = function () {
+      var ok = addDocData(orgId, projetId, { nom: f.name, cat: cat || "autre", date: today(), mime: f.type || "application/octet-stream", taille: f.size, data: String(reader.result) });
+      if (ok) traites++;
+      if (ok) render();
+    };
+    reader.onerror = function () { alert("Impossible de lire « " + f.name + " »."); };
+    reader.readAsDataURL(f);
+  });
+}
+function openDoc(doc, mode) {
+  if (!doc || !doc.data) { alert("Contenu du document indisponible."); return; }
+  var b64 = doc.data.split("base64,")[1] || "";
+  try {
+    var bin = atob(b64);
+    var bytes = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    var blob = new Blob([bytes], { type: doc.mime || "application/octet-stream" });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url;
+    if (mode === "dl") a.download = doc.nom || "document";
+    else a.target = "_blank";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 60000);
+  } catch (e) { alert("Impossible d&#39;ouvrir ce document."); }
+}
+function docsCardHtml(orgId, projetId, cont) {
+  var docs = (cont.docs || []);
+  var pjLabel = projetId ? " du projet" : " de l&#39;établissement";
+  var rows = docs.map(function (d) {
+    var di = docInfo(d.cat);
+    return '<div class="doc-row">'
+      + '<span class="badge ' + di.badge + '">' + di.icon + " " + di.label + '</span>'
+      + '<div style="flex:1;min-width:0"><p class="d-nom" style="margin:0">' + esc(d.nom) + '</p><p class="d-sub" style="margin:1px 0 0">' + fmtTaille(docBytes(d)) + " · ajouté le " + esc(formatDate(d.date)) + '</p></div>'
+      + '<select data-docsel="1" data-org="' + orgId + '"' + (projetId ? ' data-projet="' + projetId + '"' : "") + ' data-id="' + d.id + '" title="Changer la catégorie">' + TYPES_DOC.map(function (t) { return '<option value="' + t.value + '"' + (d.cat === t.value ? " selected" : "") + '>' + t.icon + " " + t.label + '</option>'; }).join("") + '</select>'
+      + '<button class="btn sm" data-act="open-doc" data-org="' + orgId + '"' + (projetId ? ' data-projet="' + projetId + '"' : "") + ' data-id="' + d.id + '" title="Ouvrir dans un onglet (PDF, images…)">👁</button>'
+      + '<button class="btn sm" data-act="dl-doc" data-org="' + orgId + '"' + (projetId ? ' data-projet="' + projetId + '"' : "") + ' data-id="' + d.id + '" title="Télécharger une copie">⬇</button>'
+      + '<button class="btn sm danger" data-act="del-doc" data-org="' + orgId + '"' + (projetId ? ' data-projet="' + projetId + '"' : "") + ' data-id="' + d.id + '">Suppr.</button>'
+      + '</div>';
+  }).join("");
+  return '<div class="card pad" style="margin-top:20px"><div class="section-head"><h3>📄 Documents' + pjLabel + ' (' + docs.length + ')</h3>'
+    + '<span class="badge" title="Documents stockés dans ce navigateur — maximum ' + fmtTaille(DOC_MAX_TOTAL) + ' au total">' + fmtTaille(allDocsSize()) + " / " + fmtTaille(DOC_MAX_TOTAL) + '</span></div>'
+    + '<div class="dropzone" data-dropzone="1" data-org="' + orgId + '"' + (projetId ? ' data-projet="' + projetId + '"' : "") + '>'
+    + '<p style="margin:0 0 8px"><b>Glissez ici</b> vos fichiers' + pjLabel + ' — convention, devis, facture, rapport…</p>'
+    + '<div style="display:flex;gap:8px;justify-content:center;align-items:center;flex-wrap:wrap">'
+    + '<label style="font-size:12.5px;color:#64748b">Catégorie :</label>'
+    + '<select id="doc-cat">' + TYPES_DOC.map(function (t) { return '<option value="' + t.value + '">' + t.icon + " " + t.label + '</option>'; }).join("") + '</select>'
+    + '<button class="btn sm" data-act="doc-pick" data-org="' + orgId + '"' + (projetId ? ' data-projet="' + projetId + '"' : "") + ' style="position:relative;z-index:2">📁 Parcourir…</button>'
+    + '</div>'
+    + '<input type="file" multiple id="doc-file-input" data-org="' + orgId + '"' + (projetId ? ' data-projet="' + projetId + '"' : "") + ' style="display:none"/>'
+    + '</div>'
+    + (rows ? rows : '<p style="font-size:13px;color:#94a3b8;margin:8px 0 0">Aucun document pour le moment. Les fichiers restent dans ce navigateur (max ' + fmtTaille(DOC_MAX_FILE) + ' par fichier) — ils partent dans la sauvegarde JSON/HTML et suivent la fiche. Conservez vos originaux ailleurs.</p>')
+    + '</div>';
+}
+function mecMethodNote() {
+  return '<details class="mc-note-box"><summary>ℹ️ Comment sont calculés les montants ?</summary><ul>'
+    + '<li>💶 <b>Financier</b> : don en argent — le montant saisi est de l&#39;argent réel (« cash »), à sommer dans le budget.</li>'
+    + '<li>🎁 <b>En nature</b> : don de biens (matériel, locaux…) — saisissez la <b>quantité</b> (ex. « 20 nichoirs ») et une <b>valeur estimée</b> en € si vous la connaissez (valeur marchande du don).</li>'
+    + '<li>🧠 <b>De compétence</b> : mise à disposition de personnel — montant <b>valorisé = heures × taux horaire</b>, calculé automatiquement si le champ montant est laissé vide.</li>'
+    + '<li>Le badge <b>💶 Cash</b> ne compte que le mécénat financier ; <b>📦🧠 Valorisé non-cash</b> agrège nature + compétence. Ces estimations <b>ne doivent pas être additionnées au budget réel</b> (elles ne sont pas de l&#39;argent encaissé).</li>'
+    + '</ul></details>';
+}
+
 function embeddedData() {
   try { return (typeof window !== "undefined" && window.__CRM_EMBEDDED_DATA__) || null; } catch (e) { return null; }
 }
@@ -610,9 +754,11 @@ function projetActif(p) { return p && (p.statut === "en-cours" || p.statut === "
 /* Migration : convertit une fiche de l'ancien modèle (financement + aap au niveau de
    la fiche) vers le nouveau modèle (projets rattachés à l'établissement). */
 function migrateOrg(o) {
+  if (!o.docs) o.docs = [];
   if (o.projets) {
     o.projets.forEach(function (p) {
       if (!p.contributeurs) p.contributeurs = [];
+      if (!p.docs) p.docs = [];
       ((p.financement || {}).lignes || []).forEach(function (l) { if (!l.orgId) l.orgId = ""; });
     });
     return o;
@@ -1099,7 +1245,7 @@ function viewStats() {
       }).join("")
     + '<tr class="total"><td>Total</td><td class="num">' + nbMec + '</td><td class="num">' + fmtE(totalMec) + '</td></tr>'
     + '<tr><td colspan="3" style="font-size:12.5px;color:#64748b;padding-top:4px">💶 Cash (financier) : <b>' + fmtE(mecParType["financier"].total) + '</b> · 📦🧠 Valorisé non-cash (nature + compétence) : <b>' + fmtE(mecParType["nature"].total + mecParType["competence"].total) + '</b> — le « cash » est de l&#39;argent réel encaissé, le « valorisé » mesure l&#39;ampleur du soutien non monétaire (à ne pas additionner au budget réel).</td></tr>'
-    + '</tbody></table></div>'
+    + '</tbody></table>' + mecMethodNote() + '</div>'
     + '<div class="card pad" style="margin-bottom:20px"><div class="section-head"><h3>Vue détaillée par projet</h3></div>'
     + '<table class="stats-table"><thead><tr><th>Projet</th><th>Établissement</th><th>Statut</th><th class="num">Coût</th><th class="num">Financé</th><th class="num">Reste</th><th>AAP</th></tr></thead><tbody>'
     + projetRows
@@ -1212,7 +1358,7 @@ function viewDetail() {
       if (m2.poste) det.push("Poste : " + esc(m2.poste));
       if (m2.personnel) det.push("Personnel : " + esc(m2.personnel));
       if (m2.mission) det.push("Mission : " + esc(m2.mission));
-      return '<div class="list-row"><div style="min-width:0">'
+      return '<div class="list-row" style="border-left:3px solid ' + mi.accent + '"><div style="min-width:0">'
         + '<p class="t"><span class="badge ' + mi.badge + '">' + mi.icon + " " + mi.label + '</span>'
         + (num(m2.montant) > 0 ? ' <b>' + fmtE(num(m2.montant)) + '</b>' : "") + '</p>'
         + (det.length ? '<p class="s">' + det.join(" · ") + '</p>' : "")
@@ -1260,7 +1406,8 @@ function viewDetail() {
     + '<button class="btn sm" data-act="new-projet" data-org="' + org.id + '">＋ Nouveau projet</button></div>' + projetsHtml + '</div>'
     + '<div class="card pad" style="margin-top:20px"><div class="section-head"><h3>Co-financé chez d&#39;autres établissements (' + coList.length + ')</h3></div>' + coHtml + '</div>'
     + '<div class="card pad" style="margin-top:20px"><div class="section-head"><h3>Mécénats (' + (org.mecenats || []).length + ')</h3>'
-    + '<button class="btn sm" data-act="new-mecenat" data-org="' + org.id + '">＋ Ajouter un mécénat</button></div>' + mecenatsHtml + '</div>'
+    + '<button class="btn sm" data-act="new-mecenat" data-org="' + org.id + '">＋ Ajouter un mécénat</button></div>' + mecenatsHtml + mecMethodNote() + '</div>'
+    + docsCardHtml(org.id, null, org)
     + '<div class="card pad" style="margin-top:20px"><div class="section-head"><h3>Contacts (' + (org.contacts || []).length + ')</h3>'
     + '<button class="btn sm" data-act="new-contact" data-org="' + org.id + '">＋ Ajouter un contact</button></div>' + contactsHtml + '</div>'
     + '<div class="card pad" style="margin-top:20px"><div class="section-head"><h3>Historique des échanges (' + (org.historique || []).length + ')</h3>'
@@ -1390,11 +1537,38 @@ function viewProjet() {
     + '</div>'
     + '<div class="card pad" style="margin-top:20px"><div class="section-head"><h3>Échanges liés au projet (' + pjHisto.length + ')</h3>'
     + '<button class="btn sm" data-act="new-histo" data-org="' + org.id + '" data-projet="' + p.id + '">＋ Échange</button></div>' + pjHistoHtml + '</div>'
+    + docsCardHtml(org.id, p.id, p)
     + '<div class="card pad" style="margin-top:20px"><h3>Appel à projets (AAP)</h3>' + aapHtml + '</div>'
     + '</div>';
 }
 
 /* ===================== Modales ===================== */
+
+function mcMethodHtml(t) {
+  if (t === "nature") return '🎁 <b>Mécénat en nature</b> — don de biens (matériel, locaux, véhicules…). Renseignez la <b>quantité</b> (ex. « 20 nichoirs ») et, si vous la connaissez, la <b>valeur estimée</b> en € : c&#39;est la valeur marchande du don, une estimation qui n&#39;est <b>pas de l&#39;argent encaissé</b> (elle se cumule dans le badge « 📦🧠 Valorisé non-cash », jamais dans le budget réel).';
+  if (t === "competence") return '🧠 <b>Mécénat de compétence</b> — mise à disposition de personnel (salariés, retraités, bénévoles qualifiés). Le montant est <b>valorisé, pas encaissé</b> : si le champ montant est vide, il est calculé automatiquement en <b>heures × taux horaire</b>. Ce montant se cumule dans le badge « 📦🧠 Valorisé non-cash ».';
+  return '💶 <b>Mécénat financier</b> — don en argent (virement, chèque, abonnement). Le montant saisi est de l&#39;argent réel : il se cumule dans le badge « 💶 Cash » et peut être additionné au budget de votre structure.';
+}
+function mcMontantLabel(t) {
+  if (t === "nature") return "Valeur estimée du don (€) — si connue";
+  if (t === "competence") return "Montant valorisé (€) — auto : heures × taux si vide";
+  return "Montant du don (€) *";
+}
+function mcPreviewText(t, montant, heures, taux) {
+  if (t === "financier") return montant > 0 ? "💰 Montant qui sera enregistré : <b>" + fmtE(montant) + "</b> — argent réel (cash)." : "💰 Aucun montant saisi — le don financier sera enregistré sans montant.";
+  if (t === "nature") return montant > 0 ? "💰 Valeur estimée qui sera enregistrée : <b>" + fmtE(montant) + "</b> — estimation non-cash (pas d&#39;argent encaissé)." : "📦 Aucune valeur estimée — seul le descriptif (quantité, objet) sera enregistré. C&#39;est acceptable si la valeur est inconnue.";
+  if (montant > 0) return "💰 Montant retenu : <b>" + fmtE(montant) + "</b> (saisi directement) — valorisation non-cash.";
+  if (heures > 0 && taux > 0) return "🧮 Montant qui sera calculé : <b>" + fmtE(Math.round(heures * taux * 100) / 100) + "</b> = " + heures + " h × " + fmtE(taux) + " €/h — valorisation non-cash.";
+  return "🧮 Renseignez les heures et le taux horaire (ou saisissez directement un montant) pour valoriser ce mécénat.";
+}
+function mcPreviewHtml(t, mc0) { return mcPreviewText(t, mc0 ? num(mc0.montant) : 0, mc0 ? num(mc0.heures) : 0, mc0 ? num(mc0.taux) : 0); }
+function syncMcPreview() {
+  var tEl = document.getElementById("m_mctype");
+  var t = tEl ? tEl.value : "financier";
+  var g = function (id) { var el = document.getElementById(id); return el ? el.value : ""; };
+  var pv = document.getElementById("mc-preview");
+  if (pv) pv.innerHTML = mcPreviewText(t, num(g("m_mcmontant")), num(g("m_mcheures")), num(g("m_mctaux")));
+}
 
 function fld(label, inner) {
   return '<label class="fld"><span>' + label + '</span>' + inner + '</label>';
@@ -1631,20 +1805,32 @@ function viewModal() {
 
   if (m.type === "mecenat") {
     var mc0 = m.mecId && org ? (org.mecenats || []).find(function (x) { return x.id === m.mecId; }) : null;
+    var mcTy = mc0 ? (mc0.type || "financier") : "financier";
     title = mc0 ? "Modifier le mécénat" : "Ajouter un mécénat";
-    body = '<form id="modal-form"><div class="form-grid">'
-      + fld("Type de mécénat *", '<select id="m_mctype">' + TYPES_MECENAT.map(function (t) { return '<option value="' + t.value + '"' + (mc0 && mc0.type === t.value ? " selected" : "") + '>' + t.icon + " " + t.label + '</option>'; }).join("") + '</select>')
-      + fld("Montant / valorisation (€)", '<input id="m_mcmontant" type="number" step="0.01" min="0" value="' + esc(mc0 ? num(mc0.montant) : "") + '" placeholder="Ex. 8 000"/>')
-      + fld("Quantité / volume (si en nature)", '<input id="m_mcqte" value="' + esc(mc0 ? mc0.quantite || "" : "") + '" placeholder="Ex. 20 nichoirs, 1 salle de réunion, 3 véhicules…"/>')
-      + '<div class="full">' + fld("De quoi s'agit-il ? (objet du don, prestation, projet financé…)", '<input id="m_mcdesc" value="' + esc(mc0 ? mc0.description || "" : "") + '" placeholder="Ex. Don de matériel, aménagement d&#39;une mare…"/>') + '</div>'
+    body = '<form id="modal-form">'
+      + '<input type="hidden" id="m_mctype" value="' + mcTy + '"/>'
+      + '<p style="margin:0 0 8px;font-size:12px;font-weight:700;color:#475569">1. Quel type de mécénat ?</p>'
+      + '<div class="mectype-cards">'
+      + TYPES_MECENAT.map(function (t) {
+          return '<button type="button" class="mectype-card ' + (t.value === "financier" ? "mtc-fin" : t.value === "nature" ? "mtc-nat" : "mtc-comp") + (t.value === mcTy ? " active" : "") + '" id="mc-card-' + t.value + '" data-act="mc-type" data-type="' + t.value + '">'
+            + '<span class="mtc-ico">' + t.icon + '</span><span class="mtc-lbl">' + t.label + '</span><span class="mtc-desc">' + t.desc + '</span></button>';
+        }).join("")
       + '</div>'
-      + '<div class="fieldset-tint fs-blue" style="margin-top:12px"><h4>Si mécénat de compétence — le cas échéant</h4><p style="font-size:11.5px;color:#64748b;margin:4px 0 8px">Si le champ « Montant / valorisation » est vide, il sera calculé automatiquement : heures × taux horaire.</p><div class="form-grid">'
-      + fld("Poste", '<input id="m_mcposte" value="' + esc(mc0 ? mc0.poste || "" : "") + '" placeholder="Ex. Ingénieur études, menuisier…"/>')
-      + fld("Personnel mobilisé", '<input id="m_mcperso" value="' + esc(mc0 ? mc0.personnel || "" : "") + '" placeholder="Ex. 1 salarié (2 jours), équipe de volontaires…"/>')
+      + '<div class="mc-method" id="mc-method">' + mcMethodHtml(mcTy) + '</div>'
+      + '<p style="margin:14px 0 8px;font-size:12px;font-weight:700;color:#475569">2. Détails</p>'
+      + '<div class="form-grid">'
+      + '<div class="full">' + fld("De quoi s&#39;agit-il ? (objet du don, prestation, projet financé…)", '<input id="m_mcdesc" value="' + esc(mc0 ? mc0.description || "" : "") + '" placeholder="Ex. Don de matériel, aménagement d&#39;une mare…"/>') + '</div>'
+      + '<div id="mcg-nat" class="full"' + (mcTy === "nature" ? "" : ' style="display:none"') + '>' + fld("Quantité / volume du don *", '<input id="m_mcqte" value="' + esc(mc0 ? mc0.quantite || "" : "") + '" placeholder="Ex. 20 nichoirs, 1 salle de réunion, 3 véhicules…"/>') + '</div>'
+      + '<div class="full">' + fld('<span id="mcmontant-lbl">' + mcMontantLabel(mcTy) + '</span>', '<input id="m_mcmontant" type="number" step="0.01" min="0" value="' + esc(mc0 ? num(mc0.montant) : "") + '" placeholder="Ex. 8 000"/>') + '</div>'
+      + '</div>'
+      + '<div class="fieldset-tint fs-blue" id="mcg-comp" style="margin-top:12px' + (mcTy === "competence" ? "" : ';display:none') + '"><h4>🧠 Personnel mobilisé (mécénat de compétence)</h4><p style="font-size:11.5px;color:#64748b;margin:4px 0 8px">Montant valorisé = <b>heures × taux horaire</b> si le champ montant est laissé vide.</p><div class="form-grid">'
       + fld("Heures mobilisées", '<input id="m_mcheures" type="number" step="0.5" min="0" value="' + esc(mc0 ? num(mc0.heures) : "") + '" placeholder="Ex. 24"/>')
       + fld("Taux horaire (€)", '<input id="m_mctaux" type="number" step="0.5" min="0" value="' + esc(mc0 ? num(mc0.taux) : "") + '" placeholder="Ex. 65"/>')
+      + fld("Poste", '<input id="m_mcposte" value="' + esc(mc0 ? mc0.poste || "" : "") + '" placeholder="Ex. Ingénieur études, menuisier…"/>')
+      + fld("Personnel mobilisé", '<input id="m_mcperso" value="' + esc(mc0 ? mc0.personnel || "" : "") + '" placeholder="Ex. 1 salarié (2 jours), équipe de volontaires…"/>')
       + fld("Mission", '<input id="m_mcmission" value="' + esc(mc0 ? mc0.mission || "" : "") + '" placeholder="Ex. Étude du refuge, atelier pédagogique…"/>')
       + '</div></div>'
+      + '<div class="mc-preview" id="mc-preview">' + mcPreviewHtml(mcTy, mc0) + '</div>'
       + '<div class="modal-foot"><button type="button" class="btn" data-act="close-modal">Annuler</button>'
       + '<button type="submit" class="btn primary">' + (mc0 ? "Enregistrer" : "Ajouter") + '</button></div></form>';
   }
@@ -1678,6 +1864,7 @@ function viewModal() {
       + '<button class="btn" data-act="export-csv-projets">📁 CSV — Projets</button>'
       + '<button class="btn" data-act="export-csv-contacts">👤 CSV — Contacts</button>'
       + '<button class="btn" data-act="export-csv-alertes">🔔 CSV — Alertes</button>'
+      + '<button class="btn" data-act="export-csv-docs">📄 CSV — Documents (liste)</button>'
       + '</div>'
       + '<p style="font-size:11.5px;color:#94a3b8;margin:12px 0 0">CSV : séparateur « ; » et encodage UTF-8 (BOM), s&#39;ouvre directement dans Excel. HTML tout-en-un : copiez le fichier sur une clé USB ou envoyez-le par mail, il rouvre vos fiches à l&#39;identique sur n&#39;importe quel PC.</p>'
       + '<div class="modal-foot"><button type="button" class="btn" data-act="close-modal">Fermer</button></div>'
@@ -1760,7 +1947,7 @@ function render() {
     + '</div></header>'
     + '<main class="wrap">' + content + '</main>'
     + viewModal()
-    + '<footer class="foot wrap">CRM Mécénat LPO · <b>v4-test</b> — les données sont enregistrées dans ce navigateur. Pensez à exporter régulièrement : bouton Export (sauvegarde JSON, CSV ou HTML tout-en-un) · bouton 🖨 Imprimer pour une version papier / PDF pour les réunions.</footer>';
+    + '<footer class="foot wrap">CRM Mécénat LPO · <b>v4.1-test</b> — les données sont enregistrées dans ce navigateur. Pensez à exporter régulièrement : bouton Export (sauvegarde JSON, CSV ou HTML tout-en-un) · bouton 🖨 Imprimer pour une version papier / PDF pour les réunions.</footer>';
 
   if (state.focusSearch) {
     var s = document.getElementById("search");
@@ -1792,6 +1979,44 @@ document.addEventListener("click", function (e) {
   else if (act === "open-org") setState({ page: "detail", detailId: id, projetId: null });
   else if (act === "open-projet") setState({ page: "projet", detailId: orgId, projetId: id });
   else if (act === "close-modal") closeModal();
+  else if (act === "mc-type") {
+    var mt = el.getAttribute("data-type");
+    var hin = document.getElementById("m_mctype");
+    if (hin) hin.value = mt;
+    TYPES_MECENAT.forEach(function (tt) {
+      var card = document.getElementById("mc-card-" + tt.value);
+      if (!card) return;
+      if (tt.value === mt) { if ((" " + card.className + " ").indexOf(" active ") < 0) card.className = card.className + " active"; }
+      else card.className = card.className.replace(/\s*active/g, "");
+    });
+    var gNat = document.getElementById("mcg-nat"); if (gNat) gNat.style.display = mt === "nature" ? "" : "none";
+    var gComp = document.getElementById("mcg-comp"); if (gComp) gComp.style.display = mt === "competence" ? "" : "none";
+    var meth = document.getElementById("mc-method"); if (meth) meth.innerHTML = mcMethodHtml(mt);
+    var lbl = document.getElementById("mcmontant-lbl"); if (lbl) lbl.innerHTML = mcMontantLabel(mt);
+    syncMcPreview();
+  }
+  else if (act === "doc-pick") {
+    var fi = document.getElementById("doc-file-input");
+    if (fi && fi.click) fi.click();
+  }
+  else if (act === "open-doc" || act === "dl-doc") {
+    var doPj = el.getAttribute("data-projet");
+    var doOrg = findOrg(orgId);
+    var doCont = doOrg ? (doPj ? findProjet(doOrg, doPj) : doOrg) : null;
+    var doDoc = doCont && doCont.docs ? doCont.docs.find(function (d) { return d.id === id; }) : null;
+    if (doDoc) openDoc(doDoc, act === "dl-doc" ? "dl" : "view");
+  }
+  else if (act === "del-doc") {
+    var ddPj = el.getAttribute("data-projet");
+    if (confirm("Supprimer ce document du CRM ? (votre fichier original sur le PC n&#39;est pas touché)")) {
+      updateOrg(orgId, function (o) {
+        var c = ddPj ? findProjet(o, ddPj) : o;
+        if (c && c.docs) c.docs = c.docs.filter(function (d) { return d.id !== id; });
+        return o;
+      });
+      render();
+    }
+  }
   else if (act === "nav-back") {
     if (nav.index > 0) { nav.index--; var nb = nav.stack[nav.index]; setState({ page: nb.page, detailId: nb.detailId, projetId: nb.projetId }); }
   }
@@ -1946,6 +2171,15 @@ document.addEventListener("click", function (e) {
     downloadText("alertes-" + today() + ".csv", toCSV(rowsA), "text/csv", true);
     closeModal();
   }
+  else if (act === "export-csv-docs") {
+    var rowsD = [["Nom du fichier", "Catégorie", "Établissement", "Projet", "Date d'ajout", "Taille (octets)", "Taille", "Type MIME"]];
+    state.orgs.forEach(function (o) {
+      (o.docs || []).forEach(function (d) { rowsD.push([d.nom, docInfo(d.cat).label, o.nom, "", d.date, docBytes(d), fmtTaille(docBytes(d)), d.mime || ""]); });
+      (o.projets || []).forEach(function (p) { (p.docs || []).forEach(function (d) { rowsD.push([d.nom, docInfo(d.cat).label, o.nom, p.nom || "Projet", d.date, docBytes(d), fmtTaille(docBytes(d)), d.mime || ""]); }); });
+    });
+    downloadText("documents-" + today() + ".csv", toCSV(rowsD), "text/csv", true);
+    closeModal();
+  }
   else if (act === "print") {
     var pa = document.getElementById("print-area");
     if (!pa) return;
@@ -1998,6 +2232,7 @@ document.addEventListener("input", function (e) {
     state.focusSearch = true;
     render();
   }
+  if (e.target.id === "m_mcmontant" || e.target.id === "m_mcheures" || e.target.id === "m_mctaux") syncMcPreview();
 });
 
 document.addEventListener("change", function (e) {
@@ -2050,6 +2285,47 @@ document.addEventListener("change", function (e) {
     reader.readAsText(f);
     e.target.value = "";
   }
+});
+
+document.addEventListener("change", function (e) {
+  if (e.target.id === "doc-file-input") {
+    var dOrg = e.target.getAttribute("data-org");
+    var dPj = e.target.getAttribute("data-projet");
+    var catSel = document.getElementById("doc-cat");
+    readFilesAsDocs(e.target.files, dOrg, dPj, catSel ? catSel.value : "autre");
+    e.target.value = "";
+    return;
+  }
+  if (e.target.getAttribute && e.target.getAttribute("data-docsel")) {
+    var sOrg = e.target.getAttribute("data-org");
+    var sPj = e.target.getAttribute("data-projet");
+    var sId = e.target.getAttribute("data-id");
+    updateOrg(sOrg, function (o) {
+      var c = sPj ? findProjet(o, sPj) : o;
+      if (c && c.docs) c.docs = c.docs.map(function (d) { return d.id === sId ? Object.assign({}, d, { cat: e.target.value }) : d; });
+      return o;
+    });
+    render();
+  }
+});
+
+document.addEventListener("dragover", function (e) {
+  var z = e.target && e.target.closest ? e.target.closest("[data-dropzone]") : null;
+  if (!z) return;
+  e.preventDefault();
+  if ((" " + z.className + " ").indexOf(" drag-over ") < 0) z.className = z.className + " drag-over";
+});
+document.addEventListener("dragleave", function (e) {
+  var z = e.target && e.target.closest ? e.target.closest("[data-dropzone]") : null;
+  if (z) z.className = z.className.replace(/\s*drag-over/g, "");
+});
+document.addEventListener("drop", function (e) {
+  var z = e.target && e.target.closest ? e.target.closest("[data-dropzone]") : null;
+  if (!z) return;
+  e.preventDefault();
+  z.className = z.className.replace(/\s*drag-over/g, "");
+  var catSel = document.getElementById("doc-cat");
+  readFilesAsDocs(e.dataTransfer.files, z.getAttribute("data-org"), z.getAttribute("data-projet"), catSel ? catSel.value : "autre");
 });
 
 document.addEventListener("submit", function (e) {
