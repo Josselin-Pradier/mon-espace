@@ -284,7 +284,7 @@ input[type=file]{padding:5px;font-size:12px}
     <a class="snav" data-act="open-listes">⚙️ Mes listes</a>
     <a class="snav" data-act="open-export">💾 Export &amp; sauvegarde</a>
     <a class="snav" data-act="open-help">❓ Aide &amp; confidentialité</a>
-    <div class="side-note">Mon Espace v5.14 — 100 % local par défaut. Connexion Outlook et synchro chiffrée (page ☁️) optionnelles — vous décidez.</div>
+    <div class="side-note">Mon Espace v5.15 — 100 % local par défaut. Connexion Outlook et synchro chiffrée (page ☁️) optionnelles — vous décidez.</div>
   </div>
 </aside>
 <aside id="qa-root" class="off"></aside>
@@ -719,7 +719,55 @@ function clipBtnsHtml(kind,id){
   return '<span style="display:inline-flex;gap:2px">'
    +'<button class="btn sm ghost" data-act="clip-copy" data-kind="'+kind+'" data-id="'+id+'" title="Copier — puis ouvrez un dossier et cliquez 📥 Coller ici">⧉</button>'
    +'<button class="btn sm ghost" data-act="clip-cut" data-kind="'+kind+'" data-id="'+id+'" title="Couper / déplacer — puis ouvrez un dossier et cliquez 📥 Coller ici">✂</button>'
+   +'<button class="btn sm ghost" style="color:#dc2626" data-act="item-del" data-kind="'+kind+'" data-id="'+id+'" title="Supprimer définitivement cet élément (confirmation demandée)">✕</button>'
    +'</span>';
+}
+// ===== v5.15 : suppression unifiée (fiche 🗑, ✕ en bout de ligne, cartes Kanban) =====
+function delDossier(id){
+  var d=findDossier(id);
+  if(!d)return;
+  var sous=0,i;
+  for(i=0;i<state.dossiers.length;i++){if(state.dossiers[i].parentId===id)sous++;}
+  if(confirm('Supprimer le dossier « '+d.nom+' » ?'+(sous?'\nSes '+sous+' sous-dossier(s) seront déplacés à la racine.':'')+'\nSes tâches et notes seront conservées mais détachées.')){
+    for(i=0;i<state.dossiers.length;i++){if(state.dossiers[i].parentId===id)state.dossiers[i].parentId='';}
+    for(i=0;i<state.taches.length;i++){if(state.taches[i].dossierId===id)state.taches[i].dossierId='';}
+    for(i=0;i<state.notes.length;i++){if(state.notes[i].dossierId===id)state.notes[i].dossierId='';}
+    for(i=0;i<state.docs.length;i++){state.docs[i].dossiers=state.docs[i].dossiers.filter(function(z){return z!==id;});}
+    state.dossiers=state.dossiers.filter(function(x){return x.id!==id;});
+    if(state.page==='dossier'&&state.detailId===id){navGo('dossiers','');}
+    save();toast('Dossier supprimé');render();renderRemind();renderQa();
+  }
+}
+function delTache(id){
+  var t=findTache(id);
+  if(!t)return;
+  if(confirm('Supprimer la tâche « '+t.titre+' » ?')){
+    var i;
+    for(i=0;i<state.notes.length;i++){if(state.notes[i].tacheId===id)state.notes[i].tacheId='';}
+    state.taches=state.taches.filter(function(x){return x.id!==id;});
+    save();closeModal();toast('Tâche supprimée');render();renderRemind();renderQa();
+  }
+}
+function delNote(id){
+  var n=findNote(id);
+  if(!n)return;
+  if(confirm('Supprimer la note « '+n.titre+' » ?')){
+    state.notes=state.notes.filter(function(x){return x.id!==id;});
+    if(state.page==='note'&&state.detailId===id){navGo('notes','');}
+    save();toast('Note supprimée');render();renderRemind();renderQa();
+  }
+}
+function delDoc(id){
+  var x=findDoc(id);
+  if(!x)return;
+  if(confirm('Supprimer le document « '+x.nom+' » ?\nSes notes seront conservées mais détachées.')){
+    if(x.stocke){idbDel(id)['catch'](function(){});}
+    var i;
+    for(i=0;i<state.notes.length;i++){if(state.notes[i].docId===id)state.notes[i].docId='';}
+    state.docs=state.docs.filter(function(y){return y.id!==id;});
+    if(state.page==='doc'&&state.detailId===id){navGo('docs','');}
+    save();toast('Document supprimé');render();renderRemind();renderQa();
+  }
 }
 function clipLabel(){
   var cl=state._clip;
@@ -880,7 +928,7 @@ function vueKanbanCards(kind,val){
       if(val!=='*'&&!matchKanbanVal(kind,list[i],val))continue;
       count++;
       var d=list[i];
-      h+='<div class="kcard" draggable="true" data-id="kv:dos:'+d.id+'"><span class="row-title" data-act="open-dossier" data-id="'+d.id+'">'+esc(d.nom)+'</span><div class="sub">'+qw('dossier',d.id,'statut',badgeDossier(d.statut))+qw('dossier',d.id,'ctx',badgeCtx(d.contexte))+(d.echeance?qw('dossier',d.id,'ech',echLabel(d.echeance,(d.statut==='termine'||d.statut==='archive'))):'')+'</div></div>';
+      h+='<div class="kcard" draggable="true" data-id="kv:dos:'+d.id+'"><span class="row-title" data-act="open-dossier" data-id="'+d.id+'">'+esc(d.nom)+'</span><div class="sub">'+qw('dossier',d.id,'statut',badgeDossier(d.statut))+qw('dossier',d.id,'ctx',badgeCtx(d.contexte))+(d.echeance?qw('dossier',d.id,'ech',echLabel(d.echeance,(d.statut==='termine'||d.statut==='archive'))):'')+'</div><div class="sub" style="justify-content:flex-end;margin-top:2px">'+clipBtnsHtml('dossier',d.id)+'</div></div>';
     }
   }else if(kind==='doc'){
     var dl=docsFilteredList();
@@ -888,7 +936,7 @@ function vueKanbanCards(kind,val){
       if(val!=='*'&&!matchKanbanVal(kind,dl[i],val))continue;
       count++;
       var x=dl[i];
-      h+='<div class="kcard" draggable="true" data-id="kv:doc:'+x.id+'"><span class="row-title" data-act="open-doc" data-id="'+x.id+'">'+esc(x.nom)+'</span><div class="sub">'+badgeDocType(x.type)+badgeDocRole(x.role)+(x.dossiers.length?'<span class="chip">📁 '+esc((findDossier(x.dossiers[0])||{nom:''}).nom)+'</span>':'')+'</div></div>';
+      h+='<div class="kcard" draggable="true" data-id="kv:doc:'+x.id+'"><span class="row-title" data-act="open-doc" data-id="'+x.id+'">'+esc(x.nom)+'</span><div class="sub">'+badgeDocType(x.type)+badgeDocRole(x.role)+(x.dossiers.length?'<span class="chip">📁 '+esc((findDossier(x.dossiers[0])||{nom:''}).nom)+'</span>':'')+'</div><div class="sub" style="justify-content:flex-end;margin-top:2px">'+clipBtnsHtml('doc',x.id)+'</div></div>';
     }
   }else{
     var nl=notesKanbanList(kind);
@@ -896,7 +944,7 @@ function vueKanbanCards(kind,val){
       if(val!=='*'&&!matchKanbanVal(kind,nl[i],val))continue;
       count++;
       var n=nl[i];
-      h+='<div class="kcard" draggable="true" data-id="kv:not:'+n.id+'"><span class="row-title" data-act="open-note" data-id="'+n.id+'">'+esc(n.titre)+'</span><div class="sub">'+badgeCtx(n.contexte)+(n.echeance?qw('note',n.id,'ech',echLabel(n.echeance,n.traitee,'Traitée',n.heure||'')):'')+(n.traitee?'<span class="badge" style="background:#d1fae5;color:#065f46">✓</span>':'')+'</div></div>';
+      h+='<div class="kcard" draggable="true" data-id="kv:not:'+n.id+'"><span class="row-title" data-act="open-note" data-id="'+n.id+'">'+esc(n.titre)+'</span><div class="sub">'+badgeCtx(n.contexte)+(n.echeance?qw('note',n.id,'ech',echLabel(n.echeance,n.traitee,'Traitée',n.heure||'')):'')+(n.traitee?'<span class="badge" style="background:#d1fae5;color:#065f46">✓</span>':'')+'</div><div class="sub" style="justify-content:flex-end;margin-top:2px">'+clipBtnsHtml('note',n.id)+'</div></div>';
     }
   }
   return {h:h,count:count};
@@ -1542,14 +1590,19 @@ function dossierCard(d){
 }
 
 // ===== Fiche dossier =====
-function dossierTreeHtml(id,depth,curId){
+function dossierTreeHtml(id,depth,curId,guides){
+  // v5.15 : lignes de branche (│ ├─ └─) pour visualiser le fil de l’arborescence
   var enf=dossierEnfants(id);
   var h='',e;
+  guides=guides||'';
   for(e=0;e<enf.length;e++){
     var d=enf[e];
     var nb=dossierEnfants(d.id).length;
     var isCur=(d.id===curId);
-    h+='<div style="margin-left:'+(depth*20)+'px;padding:2px 0;display:flex;align-items:center;gap:4px;flex-wrap:wrap">'
+    var last=(e===enf.length-1);
+    var br='<span style="font-family:ui-monospace,Consolas,monospace;color:#94a3b8;white-space:pre;flex:0 0 auto;user-select:none">'+guides+(last?'└─ ':'├─ ')+'</span>';
+    h+='<div style="padding:2px 0;display:flex;align-items:center;gap:4px;flex-wrap:wrap">'
+     +br
      +'<a class="chip"'+(isCur?' style="font-weight:700;background:var(--accent-soft)"':'')+' data-act="open-dossier" data-id="'+d.id+'" data-drop="'+d.id+'" draggable="true" data-drag="dos:'+d.id+'" title="Ouvrir — ou glissez-y un élément pour le déplacer dedans">'+(isCur?'📍 ':'')+'📁 '+esc(d.nom)+(nb?' <span class="tiny muted">('+nb+')</span>':'')+' <span class="tiny muted">('+infoOf(DOS_STATUTS,d.statut).l+')</span></a>'
      +(d.echeance?'<span class="tiny muted" style="margin-left:6px">'+esc(relEch(d.echeance,false,''))+'</span>':'')
      // v5.11 : couper/copier/coller directement dans l’arborescence pour déplacer les dossiers
@@ -1557,9 +1610,10 @@ function dossierTreeHtml(id,depth,curId){
      +'<button type="button" class="mini-btn" data-act="clip-cut" data-kind="dossier" data-id="'+d.id+'" title="Déplacer ce dossier — cliquez ensuite sur 📥 du dossier de destination (ou « Coller à la racine »)">✂</button>'
      +'<button type="button" class="mini-btn" data-act="clip-copy" data-kind="dossier" data-id="'+d.id+'" title="Copier ce dossier — cliquez ensuite sur 📥 du dossier de destination">⧉</button>'
      +(state._clip?'<button type="button" class="mini-btn" data-act="clip-paste" data-id="'+d.id+'" title="Coller ici : « '+esc(clipLabel())+' » ('+(state._clip.mode==='cut'?'déplacement':'copie')+')">📥</button>':'')
+     +'<button type="button" class="mini-btn" style="color:#dc2626" data-act="item-del" data-kind="dossier" data-id="'+d.id+'" title="Supprimer ce dossier (confirmation demandée)">✕</button>'
      +'</span>'
      +'</div>';
-    if(nb)h+=dossierTreeHtml(d.id,depth+1,curId);
+    if(nb)h+=dossierTreeHtml(d.id,depth+1,curId,guides+(last?'   ':'│  '));
   }
   return h;
 }
@@ -1717,7 +1771,7 @@ function kcard(t){
    +'<div class="sub">'+qw('tache',t.id,'prio',badgePrio(prioAff(t)))+(isUrgente(t)&&t.priorite!=='urgente'?'<span class="badge" style="background:#fee2e2;color:#b91c1c">🔥 J-1</span>':'')+qw('tache',t.id,'ctx',badgeCtx(t.contexte));
   if(d)h+='<span class="chip" data-act="open-dossier" data-id="'+d.id+'">📁 '+esc(d.nom)+'</span>';
   h+=(t.echeance&&t.statut!=='fait'?qw('tache',t.id,'ech',echLabel(t.echeance,t.statut==='fait','',t.heure||'')):echLabel(t.echeance,t.statut==='fait','',t.heure||''));
-  h+='</div></div>';
+  h+='</div><div class="sub" style="justify-content:flex-end;margin-top:2px">'+clipBtnsHtml('tache',t.id)+'</div></div>';
   return h;
 }
 var MOIS_NOMS=['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
@@ -2541,6 +2595,7 @@ function modalHelp(){
    +'<p style="margin-top:8px"><b>Listes à cocher (v5.9)</b> — Dans une note, cochez « 🛒 Ajouter une liste à cocher » : un espace Liste apparaît sous le contenu, façon liste de courses — ajoutez des lignes, cochez-les, elles se barrent.</p>'
    +'<p style="margin-top:8px"><b>Glisser-déposer façon Explorateur (v5.9)</b> — Sur les listes Dossiers, Documents, Tâches et Notes, déplacez un élément : le haut d’une carte le place <b>avant</b>, le bas <b>après</b> (l’ordre devient « Personnalisé » automatiquement), le centre le range <b>dedans</b> (dossier) ou le déplace. L’onglet Dossiers n’affiche que les dossiers racine, comme l’Explorateur Windows.</p>'
    +'<p style="margin-top:8px"><b>Accès rapide (v5.9)</b> — Le panneau ⭐ est désormais fixe à gauche, juste après le menu. Réduisez-le avec « – », rouvrez-le avec le bouton ⭐ vertical : il liste vos dossiers, tâches et notes épinglés et vos derniers consultés.</p>'
+   +'<p style="margin-top:8px"><b>Nouveautés v5.15</b> — croix rouge ✕ de suppression en bout de ligne à côté de ⧉ copier et ✂ couper (confirmation demandée, sauvegarde des liens détachés proprement) · boutons ⧉ / ✂ / ✕ désormais aussi sur les cartes en vue Kanban (dossiers, tâches, notes/captures, documents) · arborescence des dossiers avec lignes de branche (├─ └─ │) pour visualiser le fil de la hiérarchie · supprimer un dossier déplace ses sous-dossiers à la racine au lieu de les perdre de vue.</p>'
    +'<p style="margin-top:8px"><b>Nouveautés v5.14</b> — retrait ciblé des données d’exemple : le bandeau 🧪 de l’accueil détecte les éléments d’exemple même après des fusions ou restaurations, et « Effacer les exemples » ne supprime QUE les exemples (vos tâches, notes et dossiers personnels sont conservés, sauvegarde JSON automatique avant) · nouveau bouton « 🧹 Retirer les éléments d’exemple » dans 💾 Export &amp; sauvegarde · nouveau bouton « 🗑 Tout effacer » (repartir de zéro, sauvegarde auto avant) · les jeux d’exemple ajoutés via « ➕ Ajouter les exemples » sont désormais marqués et retrouvables.</p>'
    +'<p style="margin-top:8px"><b>Nouveautés v5.13</b> — notes archivables : bouton « 📦 Archiver » sur chaque note (elle quitte la liste active et rejoint la section repliable « 📦 Archivées » de l’onglet Notes, désarchivable à tout moment) · notes « ✓ Terminée » (bouton et date « le jj/mm » affichés à côté) · date de passage en « fait » affichée dans la fiche tâche et tenue à jour partout (même via le clic rapide sur le badge statut) · dossiers : date « le jj/mm » affichée à côté du statut Terminé / Archivé · accueil : bulles d’échéance enfin colorées (retard = rouge, proche = orange — vos réglages 🎯 s’appliquent) · ⚙️ Mes listes : les valeurs de base peuvent aussi être retirées (restaurables via « ↩ restaurer ») ; une valeur utilisée par des éléments ou valeur par défaut est protégée.</p>'
    +'<p style="margin-top:8px"><b>Nouveautés v5.12</b> — correctif définitif du bouton Enregistrer (identification du formulaire réparée — un champ caché « id » perturbait Firefox) · clic sur une suggestion de l’autocomplétion réparé · épinglage 📍 visible aussi sur les lignes de l’accueil · cases jaunes des épinglées encore plus compactes · bouton Enregistrer fiabilisé (appel direct, le clic fonctionne quel que soit le navigateur) · boutons ✂ couper / ⧉ copier / 📥 coller directement dans l’arborescence des dossiers (plus le bouton « Coller à la racine ») · accueil allégé : épinglées regroupées en une seule boîte compacte, sélecteur d’anticipation plus discret à côté des boutons « + », sections En retard / Proches / À venir regroupant TOUS les types d’éléments avec leur picto (✅ tâches, 📝 notes, ⚡ captures, 📁 dossiers), « Toutes les échéances » devient un simple lien vers le calendrier, nouveau compteur « Tâches aujourd’hui » (cliquable) · bouton d’épinglage 📍 plus discret, aligné à droite des lignes · « Dossier lié » / « Tâche liée » / « Document lié » : barre de recherche avec autocomplétion à la place du déroulant.</p>'
@@ -2954,7 +3009,7 @@ function pageSynchro(){
   var h='<div class="content"><div class="page-head"><h1 class="page-title">☁️ Synchro multi-appareils</h1></div>';
   h+='<div class="banner info">Vos données sont <b>chiffrées de bout en bout</b> (AES-GCM 256 bits, clé dérivée de votre passphrase) avant tout envoi. Le serveur ne voit jamais le contenu, ni la passphrase — uniquement un email de compte.</div>';
   h+='<h2 class="sec-title">État</h2><div class="step">';
-  h+='<p>Version de l’appli : <b>v5.14</b></p>';
+  h+='<p>Version de l’appli : <b>v5.15</b></p>';
   h+='<p>Configuration : '+(sbReady()?'<b style="color:var(--ok)">complète ✓</b>':'<b>incomplète</b> — il manque : <b>'+sbMissing()+'</b>')+(c.email?' — compte : <b>'+esc(c.email)+'</b>':'')+'</p>';
   h+='<p>Dernière synchro : <b>'+(state.sb.last||'jamais')+'</b>'+(state.sb.busy?' (en cours…)':'')+(state.sb.err?' <span style="color:var(--danger)">⚠️ '+esc(state.sb.err)+'</span>':'')+'</p>';
   h+='<div class="toolbar" style="margin-top:8px">'
@@ -3269,7 +3324,7 @@ function pageOutlook(){
 
 // ===== PWA (installation en tant qu'application) =====
 var SW_SRC=[
-'var C="espace-cache-v17";',
+'var C="espace-cache-v18";',
 'self.addEventListener("install",function(e){self.skipWaiting();});',
 'self.addEventListener("activate",function(e){e.waitUntil(self.clients.claim());});',
 'self.addEventListener("fetch",function(e){',
@@ -3752,34 +3807,17 @@ document.addEventListener('click',function(ev){
   else if(a==='tache-toggle'){
     var t=findTache(id);if(t){t.statut=(t.statut==='fait')?'a-faire':'fait';if(t.statut==='fait'){t.faitLe=today();}else{t.faitLe='';}t.maj=today();save();render();renderQa();}
   }
-  else if(a==='del-dossier'){
-    var d=findDossier(id);
-    if(d&&confirm('Supprimer le dossier « '+d.nom+' » ?\nSes tâches et notes seront conservées mais détachées.')){
-      var i;
-      for(i=0;i<state.taches.length;i++){if(state.taches[i].dossierId===id)state.taches[i].dossierId='';}
-      for(i=0;i<state.notes.length;i++){if(state.notes[i].dossierId===id)state.notes[i].dossierId='';}
-      state.dossiers=state.dossiers.filter(function(x){return x.id!==id;});
-      if(state.page==='dossier'&&state.detailId===id){navGo('dossiers','');}
-      save();toast('Dossier supprimé');render();
-    }
+  else if(a==='item-del'){
+    // v5.15 : croix rouge ✕ en bout de ligne et sur les cartes Kanban
+    var kd15=el.getAttribute('data-kind');
+    if(kd15==='dossier')delDossier(id);
+    else if(kd15==='tache')delTache(id);
+    else if(kd15==='note')delNote(id);
+    else if(kd15==='doc')delDoc(id);
   }
-  else if(a==='del-tache'){
-    var t2=findTache(id);
-    if(t2&&confirm('Supprimer la tâche « '+t2.titre+' » ?')){
-      var j;
-      for(j=0;j<state.notes.length;j++){if(state.notes[j].tacheId===id)state.notes[j].tacheId='';}
-      state.taches=state.taches.filter(function(x){return x.id!==id;});
-      save();closeModal();toast('Tâche supprimée');render();
-    }
-  }
-  else if(a==='del-note'){
-    var n=findNote(id);
-    if(n&&confirm('Supprimer la note « '+n.titre+' » ?')){
-      state.notes=state.notes.filter(function(x){return x.id!==id;});
-      if(state.page==='note'&&state.detailId===id){navGo('notes','');}
-      save();toast('Note supprimée');render();
-    }
-  }
+  else if(a==='del-dossier'){delDossier(id);}
+  else if(a==='del-tache'){delTache(id);}
+  else if(a==='del-note'){delNote(id);}
   else if(a==='pin-note'){var n2=findNote(id);if(n2){n2.epinglee=!n2.epinglee;save();render();}}
   else if(a==='open-export'){modalExport();}
   else if(a==='open-help'){modalHelp();}
@@ -3913,17 +3951,7 @@ document.addEventListener('click',function(ev){
       x2.maj=today();save();modalLinkDoc(did2);render();
     }
   }
-  else if(a==='del-doc'){
-    var x3=findDoc(id);
-    if(x3&&confirm('Supprimer le document « '+x3.nom+' » ?\nSes notes seront conservées mais détachées.')){
-      if(x3.stocke){idbDel(x3.id)['catch'](function(){});}
-      var i3;
-      for(i3=0;i3<state.notes.length;i3++){if(state.notes[i3].docId===id)state.notes[i3].docId='';}
-      state.docs=state.docs.filter(function(y){return y.id!==id;});
-      if(state.page==='doc'&&state.detailId===id){navGo('docs','');}
-      save();toast('Document supprimé');render();
-    }
-  }
+  else if(a==='del-doc'){delDoc(id);}
   else if(a==='doc-open'){
     var x4=findDoc(id);
     if(x4&&x4.stocke){
