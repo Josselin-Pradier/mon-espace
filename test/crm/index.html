@@ -200,6 +200,15 @@
   .mc-tot-bar b { font-size: 14px; }
   .mc-add-line { margin-top: 8px; }
   .mc-recap { border-radius: 10px; padding: 9px 12px; font-size: 12px; line-height: 1.5; background: #f8fafc; border: 1px dashed #cbd5e1; color: #475569; margin-top: 10px; }
+  .ac-box { position: relative; }
+  .ac-box .ac-inp { padding-right: 26px; }
+  .ac-x { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); border: 0; background: transparent; color: #94a3b8; cursor: pointer; font-size: 12px; padding: 3px 5px; border-radius: 6px; }
+  .ac-x:hover { color: #475569; background: #f1f5f9; }
+  .ac-list { position: absolute; z-index: 60; top: calc(100% - 2px); left: 0; right: 0; background: #fff; border: 1px solid #cbd5e1; border-radius: 8px; box-shadow: 0 10px 26px rgba(15,23,42,.14); max-height: 190px; overflow: auto; }
+  .ac-opt { padding: 7px 10px; font-size: 13px; cursor: pointer; }
+  .ac-opt:hover { background: #f1f5f9; }
+  .ac-empty { padding: 7px 10px; font-size: 12.5px; color: #94a3b8; }
+  .su-exist { background: #fffbeb; border: 1px solid #fcd34d; border-radius: 10px; padding: 8px 12px; font-size: 12px; line-height: 1.6; }
   .mc-recap b { color: #1e293b; }
 
   @media (max-width: 640px) { .form-grid { grid-template-columns: 1fr; } .stats-table { display: block; overflow-x: auto; } .mectype-card { min-width: 100%; } }
@@ -642,6 +651,7 @@ function mecMethodNote() {
     + '<li>🎁 <b>En nature</b> : don de biens (matériel, locaux…) — détaillez le tableau <b>produit / qté / unité / valorisation unitaire</b> : le total se reporte dans le montant. C&#39;est une <b>estimation</b>, pas de l&#39;argent encaissé.</li>'
     + '<li>🧠 <b>De compétence</b> : mise à disposition de personnel — chaque poste se valorise en <b>nb de personnes × heures/pers. × coût horaire</b> (tableau dédié, total automatique).</li>'
     + '<li>Le badge <b>💶 Cash</b> ne compte que le mécénat financier ; <b>📦🧠 Valorisé non-cash</b> agrège nature + compétence. Ces estimations <b>ne doivent pas être additionnées au budget réel</b> (elles ne sont pas de l&#39;argent encaissé).</li>'
+    + '<li>📉 <b>Défiscalisation</b> : un don d&#39;entreprise à une cause d&#39;intérêt général ouvre droit à une réduction d&#39;impôt de <b>60 %</b> du don (plafond : 20 000 € ou 0,5 % du chiffre d&#39;affaires si inférieur, selon la loi française) — le badge <b>📉 Défisc. 60 %</b> estime l&#39;économie d&#39;impôt, le coût réel restant étant d&#39;environ 40 %.</li>'
     + '</ul></details>';
 }
 
@@ -1399,12 +1409,19 @@ function viewDetail() {
       + '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;align-items:center">' + mecTotBadges
       + '<span class="badge b-emerald" style="margin-left:auto">💶 Cash : <b>' + fmtE(mecCash(mecList)) + '</b></span>'
       + '<span class="badge b-amber">📦🧠 Valorisé non-cash : <b>' + fmtE(mecValorise(mecList)) + '</b></span>'
-      + '<span class="badge">Total : <b>' + fmtE(mecSum) + '</b></span></div>';
+      + '<span class="badge">Total : <b>' + fmtE(mecSum) + '</b></span>'
+      + '<span class="badge b-sky">📉 Défisc. 60 % : <b>' + fmtE(Math.round(mecSum * 0.6)) + '</b></span></div>';
   }
 
   return '<div>'
     + '<div class="row between" style="margin-bottom:16px">'
     + '<button class="btn" data-act="goto" data-page="orgs">← Retour aux établissements</button>'
+    + (meBridge()
+      ? '<span style="display:flex;gap:8px;flex-wrap:wrap">'
+        + '<button class="btn" data-act="me-task" data-id="' + org.id + '" title="Créer une tâche de relance dans Mon Espace">➕ Tâche Mon Espace</button>'
+        + '<button class="btn" data-act="me-dossier" data-id="' + org.id + '" title="Ouvrir / créer le dossier de cet établissement dans Mon Espace">📁 Dossier Mon Espace</button>'
+      + '</span>'
+      : "")
     + '<button class="btn danger" data-act="delete-org" data-id="' + org.id + '">Supprimer l&#39;établissement</button>'
     + '</div>'
     + '<div class="card pad" style="padding:22px">'
@@ -1649,8 +1666,10 @@ function mcRecapHtml(orgId) {
     var tot = mecTotal(list, t.value);
     return '<span title="' + t.label + '">' + t.icon + " " + fmtE(tot) + "</span>";
   });
+  var suTotAll = mecCash(list) + mecValorise(list);
   return "📊 <b>Soutien déjà enregistré avec cet établissement :</b> " + parts.join(" · ")
-    + " — soit <b>" + fmtE(mecCash(list)) + "</b> en cash (argent réel) et <b>" + fmtE(mecValorise(list)) + "</b> valorisé non-cash, pour un total de <b>" + fmtE(mecCash(list) + mecValorise(list)) + "</b>.";
+    + " — soit <b>" + fmtE(mecCash(list)) + "</b> en cash (argent réel) et <b>" + fmtE(mecValorise(list)) + "</b> valorisé non-cash, pour un total de <b>" + fmtE(suTotAll) + "</b>."
+    + " Défiscalisation estimée pour l&#39;entreprise (60 %) : <b>" + fmtE(Math.round(suTotAll * 0.6)) + "</b> (coût réel restant ≈ <b>" + fmtE(suTotAll - Math.round(suTotAll * 0.6)) + "</b>).";
 }
 function mcRowHasData(r) {
   if (!r) return false;
@@ -1772,6 +1791,54 @@ function mcNatSummary(rows) {
   return rows.map(function (r) { return (r.qte ? r.qte + (r.unite ? " " + r.unite : "") + " " : "") + (r.libelle || "don") + (num(r.valU) > 0 ? " (" + fmtE(r.qte * r.valU) + ")" : ""); }).join(" + ");
 }
 
+/* ===== v4.3 : autocomplétion (remplace les selects longs — modèle Mon Espace) ===== */
+var AC_DATA = {};
+var AC_LAST = {};
+function normAc(s) { return String(s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""); }
+function acSelHtml(id, items, selId, ph) {
+  AC_DATA[id] = items || [];
+  var sel = items.filter(function (it) { return it.id === selId; })[0];
+  var lbl = sel ? sel.label : "";
+  return '<div class="ac-box" data-acbox="' + id + '">'
+    + '<input type="hidden" id="' + id + '" value="' + esc(selId || "") + '"/>'
+    + '<input class="ac-inp" id="' + id + '-inp" data-ac="' + id + '" autocomplete="off" placeholder="' + esc(ph || "Tapez pour rechercher…") + '" value="' + esc(lbl) + '" style="width:100%"/>'
+    + '<button type="button" class="ac-x" data-acx="' + id + '" title="Vider la sélection">✕</button>'
+    + '<div class="ac-list" id="' + id + '-list" style="display:none"></div>'
+    + '</div>';
+}
+function acListRender(id, q) {
+  var el = document.getElementById(id + "-list");
+  if (!el) return;
+  var nq = normAc(q);
+  var items = AC_DATA[id] || [];
+  var res = items.filter(function (it) { return !nq || normAc(it.label).indexOf(nq) >= 0 || normAc(it.id).indexOf(nq) >= 0; }).slice(0, 8);
+  AC_LAST[id] = res;
+  el.innerHTML = res.length
+    ? res.map(function (it) { return '<div class="ac-opt" data-acp="' + id + '" data-acidv="' + esc(it.id) + '" data-aclbl="' + esc(it.label) + '">' + esc(it.label) + '</div>'; }).join("")
+    : '<div class="ac-empty">Aucun résultat</div>';
+  el.style.display = res.length || nq ? "block" : "none";
+}
+function acPick(id, val, lbl) {
+  var h = document.getElementById(id);
+  if (h) h.value = val;
+  var inp = document.getElementById(id + "-inp");
+  if (inp) inp.value = lbl;
+  var list = document.getElementById(id + "-list");
+  if (list) { list.innerHTML = ""; list.style.display = "none"; }
+  AC_LAST[id] = [];
+  if (id === "m_mcorg") { var rec = document.getElementById("mc-recap"); if (rec) rec.innerHTML = mcRecapHtml(val); }
+}
+function acCloseAll() { for (var k in AC_DATA) { var l = document.getElementById(k + "-list"); if (l) l.style.display = "none"; } }
+
+/* ===== v4.3 : pont Mon Espace (iframe même origine) ===== */
+function meBridge() {
+  try { return !!(window.parent && window.parent !== window && window.parent.__espaceCrmBridge); } catch (e) { return false; }
+}
+function meBridgeCall(data) {
+  try { if (meBridge()) return window.parent.__espaceCrmBridge(data); } catch (e) {}
+  return null;
+}
+
 function fld(label, inner) {
   return '<label class="fld"><span>' + label + '</span>' + inner + '</label>';
 }
@@ -1815,12 +1882,21 @@ function viewModal() {
 
   if (m.type === "suiviInvite") {
     title = "🤝 Programmer un suivi de relation ?";
+    var suOrg0 = org || null;
+    var suEx = (suOrg0 && suOrg0.alertes ? suOrg0.alertes : []).filter(function (a) { return a && a.date; });
+    var suExHtml = suEx.length
+      ? '<div class="full"><div class="su-exist"><b>📋 Rappels déjà programmés pour ' + esc(suOrg0.nom) + ' (' + suEx.length + ') :</b><br/>'
+        + suEx.map(function (a) { return '<span class="badge" style="background:#fef3c7;color:#92400e;margin:2px 3px 2px 0">' + formatDate(a.date) + ' — ' + esc(a.libelle || "rappel") + '</span>'; }).join("")
+        + '<br/><span style="font-size:11.5px;color:#b45309">Choisissez une date libre pour éviter les doublons — la date saisie ci-dessous vous signalera si un rappel existe déjà.</span></div></div>'
+      : "";
     body = '<form id="modal-form"><div class="form-grid">'
       + fld("Établissement", '<span style="font-weight:600">' + esc(org ? org.nom : "—") + '</span>')
       + '<div class="full">' + fld("Libellé du rappel *", '<input id="m_sulib" required value="' + esc(m.libelle || "") + '"/>') + '</div>'
-      + fld("Échéance", '<select id="m_sumois">' + [1, 3, 6, 12].map(function (mm) { return '<option value="' + mm + '"' + (m.mois === mm ? " selected" : "") + '>dans ' + mm + ' mois — ' + formatDate(addMonths(today(), mm)) + '</option>'; }).join("") + '</select>')
+      + fld("Échéance (mois)", '<select id="m_sumois">' + [1, 3, 6, 12].map(function (mm) { return '<option value="' + mm + '"' + (m.mois === mm ? " selected" : "") + '>dans ' + mm + ' mois — ' + formatDate(addMonths(today(), mm)) + '</option>'; }).join("") + '</select>')
+      + fld("Ou date libre", '<input id="m_sudate" type="date"/>')
+      + suExHtml
       + '<div class="full">' + fld("Notes / contexte", '<textarea id="m_sunotes" rows="3">' + esc(m.notes || "") + '</textarea>') + '</div>'
-      + '</div><p style="font-size:11.5px;color:#64748b;margin:10px 0 0">Ce rappel ira dans les Alertes &amp; l&#39;Agenda du CRM (type « Suivi de relation »). Modifiable ou supprimable comme toute alerte — rien n&#39;est envoyé automatiquement.</p>'
+      + '</div><p style="font-size:11.5px;color:#64748b;margin:10px 0 0">La <b>date libre prime</b> sur l&#39;échéance en mois. Ce rappel ira dans les Alertes &amp; l&#39;Agenda du CRM (type « Suivi de relation »). Modifiable ou supprimable comme toute alerte — rien n&#39;est envoyé automatiquement.</p>'
       + '<div class="modal-foot"><button type="button" class="btn" data-act="close-modal">Non merci</button>'
       + '<button type="submit" class="btn primary">＋ Programmer le suivi</button></div></form>';
   }
@@ -1937,7 +2013,7 @@ function viewModal() {
   if (m.type === "alert") {
     var a0 = m.alertId && org ? (org.alertes || []).find(function (x) { return x.id === m.alertId; }) : null;
     title = a0 ? "Modifier l'alerte" : "Ajouter une alerte / un rappel";
-    var alOrgPick = org ? "" : fld("Établissement concerné *", '<select id="m_alorg" required><option value="">— Choisir un établissement —</option>' + state.orgs.map(function (o) { return '<option value="' + o.id + '">' + esc(o.nom) + '</option>'; }).join("") + '</select>');
+    var alOrgPick = org ? "" : fld("Établissement concerné *", acSelHtml("m_alorg", [{ id: "", label: "— Choisir un établissement —" }].concat(state.orgs.map(function (o) { return { id: o.id, label: o.nom }; })), "", "Tapez le nom de l&#39;établissement…"));
     body = '<form id="modal-form"><div class="form-grid">'
       + (alOrgPick ? '<div class="full">' + alOrgPick + '</div>' : "")
       + fld("Libellé de l'alerte *", '<input id="m_alib" required value="' + esc(a0 ? a0.libelle : m.presetLibelle || "") + '" placeholder="Ex. Relancer sur le dossier, appeler pour…"/>')
@@ -1952,7 +2028,7 @@ function viewModal() {
     var pjA = m.projetId && org ? findProjet(org, m.projetId) : null;
     var aap0 = (pjA && pjA.aap) || {};
     title = pjA ? "AAP — " + org.nom + " · " + (pjA.nom || "projet") : "Ajouter un AAP";
-    var pjSelect = pjA ? "" : fld("Projet concerné *", '<select id="m_aapPj" required><option value="">— Choisir un projet —</option>' + allProjets().map(function (it) { return '<option value="' + it.orgId + "|" + it.projet.id + '">' + esc(it.orgNom + " — " + (it.projet.nom || "projet")) + '</option>'; }).join("") + '</select>');
+    var pjSelect = pjA ? "" : fld("Projet concerné *", acSelHtml("m_aapPj", [{ id: "", label: "— Choisir un projet —" }].concat(allProjets().map(function (it) { return { id: it.orgId + "|" + it.projet.id, label: it.orgNom + " — " + (it.projet.nom || "projet") }; })), "", "Tapez le nom du projet…"));
     body = '<form id="modal-form"><div class="form-grid">'
       + (pjSelect ? '<div class="full">' + pjSelect + '</div>' : "")
       + fld("Nom de l'AAP", '<input id="m_aapNom" value="' + esc(aap0.nom || "") + '"/>')
@@ -1997,20 +2073,20 @@ function viewModal() {
     }).join("");
     var curOrg = l0 ? l0.orgId || "" : "";
     var contribIds = pjL ? (pjL.contributeurs || []) : [];
-    var orgOpts = '<option value="">—</option>';
+    var lorgItems = [{ id: "", label: "— (aucun)" }];
     [org ? org.id : ""].concat(contribIds).filter(Boolean).forEach(function (cid) {
       var co = findOrg(cid);
-      if (co) orgOpts += '<option value="' + co.id + '"' + (curOrg === co.id ? " selected" : "") + '>' + esc(co.nom) + (org && cid === org.id ? " (porteur)" : " (co-financeur)") + '</option>';
+      if (co) lorgItems.push({ id: co.id, label: co.nom + (org && cid === org.id ? " (porteur)" : " (co-financeur)") });
     });
     state.orgs.forEach(function (o2) {
       if (org && o2.id === org.id) return;
       if (contribIds.indexOf(o2.id) >= 0) return;
-      orgOpts += '<option value="' + o2.id + '"' + (curOrg === o2.id ? " selected" : "") + '>' + esc(o2.nom) + '</option>';
+      lorgItems.push({ id: o2.id, label: o2.nom });
     });
     body = '<form id="modal-form"><div class="form-grid">'
       + fld("Intitulé de la source *", '<select id="m_lsrcsel">' + srcOpts + '<option value="__custom"' + (SOURCES_FIN.indexOf(curSrc) < 0 ? " selected" : "") + '>Autre (à préciser)…</option></select>')
       + fld("Précision / nom exact *", '<input id="m_lsrc" required value="' + esc(curSrc) + '" placeholder="Ex. Fonds région, Fonds propres LPO, Fonds mécène…"/>')
-      + fld("Établissement mécène (tous les établissements)", '<select id="m_lorg">' + orgOpts + '</select>')
+      + fld("Établissement mécène (tous les établissements)", acSelHtml("m_lorg", lorgItems, curOrg, "Tapez le nom de l&#39;établissement…"))
       + fld("Montant (€) *", '<input id="m_lmnt" type="number" step="0.01" min="0" required value="' + esc(l0 ? num(l0.montant) : "") + '"/>')
       + '</div><p style="font-size:11.5px;color:#64748b;margin:10px 0 0">Un établissement mécène choisi hors porteur et co-financeurs est <b>ajouté automatiquement</b> comme co-financeur du projet (carte « Établissements impliqués »). Un intitulé prédéfini remplit le champ « Précision », ajustez si besoin.</p>'
       + '<div class="modal-foot"><button type="button" class="btn" data-act="close-modal">Annuler</button>'
@@ -2036,14 +2112,15 @@ function viewModal() {
         if (cid && !seenO[cid]) { seenO[cid] = 1; mcOrgList.push({ id: cid, tag: (org && cid === org.id) ? " (porteur)" : " (co-financeur)" }); }
       });
       state.orgs.forEach(function (o2) { if (!seenO[o2.id]) { seenO[o2.id] = 1; mcOrgList.push({ id: o2.id, tag: "" }); } });
-      mcOrgSel = fld("Établissement mécène *", '<select id="m_mcorg">' + mcOrgList.map(function (oo) { var co2 = findOrg(oo.id); return co2 ? '<option value="' + co2.id + '"' + (co2.id === (org ? org.id : "") ? " selected" : "") + '>' + esc(co2.nom) + oo.tag + '</option>' : ""; }).join("") + '</select>');
+      var mcOrgItems = mcOrgList.map(function (oo) { var co2 = findOrg(oo.id); return co2 ? { id: co2.id, label: co2.nom + oo.tag } : null; }).filter(Boolean);
+      mcOrgSel = fld("Établissement mécène *", acSelHtml("m_mcorg", mcOrgItems, org ? org.id : "", "Tapez le nom de l&#39;établissement mécène…"));
     }
     var mcPjSel = "";
     if (!m.fromProjet && org && (org.projets || []).length > 0) {
       var pjIds = org.projets.map(function (pp) { return pp.id; });
-      var optsPj = '<option value="">— aucun / non lié à un projet</option>' + org.projets.map(function (pp) { return '<option value="' + pp.id + '"' + (mc0 && mc0.projetId === pp.id ? " selected" : "") + '>' + esc(pp.nom || "Projet") + '</option>'; }).join("");
-      if (mc0 && mc0.projetId && pjIds.indexOf(mc0.projetId) < 0) { var gp0 = findProjetGlobal(mc0.projetId); if (gp0) optsPj += '<option value="' + gp0.projet.id + '" selected>' + esc(gp0.projet.nom || "Projet") + ' (' + esc(gp0.orgNom) + ')</option>'; }
-      mcPjSel = fld("Projet concerné (optionnel)", '<select id="m_mcproj">' + optsPj + '</select>');
+      var mcPjItems = [{ id: "", label: "— aucun / non lié à un projet" }].concat(org.projets.map(function (pp) { return { id: pp.id, label: pp.nom || "Projet" }; }));
+      if (mc0 && mc0.projetId && pjIds.indexOf(mc0.projetId) < 0) { var gp0 = findProjetGlobal(mc0.projetId); if (gp0) mcPjItems.push({ id: gp0.projet.id, label: (gp0.projet.nom || "Projet") + " (" + gp0.orgNom + ")" }); }
+      mcPjSel = fld("Projet concerné (optionnel)", acSelHtml("m_mcproj", mcPjItems, mc0 ? mc0.projetId || "" : "", "Tapez le nom du projet…"));
     }
     body = '<form id="modal-form">'
       + '<input type="hidden" id="m_mctype" value="' + mcTy + '"/>'
@@ -2088,11 +2165,11 @@ function viewModal() {
     var cOpts = state.orgs.filter(function (o2) {
       return o2.id !== (org ? org.id : "") && !(pjC && (pjC.contributeurs || []).indexOf(o2.id) >= 0);
     }).map(function (o2) {
-      return '<option value="' + o2.id + '">' + esc(o2.nom) + '</option>';
-    }).join("");
-    body = pjC && cOpts
+      return { id: o2.id, label: o2.nom };
+    });
+    body = pjC && cOpts.length
       ? '<form id="modal-form"><div class="form-grid">'
-        + '<div class="full">' + fld("Établissement *", '<select id="m_corg" required>' + cOpts + '</select>') + '</div>'
+        + '<div class="full">' + fld("Établissement *", acSelHtml("m_corg", cOpts, "", "Tapez le nom de l&#39;établissement…")) + '</div>'
         + '</div><p style="font-size:11.5px;color:#64748b;margin:10px 0 0">L&#39;établissement sélectionné apparaîtra comme co-financeur du projet « ' + esc(pjC.nom || "Projet") + ' ». Son apport se précise ligne par ligne dans la carte Financement (champ « Établissement mécène »).</p>'
         + '<div class="modal-foot"><button type="button" class="btn" data-act="close-modal">Annuler</button>'
         + '<button type="submit" class="btn primary">Ajouter</button></div></form>'
@@ -2194,7 +2271,7 @@ function render() {
     + '</div></header>'
     + '<main class="wrap">' + content + '</main>'
     + viewModal()
-    + '<footer class="foot wrap">CRM Mécénat LPO · <b>v4.2-test</b> — les données sont enregistrées dans ce navigateur. Pensez à exporter régulièrement : bouton Export (sauvegarde JSON, CSV ou HTML tout-en-un) · bouton 🖨 Imprimer pour une version papier / PDF pour les réunions.</footer>';
+    + '<footer class="foot wrap">CRM Mécénat LPO · <b>v4.3-test</b> — les données sont enregistrées dans ce navigateur. Pensez à exporter régulièrement : bouton Export (sauvegarde JSON, CSV ou HTML tout-en-un) · bouton 🖨 Imprimer pour une version papier / PDF pour les réunions.</footer>';
 
   if (state.focusSearch) {
     var s = document.getElementById("search");
@@ -2214,6 +2291,20 @@ function readStatutsDraft() {
   });
 }
 
+/* ===== v4.3 : interactions autocomplétion ===== */
+document.addEventListener("click", function (e) {
+  var t = e.target;
+  if (!t || !t.getAttribute) return;
+  var acp = t.getAttribute("data-acp");
+  if (acp) { acPick(acp, t.getAttribute("data-acidv") || "", t.getAttribute("data-aclbl") || ""); return; }
+  var acx = t.getAttribute("data-acx");
+  if (acx) { acPick(acx, "", ""); return; }
+  var acIn = t.getAttribute("data-ac");
+  if (acIn) { acListRender(acIn, t.value || ""); return; }
+  var box = t.closest ? t.closest("[data-acbox]") : null;
+  if (!box) acCloseAll();
+});
+
 document.addEventListener("click", function (e) {
   var el = e.target.closest ? e.target.closest("[data-act]") : null;
   if (!el) return;
@@ -2226,6 +2317,8 @@ document.addEventListener("click", function (e) {
   else if (act === "open-org") setState({ page: "detail", detailId: id, projetId: null });
   else if (act === "open-projet") setState({ page: "projet", detailId: orgId, projetId: id });
   else if (act === "close-modal") closeModal();
+  else if (act === "me-task") { var meO = findOrg(id); if (meO) meBridgeCall({ type: "task", orgId: meO.id, nom: meO.nom }); }
+  else if (act === "me-dossier") { var meO2 = findOrg(id); if (meO2) meBridgeCall({ type: "dossier", orgId: meO2.id, nom: meO2.nom }); }
   else if (act === "mc-type") {
     var mt = el.getAttribute("data-type");
     var hin = document.getElementById("m_mctype");
@@ -2479,6 +2572,14 @@ document.addEventListener("click", function (e) {
 });
 
 document.addEventListener("input", function (e) {
+  if (e.target.getAttribute) {
+    var acIn = e.target.getAttribute("data-ac");
+    if (acIn) {
+      var acH = document.getElementById(acIn);
+      if (acH) acH.value = "";
+      acListRender(acIn, e.target.value || "");
+    }
+  }
   if (e.target.id === "search") {
     state.query = e.target.value;
     state.focusSearch = true;
@@ -2617,9 +2718,14 @@ document.addEventListener("submit", function (e) {
   else if (m.type === "suiviInvite") {
     var suLib = v("m_sulib");
     var suOrgId = m.orgId || "";
+    var suDateLibre = v("m_sudate");
+    var suDate = (suDateLibre && /^\d{4}-\d{2}-\d{2}$/.test(suDateLibre)) ? suDateLibre : addMonths(today(), num(v("m_sumois")) || 3);
     if (suLib && suOrgId && findOrg(suOrgId)) {
+      var suOrgExist = findOrg(suOrgId);
+      var suDup = (suOrgExist.alertes || []).some(function (a) { return a && a.date === suDate; });
+      if (suDup) alert("⚠️ Un rappel existe déjà à la date du " + formatDate(suDate) + " pour cet établissement. Il sera quand même créé — pensez à vérifier les Alertes pour éviter le doublon.");
       updateOrg(suOrgId, function (o) {
-        o.alertes = (o.alertes || []).concat([{ id: uid(), libelle: suLib, type: "suivi", date: addMonths(today(), num(v("m_sumois")) || 3), notes: v("m_sunotes"), faite: false }]);
+        o.alertes = (o.alertes || []).concat([{ id: uid(), libelle: suLib, type: "suivi", date: suDate, notes: v("m_sunotes"), faite: false }]);
         return o;
       });
     }
@@ -2838,6 +2944,23 @@ document.addEventListener("submit", function (e) {
 });
 
 /* ===================== Édition en direct (notes / description) ===================== */
+document.addEventListener("focus", function (e) {
+  if (e.target.getAttribute) {
+    var acIn = e.target.getAttribute("data-ac");
+    if (acIn) acListRender(acIn, e.target.value || "");
+  }
+}, true);
+document.addEventListener("keydown", function (e) {
+  if (!e.target || !e.target.getAttribute) return;
+  var acIn = e.target.getAttribute("data-ac");
+  if (!acIn) return;
+  if (e.key === "Enter") {
+    var last = AC_LAST[acIn] || [];
+    if (last.length) { acPick(acIn, last[0].id, last[0].label); e.preventDefault(); }
+  } else if (e.key === "Escape") {
+    acCloseAll();
+  }
+});
 document.addEventListener("focus", function (e) {
   var el = e.target.closest ? e.target.closest("[data-live]") : null;
   if (!el || el.getAttribute("data-ph") !== "1") return;
