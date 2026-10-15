@@ -208,6 +208,18 @@
   .ac-opt { padding: 7px 10px; font-size: 13px; cursor: pointer; }
   .ac-opt:hover { background: #f1f5f9; }
   .ac-empty { padding: 7px 10px; font-size: 12.5px; color: #94a3b8; }
+
+  /* v4.4 : colonne ⭐ Mon Espace (affichée quand le CRM est utilisé SEUL, hors iframe Mon Espace) */
+  .meqa-row { display: flex; gap: 16px; align-items: flex-start; }
+  .meqa { flex: 0 0 190px; width: 190px; position: sticky; top: 70px; }
+  .meqa.offq { flex: 0 0 42px; width: 42px; }
+  .meqa-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 8px 8px; font-size: 12.5px; }
+  .meqa-box h4 { margin: 0 0 6px; font-size: 13px; display: flex; justify-content: space-between; align-items: center; }
+  .meqa-link { display: block; font-size: 12px; font-weight: 600; color: #0369a1; text-decoration: none; margin-bottom: 4px; }
+  .meqa-sec { font-weight: 600; font-size: 12px; margin: 6px 0 3px; color: #475569; }
+  .meqa-it { padding: 4px 6px; border: 1px solid #e2e8f0; background: #fff; border-radius: 6px; margin-bottom: 3px; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .meqa-it:hover { background: #f1f5f9; }
+  .meqa-empty { color: #94a3b8; font-size: 12px; line-height: 1.5; margin: 4px 0; }
   .su-exist { background: #fffbeb; border: 1px solid #fcd34d; border-radius: 10px; padding: 8px 12px; font-size: 12px; line-height: 1.6; }
   .mc-recap b { color: #1e293b; }
 
@@ -1416,7 +1428,7 @@ function viewDetail() {
   return '<div>'
     + '<div class="row between" style="margin-bottom:16px">'
     + '<button class="btn" data-act="goto" data-page="orgs">← Retour aux établissements</button>'
-    + (meBridge()
+    + (true
       ? '<span style="display:flex;gap:8px;flex-wrap:wrap">'
         + '<button class="btn" data-act="me-task" data-id="' + org.id + '" title="Créer une tâche de relance dans Mon Espace">➕ Tâche Mon Espace</button>'
         + '<button class="btn" data-act="me-dossier" data-id="' + org.id + '" title="Ouvrir / créer le dossier de cet établissement dans Mon Espace">📁 Dossier Mon Espace</button>'
@@ -1837,6 +1849,63 @@ function meBridge() {
 function meBridgeCall(data) {
   try { if (meBridge()) return window.parent.__espaceCrmBridge(data); } catch (e) {}
   return null;
+}
+
+/* ===== v4.4 : passerelles Mon Espace en mode autonome (CRM ouvert seul, hors iframe) ===== */
+function meQaItems() {
+  var st = null;
+  try { st = JSON.parse(localStorage.getItem("gestion-dnt-v1") || "null"); } catch (e) { st = null; }
+  if (!st || !st.dossiers || !st.taches || !st.notes) return null;
+  return st;
+}
+function meQaWrap(content) {
+  var col = meQaHtml();
+  if (!col) return content;
+  return '<div class="meqa-row">' + col + '<div style="flex:1;min-width:0">' + content + '</div></div>';
+}
+function meQaHtml() {
+  if (meBridge()) return "";
+  var off = "";
+  try { off = localStorage.getItem("crm-mecenat-lpo-meqa") || ""; } catch (e) {}
+  if (off === "1") return '<aside class="meqa offq"><button class="btn sm" data-act="meqa-toggle" title="Ouvrir la colonne ⭐ Mon Espace">⭐</button></aside>';
+  var st = meQaItems();
+  if (!st) return '<aside class="meqa"><div class="meqa-box"><h4>⭐ Mon Espace</h4><p class="meqa-empty">Aucune donnée Mon Espace détectée dans ce navigateur. Ouvrez Mon Espace au moins une fois, épinglez des dossiers, tâches ou notes (📍 / 📌) : ils apparaîtront ici, cliquables.</p></div></aside>';
+  var h = '<aside class="meqa"><div class="meqa-box"><h4>⭐ Mon Espace <button class="btn sm" data-act="meqa-toggle" title="Masquer la colonne (le bouton ⭐ la rouvre)">–</button></h4>'
+    + '<a class="meqa-link" href="../" target="_blank" rel="noreferrer" title="Ouvrir Mon Espace dans un nouvel onglet">↗ Ouvrir Mon Espace</a>';
+  var d = [], t = [], n = [], i;
+  for (i = 0; i < st.dossiers.length; i++) { if (st.dossiers[i] && st.dossiers[i].epingle) d.push(st.dossiers[i]); }
+  for (i = 0; i < st.taches.length; i++) { if (st.taches[i] && st.taches[i].epingle) t.push(st.taches[i]); }
+  for (i = 0; i < st.notes.length; i++) { var nn = st.notes[i]; if (nn && nn.epinglee && !nn.archivee && !nn.capture) n.push(nn); }
+  if (d.length) { h += '<div class="meqa-sec">📌 Dossiers épinglés</div>'; for (i = 0; i < Math.min(d.length, 6); i++) h += '<div class="meqa-it" data-act="meqa-open" data-k="dos" data-id="' + esc(d[i].id) + '" title="Ouvrir ce dossier dans Mon Espace">📁 ' + esc(String(d[i].nom || "Dossier")) + '</div>'; }
+  if (t.length) { h += '<div class="meqa-sec">📌 Tâches épinglées</div>'; for (i = 0; i < Math.min(t.length, 8); i++) h += '<div class="meqa-it" data-act="meqa-open" data-k="tac" data-id="' + esc(t[i].id) + '" title="Ouvrir cette tâche dans Mon Espace">✅ ' + esc(String(t[i].titre || "Tâche")) + '</div>'; }
+  if (n.length) { h += '<div class="meqa-sec">📌 Notes épinglées</div>'; for (i = 0; i < Math.min(n.length, 6); i++) h += '<div class="meqa-it" data-act="meqa-open" data-k="not" data-id="' + esc(n[i].id) + '" title="Ouvrir cette note dans Mon Espace">📝 ' + esc(String(n[i].titre || "Note")) + '</div>'; }
+  if (!d.length && !t.length && !n.length) h += '<p class="meqa-empty">Épinglez des dossiers, tâches ou notes dans Mon Espace (📍 / 📌) : ils apparaîtront ici.</p>';
+  h += '</div></aside>';
+  return h;
+}
+function meStandaloneWrite(st) {
+  try { localStorage.setItem("gestion-dnt-v1", JSON.stringify(st)); return true; } catch (e) { alert("⚠️ Impossible d'enregistrer dans Mon Espace (stockage du navigateur plein ?). Faites de la place puis réessayez."); return false; }
+}
+function meStandaloneNoData() {
+  alert("Aucune donnée Mon Espace détectée dans ce navigateur. Ouvrez Mon Espace au moins une fois (https://josselin-pradier.github.io/mon-espace/) avant d'utiliser ce bouton.");
+}
+function meStandaloneTask(o) {
+  var st = meQaItems();
+  if (!st) { meStandaloneNoData(); return; }
+  var t = { id: uid(), titre: "Relancer — " + o.nom, statut: "a-faire", priorite: "normale", contexte: "pro", echeance: "", heure: "", dossierId: "", description: "Fiche CRM : " + o.nom + " — ouverte via le bouton 🤝 Fiche CRM (#org=" + o.id + ")", cree: today(), maj: today() };
+  st.taches.push(t);
+  if (meStandaloneWrite(st)) alert("✅ Tâche « " + t.titre + " » créée dans Mon Espace (onglet Tâches) — modifiable là-bas comme toute tâche.");
+}
+function meStandaloneDossier(o) {
+  var st = meQaItems();
+  if (!st) { meStandaloneNoData(); return; }
+  var rac = null, sub = null, i;
+  for (i = 0; i < st.dossiers.length; i++) { var x = st.dossiers[i]; if (x && x.nom === "Mécénat & partenariats" && (x.parentId || "") === "") { rac = x; break; } }
+  if (!rac) { rac = { id: uid(), parentId: "", nom: "Mécénat & partenariats", statut: "ouvert", contexte: "pro", categorie: "Financement", echeance: "", description: "Dossier de travail mécénat : fondations, entreprises partenaires, conventions à renouveler et contreparties.", epingle: true, cree: today(), maj: today() }; st.dossiers.push(rac); }
+  for (i = 0; i < st.dossiers.length; i++) { var y = st.dossiers[i]; if (y && y.nom === o.nom && (y.parentId || "") === rac.id) { sub = y; break; } }
+  if (!sub) { sub = { id: uid(), parentId: rac.id, nom: o.nom, statut: "ouvert", contexte: "pro", categorie: "", echeance: "", description: "Établissement du CRM Mécénat LPO (#org=" + o.id + ")", cree: today(), maj: today() }; st.dossiers.push(sub); }
+  if (!meStandaloneWrite(st)) return;
+  try { window.open("../#dos=" + encodeURIComponent(sub.id), "_blank"); } catch (e) {}
 }
 
 function fld(label, inner) {
@@ -2269,9 +2338,9 @@ function render() {
     + '<input type="file" id="file-import" accept="application/json" style="display:none"/>'
     + '</div>'
     + '</div></header>'
-    + '<main class="wrap">' + content + '</main>'
+    + '<main class="wrap">' + meQaWrap(content) + '</main>'
     + viewModal()
-    + '<footer class="foot wrap">CRM Mécénat LPO · <b>v4.3-test</b> — les données sont enregistrées dans ce navigateur. Pensez à exporter régulièrement : bouton Export (sauvegarde JSON, CSV ou HTML tout-en-un) · bouton 🖨 Imprimer pour une version papier / PDF pour les réunions.</footer>';
+    + '<footer class="foot wrap">CRM Mécénat LPO · <b>v4.4-test</b> — les données sont enregistrées dans ce navigateur. Pensez à exporter régulièrement : bouton Export (sauvegarde JSON, CSV ou HTML tout-en-un) · bouton 🖨 Imprimer pour une version papier / PDF pour les réunions.</footer>';
 
   if (state.focusSearch) {
     var s = document.getElementById("search");
@@ -2317,8 +2386,18 @@ document.addEventListener("click", function (e) {
   else if (act === "open-org") setState({ page: "detail", detailId: id, projetId: null });
   else if (act === "open-projet") setState({ page: "projet", detailId: orgId, projetId: id });
   else if (act === "close-modal") closeModal();
-  else if (act === "me-task") { var meO = findOrg(id); if (meO) meBridgeCall({ type: "task", orgId: meO.id, nom: meO.nom }); }
-  else if (act === "me-dossier") { var meO2 = findOrg(id); if (meO2) meBridgeCall({ type: "dossier", orgId: meO2.id, nom: meO2.nom }); }
+  else if (act === "me-task") { var meO = findOrg(id); if (meO) { if (meBridge()) meBridgeCall({ type: "task", orgId: meO.id, nom: meO.nom }); else meStandaloneTask(meO); } }
+  else if (act === "me-dossier") { var meO2 = findOrg(id); if (meO2) { if (meBridge()) meBridgeCall({ type: "dossier", orgId: meO2.id, nom: meO2.nom }); else meStandaloneDossier(meO2); } }
+  else if (act === "meqa-toggle") {
+    var qaCur = "";
+    try { qaCur = localStorage.getItem("crm-mecenat-lpo-meqa") || ""; } catch (e) {}
+    try { localStorage.setItem("crm-mecenat-lpo-meqa", qaCur === "1" ? "0" : "1"); } catch (e) {}
+    render();
+  }
+  else if (act === "meqa-open") {
+    var qaK = el.getAttribute("data-k"), qaId = el.getAttribute("data-id");
+    try { window.open("../#" + qaK + "=" + encodeURIComponent(qaId || ""), "_blank"); } catch (e) {}
+  }
   else if (act === "mc-type") {
     var mt = el.getAttribute("data-type");
     var hin = document.getElementById("m_mctype");
