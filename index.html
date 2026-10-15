@@ -284,7 +284,7 @@ input[type=file]{padding:5px;font-size:12px}
     <a class="snav" data-act="open-listes">⚙️ Mes listes</a>
     <a class="snav" data-act="open-export">💾 Export &amp; sauvegarde</a>
     <a class="snav" data-act="open-help">❓ Aide &amp; confidentialité</a>
-    <div class="side-note">Mon Espace v5.17 — 100 % local par défaut. Connexion Outlook et synchro chiffrée (page ☁️) optionnelles — vous décidez.</div>
+    <div class="side-note">Mon Espace v5.18 — 100 % local par défaut. Connexion Outlook et synchro chiffrée (page ☁️) optionnelles — vous décidez.</div>
   </div>
 </aside>
 <aside id="qa-root" class="off"></aside>
@@ -313,6 +313,8 @@ input[type=file]{padding:5px;font-size:12px}
 
 // ===== Clés & constantes =====
 var STORE_KEY='gestion-dnt-v1';
+// v5.17 : drapeau de la version de TEST (déployée sous /test/) — bandeau + version distincte
+var TESTMODE=false;
 var PREFS_KEY='gestion-dnt-prefs-v1';
 var EMBED_KEY='__ESPACE_EMBEDDED_DATA__';
 var VERSION=5;
@@ -413,6 +415,15 @@ var state={
   filtres:{dos:{q:'',statut:'',ctx:''},ta:{q:'',statut:'',prio:'',ctx:''},no:{q:'',tag:'',ctx:'',tr:''},dc:{q:'',type:'',role:'',dos:''}}
 };
 var nav={stack:[],index:-1};
+// v5.18 : navigation interne du CRM (bouton ← reste dans le CRM)
+var crmNav={stack:[],index:-1};
+function crmNavGo(pg){
+  pg=String(pg||'dash');
+  if(crmNav.stack[crmNav.index]===pg)return;
+  crmNav.stack=crmNav.stack.slice(0,crmNav.index+1);
+  crmNav.stack.push(pg);
+  crmNav.index=crmNav.stack.length-1;
+}
 
 // ===== Helpers génériques =====
 function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
@@ -1112,6 +1123,8 @@ function render(){
   else h=page404();
   try{
     if(location.protocol==='file:'){h='<div class="banner warn" style="margin:0 0 14px">⚠️ <b>Vous utilisez le fichier téléchargé</b> (adresse file://…). Les données enregistrées ici sont <b>séparées</b> de celles du site en ligne. Si un élément créé n’apparaît pas, il a probablement été créé dans l’autre version. Ouvrez plutôt le site : <a href="https://josselin-pradier.github.io/mon-espace/" rel="noopener">josselin-pradier.github.io/mon-espace</a>.</div>'+h;}
+    // v5.17 : bandeau version de TEST
+    if(TESTMODE){h='<div class="banner warn" style="margin:0 0 14px">🧪 <b>Version de TEST (v5.19-test)</b> — nouvelles fonctions en essai, sans toucher au site normal. ⚠️ Vos données sont <b>les mêmes</b> que la version normale (même navigateur) : faites une <b>💾 Export &amp; sauvegarde</b> avant de jouer avec. <a href="https://josselin-pradier.github.io/mon-espace/" rel="noopener">Revenir au site normal →</a></div>'+h;}
   }catch(efile){}
   main.innerHTML=h;
   updateSidebar();updateTopbar();
@@ -1139,13 +1152,22 @@ function updateSidebar(){
 }
 function updateTopbar(){
   var b=document.getElementById('btn-back'),f=document.getElementById('btn-fwd');
+  if(state.page==='crm'){
+    // v5.18 : dans le CRM, ← / → parcourent l'historique des pages CRM
+    if(b){b.disabled=(crmNav.index<=0);b.title=(crmNav.index>0)?'Page précédente du CRM':'Retour à Mon Espace';}
+    if(f){f.disabled=(crmNav.index>=crmNav.stack.length-1);f.title='Page suivante du CRM';}
+    return;
+  }
   if(b)b.disabled=(nav.index<=0);
   if(f)f.disabled=(nav.index>=nav.stack.length-1);
 }
 function pageCrm(){
-  var h='<div class="content"><div class="page-head"><h1 class="page-title">🤝 CRM Mécénat LPO</h1></div>';
-  h+='<div class="banner info">Le CRM s’ouvre ci-dessous. Utilisez le <b>menu 🤝 à gauche</b> pour naviguer dans ses sections (Tableau de bord, Établissements, Projets, AAP, Alertes, Stats) — ou naviguez directement à l’intérieur. Ses données sont <b>locales à ce navigateur</b> (séparées du reste de Mon Espace) avec leurs propres exports à l’intérieur. Version pleine page : <a href="https://josselin-pradier.github.io/mon-espace/crm/" target="_blank" rel="noopener">ouvrir le CRM seul</a>.</div>';
-  h+='<iframe id="crm-frame" src="https://josselin-pradier.github.io/mon-espace/crm/#'+encodeURIComponent(state.crmPage||'dash')+'" title="CRM Mécénat LPO" style="width:100%;height:calc(100vh - 230px);min-height:480px;border:1px solid var(--line);border-radius:12px;background:#fff"></iframe>';
+  var full=!!getPrefs().crmFull;
+  var h='<div class="content"><div class="page-head"><div><h1 class="page-title">🤝 CRM Mécénat LPO</h1></div>'
+   +'<div class="toolbar"><a class="btn ghost" href="https://josselin-pradier.github.io/mon-espace/crm/" target="_blank" rel="noopener" title="Ouvrir le CRM dans un onglet séparé">↗ Onglet</a>'
+   +'<button class="btn ghost" data-act="crm-full" title="'+(full?'Réafficher le bandeau d\u2019explications':'Afficher le CRM en pleine page : bandeau masqué, plus de hauteur — colonne ⭐ et menus conservés')+'">'+(full?'⤢ Réafficher le bandeau':'⛶ Pleine page')+'</button></div></div>';
+  if(!full)h+='<div class="banner info">Le CRM s’ouvre ci-dessous. Utilisez le <b>menu 🤝 à gauche</b> pour naviguer dans ses sections (Tableau de bord, Établissements, Projets, AAP, Alertes, Stats) — ou naviguez directement à l’intérieur. Ses données sont <b>locales à ce navigateur</b> (séparées du reste de Mon Espace) avec leurs propres exports à l’intérieur. Version pleine page : <a href="https://josselin-pradier.github.io/mon-espace/crm/" target="_blank" rel="noopener">ouvrir le CRM seul</a>.</div>';
+  h+='<iframe id="crm-frame" src="https://josselin-pradier.github.io/mon-espace/crm/#'+encodeURIComponent(state.crmPage||'dash')+'" title="CRM Mécénat LPO" style="width:100%;height:calc(100vh - '+(full?'150':'230')+'px);min-height:480px;border:1px solid var(--line);border-radius:12px;background:#fff"></iframe>';
   h+='</div>';
   return h;
 }
@@ -1536,6 +1558,10 @@ function renderQa(){
   for(i=qaCrm.length-1;i>=0;i--){if(!qaCrm[i].t)qaCrm.splice(i,1);}
   var crmOff=(p.crmQaOff===undefined)?true:!!p.crmQaOff;
   h+='<div class="qa-box qa-crm"><h4>🤝 CRM<button class="btn sm ghost" data-act="qa-crm-toggle" title="'+(crmOff?'Dérouler les fiches CRM récentes':'Replier')+'">'+(crmOff?'▸':'▾')+'</button></h4>';
+  // v5.18 : liens directs toujours visibles, même boîte repliée
+  h+='<div class="rr" data-act="crm-go" data-crm="dash" title="Tableau de bord du CRM">▦ Tableau de bord</div>';
+  h+='<div class="rr" data-act="crm-go" data-crm="orgs" title="Établissements du CRM">🏢 Établissements</div>';
+  h+='<div class="rr" data-act="crm-go" data-crm="alerts" title="Alertes &amp; rappels du CRM">🔔 Alertes CRM</div>';
   if(!crmOff){
     if(qaCrm.length){
       h+='<div class="qsec">Fiches récentes</div>';
@@ -1754,6 +1780,8 @@ function pageTache(id){
   h+='<div class="crumbs"><a class="chip" data-act="go" data-page="taches">← Tâches</a>';
   if(d)h+=' <a class="chip" data-act="open-dossier" data-id="'+d.id+'" data-drop="'+d.id+'" title="Ouvrir le dossier — ou glissez-y cette tâche pour la déplacer">📁 '+esc(d.nom)+'</a>';
   h+='</div>';
+  // v5.18 : tâche créée depuis le CRM (#org=…) → bouton retour vers la fiche CRM
+  var crmOrgLink=(t.description||'').match(/#org=([A-Za-z0-9_-]+)/);
   h+='<div class="page-head"><div><h1 class="page-title">✅ '+esc(t.titre)+'</h1><div class="badges">'
    +qw('tache',t.id,'statut',badgeTache(t.statut))
    +qw('tache',t.id,'prio',badgePrio(prioAff(t)))
@@ -1763,6 +1791,7 @@ function pageTache(id){
    +(t.epingle?'<span class="badge" style="background:#fef3c7;color:#92400e">📌 épinglée</span>':'')
    +'</div></div>'
    +'<div class="toolbar">'
+   +(crmOrgLink?'<button class="btn" data-act="crm-open" data-hash="org='+crmOrgLink[1]+'" data-id="'+crmOrgLink[1]+'" title="Ouvrir la fiche de cet établissement dans le CRM Mécénat">🤝 Fiche CRM</button>':'')
    +'<button class="btn" data-act="tache-toggle" data-id="'+t.id+'" title="Basculer fait / à faire">'+(done?'↩ À faire':'✓ Marquer fait')+'</button>'
    +'<button class="btn" data-act="new-note" data-ta="'+t.id+'"'+(d?' data-dos="'+d.id+'"':'')+' title="Créer une note rattachée à cette tâche">+ Note liée</button>'
    +'<button class="btn ghost" data-act="tac-pin" data-id="'+t.id+'">'+(t.epingle?'Détacher 📌':'Épingler 📌')+'</button>'
@@ -1970,6 +1999,36 @@ function crmDated(){
   }
   return out;
 }
+// ===== v5.18 : pont CRM → Mon Espace (le CRM intégré appelle window.parent.__espaceCrmBridge) =====
+window.__espaceCrmBridge=function(d){
+  try{
+    if(!d||!d.type)return 'ign';
+    if(d.type==='task'){
+      var bt={id:uid(),cree:today()};
+      bt.titre='Relancer — '+String(d.nom||'Établissement CRM');
+      bt.statut='a-faire';bt.priorite='normale';bt.contexte='pro';
+      bt.echeance='';bt.heure='';bt.dossierId='';
+      bt.description='Fiche CRM : '+String(d.nom||'')+' — ouverte via le bouton 🤝 Fiche CRM (#org='+String(d.orgId||'')+')';
+      bt.maj=today();
+      state.taches.push(bt);
+      save();
+      toast('Tâche « '+bt.titre+' » créée dans Mon Espace');
+      renderRemind();renderQa();
+      return 'ok';
+    }
+    if(d.type==='dossier'){
+      var rac=state.dossiers.filter(function(x){return x.nom==='Mécénat & partenariats'&&(x.parentId||'')==='';})[0];
+      if(!rac){rac={id:uid(),cree:today()};rac.parentId='';rac.nom='Mécénat & partenariats';rac.statut='ouvert';rac.contexte='pro';rac.categorie='Financement';rac.echeance='';rac.description='Dossier de travail mécénat créé depuis le CRM.';rac.epingle=true;rac.maj=today();state.dossiers.push(rac);}
+      var sub=state.dossiers.filter(function(x){return x.nom===String(d.nom||'')&&(x.parentId||'')===rac.id;})[0];
+      if(!sub){sub={id:uid(),cree:today()};sub.parentId=rac.id;sub.nom=String(d.nom||'Établissement CRM');sub.statut='ouvert';sub.contexte='pro';sub.categorie='';sub.echeance='';sub.description='Établissement du CRM Mécénat LPO (#org='+String(d.orgId||'')+')';sub.maj=today();state.dossiers.push(sub);toast('Dossier « '+sub.nom+' » créé dans Mécénat & partenariats');}
+      save();
+      navGo('dossier',sub.id);
+      render();renderRemind();renderQa();
+      return 'ok';
+    }
+  }catch(eB){return 'err';}
+  return 'ign';
+};
 function allDated(){
   var out=[],i;
   for(i=0;i<state.taches.length;i++){var t=state.taches[i];if(t.echeance)out.push({kind:'tache',id:t.id,date:t.echeance,heure:t.heure||'',titre:t.titre,prio:t.priorite,done:t.statut==='fait'});}
@@ -2741,6 +2800,8 @@ function modalHelp(){
    +'<p style="margin-top:8px"><b>Listes à cocher (v5.9)</b> — Dans une note, cochez « 🛒 Ajouter une liste à cocher » : un espace Liste apparaît sous le contenu, façon liste de courses — ajoutez des lignes, cochez-les, elles se barrent.</p>'
    +'<p style="margin-top:8px"><b>Glisser-déposer façon Explorateur (v5.9)</b> — Sur les listes Dossiers, Documents, Tâches et Notes, déplacez un élément : le haut d’une carte le place <b>avant</b>, le bas <b>après</b> (l’ordre devient « Personnalisé » automatiquement), le centre le range <b>dedans</b> (dossier) ou le déplace. L’onglet Dossiers n’affiche que les dossiers racine, comme l’Explorateur Windows.</p>'
    +'<p style="margin-top:8px"><b>Accès rapide (v5.9)</b> — Le panneau ⭐ est désormais fixe à gauche, juste après le menu. Réduisez-le avec « – », rouvrez-le avec le bouton ⭐ vertical : il liste vos dossiers, tâches et notes épinglés et vos derniers consultés.</p>'
+   +'<p style="margin-top:8px"><b>Nouveautés v5.18</b> — CRM ouvert seul (pleine page) : nouvelle colonne <b>⭐ Mon Espace</b> à gauche — dossiers, tâches et notes épinglés, cliquables (ils s\u2019ouvrent ici directement sur la bonne fiche grâce aux liens profonds) ; boutons « ➕ Tâche Mon Espace » et « 📁 Dossier Mon Espace » visibles aussi quand le CRM est ouvert seul (avant : uniquement intégré).</p>'
+   +'<p style="margin-top:8px"><b>Nouveautés v5.18 (suite)</b> — CRM : bouton ⛶ « Pleine page » (bandeau masqué, plus de hauteur — colonne ⭐ et menus conservés) · bouton ← dans le CRM : revenir à la <b>page précédente du CRM</b> (et → pour ré-avancer) au lieu de sortir vers Mon Espace · boîte 🤝 CRM de l’accès rapide : liens directs vers Tableau de bord, Établissements et Alertes · relances CRM (rappels, deadlines AAP) dans le panneau 🔔 · pont CRM → Mon Espace : boutons « ➕ Tâche Mon Espace » et « 📁 Dossier Mon Espace » sur les fiches CRM, bouton « 🤝 Fiche CRM » sur les tâches créées ainsi.</p>'
    +'<p style="margin-top:8px"><b>Nouveautés v5.17</b> — ⚙️ Mes listes devient une page dédiée : renommez (✎), ajoutez (＋), retirez ou restaurez (↩) toutes les valeurs des menus déroulants ; renommer ne touche jamais vos données existantes · panneau ⭐ Accès rapide : nouvelle boîte 🤝 CRM séparée, en dessous, repliable — vos dernières fiches CRM consultées y remontent · compactage vertical du panneau.</p>'
    +'<p style="margin-top:8px"><b>Nouveautés v5.16</b> — page dédiée pour chaque tâche : cliquer une tâche ouvre sa fiche complète (échéance, badges, description, notes et documents liés, documents du dossier parent, bouton + Note liée) au lieu du simple formulaire · « ✎ Modifier » ouvre le formulaire d’édition · section « 📁 Sous-dossiers » dans la fiche d’un dossier, avant les tâches · dans l’arborescence, le dossier principal du titre est cliquable.</p>'
    +'<p style="margin-top:8px"><b>Nouveautés v5.15</b> — croix rouge ✕ de suppression en bout de ligne à côté de ⧉ copier et ✂ couper (confirmation demandée, sauvegarde des liens détachés proprement) · boutons ⧉ / ✂ / ✕ désormais aussi sur les cartes en vue Kanban (dossiers, tâches, notes/captures, documents) · arborescence des dossiers avec lignes de branche (├─ └─ │) pour visualiser le fil de la hiérarchie · supprimer un dossier déplace ses sous-dossiers à la racine au lieu de les perdre de vue.</p>'
@@ -2883,6 +2944,15 @@ function remindItems(){
   for(i=0;i<dosSe.length;i++)items.push({grp:grp(daysUntil(dosSe[i].echeance)),kind:'dossier',id:dosSe[i].id,lab:'📁 '+dosSe[i].nom,sub:relEch(dosSe[i].echeance,false,''),date:dosSe[i].echeance});
   var noSe=state.notes.filter(function(n){return !n.traitee&&!n.archivee&&n.echeance&&daysUntil(n.echeance)>=0&&daysUntil(n.echeance)<=echSeuil7();});
   for(i=0;i<noSe.length;i++)items.push({grp:grp(daysUntil(noSe[i].echeance)),kind:'note',id:noSe[i].id,lab:(noSe[i].capture?'⚡ ':'📝 ')+noSe[i].titre,sub:relEch(noSe[i].echeance,false,''),date:noSe[i].echeance});
+  // v5.18 : relances CRM (rappels, deadlines AAP) dans le panneau 🔔
+  var crmRl=crmDated();
+  for(i=0;i<crmRl.length;i++){
+    var cr=crmRl[i];
+    if(cr.done)continue;
+    var crD=daysUntil(cr.date);
+    if(crD===null||crD>echSeuil7())continue;
+    items.push({grp:(crD<0?'late':(crD===0?'today':'soon')),kind:'crm',id:cr.id,lab:'🤝 '+String(cr.titre||'').replace(/^CRM\s—\s/,''),sub:relEch(cr.date,false,''),date:cr.date,hash:cr.crmHash});
+  }
   return items;
 }
 function remindSortPref(){var p=getPrefs();return (p.remindSort==='type')?'type':'date';}
@@ -2894,7 +2964,7 @@ function renderRemind(){
   if(p.remindOff||!items.length){root.innerHTML=(items.length?'<button class="btn sm remind-toggle" data-act="remind-toggle" title="Afficher le panneau des relances">🔔 '+items.length+'</button>':'');return;}
   var sortMode=remindSortPref();
   var ord={late:0,today:1,soon:2};
-  var kord={tache:0,dossier:1,note:2};
+  var kord={tache:0,dossier:1,note:2,crm:3};
   items.sort(function(a,b){
     if(sortMode==='type'){
       if(kord[a.kind]!==kord[b.kind])return kord[a.kind]-kord[b.kind];
@@ -2918,7 +2988,9 @@ function renderRemind(){
     var h2='',j;
     for(j=0;j<Math.min(list.length,15);j++){
       var cls=(list[j].grp==='late')?'late':'soon';
-      h2+='<div class="rr '+cls+'" data-act="open-'+list[j].kind+'" data-id="'+list[j].id+'" title="Ouvrir"><span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(list[j].lab)+'</span><span class="tiny muted" style="flex:0 0 auto">'+esc(list[j].sub)+'</span></div>';
+      // v5.18 : les relances CRM ouvrent la fiche dans le CRM (pas open-crm)
+      var rac=(list[j].kind==='crm')?'crm-open':('open-'+list[j].kind);
+      h2+='<div class="rr '+cls+'" data-act="'+rac+'" data-id="'+list[j].id+'"'+(list[j].kind==='crm'&&list[j].hash?' data-hash="'+esc(list[j].hash)+'"':'')+' title="Ouvrir"><span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(list[j].lab)+'</span><span class="tiny muted" style="flex:0 0 auto">'+esc(list[j].sub)+'</span></div>';
     }
     if(list.length>15)h2+='<div class="tiny muted" style="padding:2px 4px">+'+(list.length-15)+' autre(s)</div>';
     return h2;
@@ -3157,7 +3229,7 @@ function pageSynchro(){
   var h='<div class="content"><div class="page-head"><h1 class="page-title">☁️ Synchro multi-appareils</h1></div>';
   h+='<div class="banner info">Vos données sont <b>chiffrées de bout en bout</b> (AES-GCM 256 bits, clé dérivée de votre passphrase) avant tout envoi. Le serveur ne voit jamais le contenu, ni la passphrase — uniquement un email de compte.</div>';
   h+='<h2 class="sec-title">État</h2><div class="step">';
-  h+='<p>Version de l’appli : <b>v5.17</b></p>';
+  h+='<p>Version de l’appli : <b>v5.18</b></p>';
   h+='<p>Configuration : '+(sbReady()?'<b style="color:var(--ok)">complète ✓</b>':'<b>incomplète</b> — il manque : <b>'+sbMissing()+'</b>')+(c.email?' — compte : <b>'+esc(c.email)+'</b>':'')+'</p>';
   h+='<p>Dernière synchro : <b>'+(state.sb.last||'jamais')+'</b>'+(state.sb.busy?' (en cours…)':'')+(state.sb.err?' <span style="color:var(--danger)">⚠️ '+esc(state.sb.err)+'</span>':'')+'</p>';
   h+='<div class="toolbar" style="margin-top:8px">'
@@ -3472,7 +3544,7 @@ function pageOutlook(){
 
 // ===== PWA (installation en tant qu'application) =====
 var SW_SRC=[
-'var C="espace-cache-v20";',
+'var C="espace-cache-v21";',
 'self.addEventListener("install",function(e){self.skipWaiting();});',
 'self.addEventListener("activate",function(e){e.waitUntil(self.clients.claim());});',
 'self.addEventListener("fetch",function(e){',
@@ -3942,8 +4014,14 @@ document.addEventListener('click',function(ev){
     if(pg==='crm'){state._crmOpen=(state.page==='crm')?!state._crmOpen:true;}
     navGo(pg,'');render();
   }
-  else if(a==='nav-back'){navBack();render();}
-  else if(a==='nav-fwd'){navFwd();render();}
+  else if(a==='nav-back'){
+    if(state.page==='crm'&&crmNav.index>0){crmNav.index--;state.crmPage=crmNav.stack[crmNav.index];crmSetHash(state.crmPage);updateSidebar();updateTopbar();}
+    else{navBack();render();}
+  }
+  else if(a==='nav-fwd'){
+    if(state.page==='crm'&&crmNav.index<crmNav.stack.length-1){crmNav.index++;state.crmPage=crmNav.stack[crmNav.index];crmSetHash(state.crmPage);updateSidebar();updateTopbar();}
+    else{navFwd();render();}
+  }
   else if(a==='open-dossier'){var dd0=findDossier(id);if(dd0){dd0.ouvertLe=Date.now();qaTouch('dossier',id,dd0.nom);}navGo('dossier',id);render();renderRemind();}
   else if(a==='open-tache'){var tt0=findTache(id);if(tt0){tt0.ouvertLe=Date.now();qaTouch('tache',id,tt0.titre);}navGo('tache',id);render();}
   else if(a==='open-note'){var nn0=findNote(id);if(nn0){nn0.ouvertLe=Date.now();qaTouch('note',id,nn0.titre);}navGo('note',id);render();renderRemind();}
@@ -4159,12 +4237,14 @@ document.addEventListener('click',function(ev){
   else if(a==='crm-go'){
     if(state.page!=='crm')navGo('crm','');
     state.crmPage=el.getAttribute('data-crm')||'dash';
+    crmNavGo(state.crmPage);
     state._crmOpen=true;
     render();
   }
   else if(a==='crm-open'){
     if(state.page!=='crm')navGo('crm','');
     state.crmPage=el.getAttribute('data-hash')||'dash';
+    crmNavGo(state.crmPage);
     // v5.17 : fiche établissement consultée → remonte dans l'accès rapide CRM
     var hhC=String(el.getAttribute('data-hash')||'');
     try{
@@ -4172,6 +4252,15 @@ document.addEventListener('click',function(ev){
       if(mmC)qaTouchCrm(decodeURIComponent(mmC[1]));
     }catch(eC){}
     state._crmOpen=true;
+    render();
+  }
+  else if(a==='crm-full'){
+    // v5.18 : pleine page CRM — bandeau masqué, iframe agrandie (⭐ et menus conservés)
+    var pF=getPrefs();
+    pF.crmFull=!pF.crmFull;
+    setPrefs(pF);
+    var frF=document.getElementById('crm-frame');
+    if(frF)frF.remove();
     render();
   }
   else if(a==='qa-crm-toggle'){
@@ -4786,6 +4875,16 @@ function init(){
   state.docs=st.docs;
   state.exemple=st.exemple;
   navGo('dash','');
+  // v5.19 : liens profonds depuis le CRM autonome — #dos=<id> / #tac=<id> / #not=<id>
+  try{
+    var h7=String(location.hash||'').replace(/^#/,'');
+    var m7=h7.match(/^(dos|tac|not)=([A-Za-z0-9_-]+)/);
+    if(m7){
+      if(m7[1]==='dos'&&findDossier(m7[2]))navGo('dossier',m7[2]);
+      else if(m7[1]==='tac'&&findTache(m7[2]))navGo('tache',m7[2]);
+      else if(m7[1]==='not'&&findNote(m7[2]))navGo('note',m7[2]);
+    }
+  }catch(eH7){}
   render();
   msBoot();
   document.addEventListener('visibilitychange',function(){
