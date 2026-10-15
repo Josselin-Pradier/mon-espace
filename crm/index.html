@@ -165,7 +165,65 @@
     #print-area .p-table td { border-bottom: 1px solid #ddd; padding: 4px 6px; vertical-align: top; }
   }
 
-  @media (max-width: 640px) { .form-grid { grid-template-columns: 1fr; } .stats-table { display: block; overflow-x: auto; } }
+  /* Sélecteur de type de mécénat (v4.1) */
+  .mectype-cards { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 4px; }
+  .mectype-card { flex: 1; min-width: 140px; background: #fff; border: 2px solid #e2e8f0; border-radius: 12px; padding: 10px 12px; cursor: pointer; text-align: left; font: inherit; transition: border-color .15s, background .15s; }
+  .mectype-card:hover { border-color: #94a3b8; }
+  .mectype-card .mtc-ico { font-size: 20px; }
+  .mectype-card .mtc-lbl { display: block; font-weight: 700; font-size: 12.5px; margin-top: 3px; }
+  .mectype-card .mtc-desc { display: block; font-size: 11px; color: #64748b; margin-top: 3px; line-height: 1.4; }
+  .mectype-card.active.mtc-fin { border-color: #059669; background: #ecfdf5; }
+  .mectype-card.active.mtc-nat { border-color: #d97706; background: #fffbeb; }
+  .mectype-card.active.mtc-comp { border-color: #0284c7; background: #f0f9ff; }
+  .mc-method { border-radius: 10px; padding: 10px 12px; font-size: 12.5px; line-height: 1.55; margin: 10px 0 2px; }
+  .mc-method b { font-weight: 700; }
+  .mc-preview { font-size: 12.5px; font-weight: 600; padding: 8px 10px; border-radius: 8px; margin-top: 10px; background: #f1f5f9; color: #334155; }
+  /* Documents (v4.1) */
+  .dropzone { border: 2px dashed #cbd5e1; border-radius: 12px; padding: 18px 14px; text-align: center; color: #64748b; font-size: 13px; background: #fff; margin: 10px 0; transition: border-color .15s, background .15s; }
+  .dropzone.drag-over { border-color: #0f766e; background: #f0fdfa; color: #0f766e; }
+  .doc-row { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border: 1px solid #e2e8f0; border-radius: 10px; margin-top: 8px; background: #fff; }
+  .doc-row .d-nom { font-weight: 600; font-size: 13px; overflow-wrap: anywhere; }
+  .doc-row .d-sub { font-size: 11.5px; color: #64748b; }
+  .doc-row select { font-size: 12px; padding: 3px 6px; border: 1px solid #cbd5e1; border-radius: 7px; background: #fff; color: #334155; }
+  .mc-note-box { border-radius: 10px; padding: 10px 12px; font-size: 12.5px; line-height: 1.55; background: #f8fafc; border: 1px solid #e2e8f0; color: #475569; margin-top: 12px; }
+  .mc-note-box summary { cursor: pointer; font-weight: 700; color: #334155; font-size: 12.5px; }
+  .mc-note-box ul { margin: 8px 0 0; padding-left: 18px; }
+  .mc-note-box li { margin-bottom: 5px; }
+  /* Tableaux de valorisation (postes compétence / lignes nature) v4.2 */
+  .mc-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 8px; }
+  .mc-table th { text-align: left; font-size: 10.5px; text-transform: uppercase; color: #64748b; border-bottom: 1px solid #e2e8f0; padding: 4px 5px; }
+  .mc-table td { border-bottom: 1px solid #f1f5f9; padding: 4px 5px; vertical-align: middle; }
+  .mc-table input, .mc-table select { width: 100%; min-width: 0; font-size: 12px; padding: 5px 7px; border: 1px solid #cbd5e1; border-radius: 7px; box-sizing: border-box; }
+  .mc-table .mc-tot-cell { font-weight: 700; white-space: nowrap; text-align: right; }
+  .mc-table .mc-del { border: 0; background: none; color: #be123c; cursor: pointer; font-size: 14px; padding: 2px 6px; }
+  .mc-tot-bar { display: flex; align-items: center; gap: 8px; margin-top: 8px; font-size: 12.5px; color: #334155; }
+  .mc-tot-bar b { font-size: 14px; }
+  .mc-add-line { margin-top: 8px; }
+  .mc-recap { border-radius: 10px; padding: 9px 12px; font-size: 12px; line-height: 1.5; background: #f8fafc; border: 1px dashed #cbd5e1; color: #475569; margin-top: 10px; }
+  .ac-box { position: relative; }
+  .ac-box .ac-inp { padding-right: 26px; }
+  .ac-x { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); border: 0; background: transparent; color: #94a3b8; cursor: pointer; font-size: 12px; padding: 3px 5px; border-radius: 6px; }
+  .ac-x:hover { color: #475569; background: #f1f5f9; }
+  .ac-list { position: absolute; z-index: 60; top: calc(100% - 2px); left: 0; right: 0; background: #fff; border: 1px solid #cbd5e1; border-radius: 8px; box-shadow: 0 10px 26px rgba(15,23,42,.14); max-height: 190px; overflow: auto; }
+  .ac-opt { padding: 7px 10px; font-size: 13px; cursor: pointer; }
+  .ac-opt:hover { background: #f1f5f9; }
+  .ac-empty { padding: 7px 10px; font-size: 12.5px; color: #94a3b8; }
+
+  /* v4.4 : colonne ⭐ Mon Espace (affichée quand le CRM est utilisé SEUL, hors iframe Mon Espace) */
+  .meqa-row { display: flex; gap: 16px; align-items: flex-start; }
+  .meqa { flex: 0 0 190px; width: 190px; position: sticky; top: 70px; }
+  .meqa.offq { flex: 0 0 42px; width: 42px; }
+  .meqa-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 8px 8px; font-size: 12.5px; }
+  .meqa-box h4 { margin: 0 0 6px; font-size: 13px; display: flex; justify-content: space-between; align-items: center; }
+  .meqa-link { display: block; font-size: 12px; font-weight: 600; color: #0369a1; text-decoration: none; margin-bottom: 4px; }
+  .meqa-sec { font-weight: 600; font-size: 12px; margin: 6px 0 3px; color: #475569; }
+  .meqa-it { padding: 4px 6px; border: 1px solid #e2e8f0; background: #fff; border-radius: 6px; margin-bottom: 3px; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .meqa-it:hover { background: #f1f5f9; }
+  .meqa-empty { color: #94a3b8; font-size: 12px; line-height: 1.5; margin: 4px 0; }
+  .su-exist { background: #fffbeb; border: 1px solid #fcd34d; border-radius: 10px; padding: 8px 12px; font-size: 12px; line-height: 1.6; }
+  .mc-recap b { color: #1e293b; }
+
+  @media (max-width: 640px) { .form-grid { grid-template-columns: 1fr; } .stats-table { display: block; overflow-x: auto; } .mectype-card { min-width: 100%; } }
 </style>
 </head>
 <body>
@@ -338,7 +396,7 @@ var TYPES_ALERTE = [
   { value: "deadline-aap", label: "Deadline AAP" },
   { value: "appel", label: "À appeler" },
   { value: "relance", label: "Relance projet" },
-  { value: "suivi", label: "Suivi contact" },
+  { value: "suivi", label: "Suivi de relation" },
   { value: "autre", label: "Autre" }
 ];
 
@@ -358,10 +416,20 @@ var TYPES_ORG = [
 ];
 
 var TYPES_MECENAT = [
-  { value: "financier", label: "Mécénat financier", icon: "💶", badge: "b-emerald" },
-  { value: "nature", label: "Mécénat en nature", icon: "🎁", badge: "b-amber" },
-  { value: "competence", label: "Mécénat de compétence", icon: "🧠", badge: "b-sky" }
+  { value: "financier", label: "Mécénat financier", icon: "💶", badge: "b-emerald", accent: "#059669", desc: "Don en argent (virement, chèque). Montant en € = argent réel encaissé." },
+  { value: "nature", label: "Mécénat en nature", icon: "🎁", badge: "b-amber", accent: "#d97706", desc: "Don de biens : matériel, locaux, véhicules… Quantité + valeur estimée." },
+  { value: "competence", label: "Mécénat de compétence", icon: "🧠", badge: "b-sky", accent: "#0284c7", desc: "Mise à disposition de personnel : montant valorisé = heures × taux horaire." }
 ];
+
+var TYPES_DOC = [
+  { value: "convention", label: "Convention / contrat", icon: "📜", badge: "b-emerald" },
+  { value: "devis", label: "Devis", icon: "🧾", badge: "b-sky" },
+  { value: "facture", label: "Facture", icon: "💸", badge: "b-amber" },
+  { value: "rapport", label: "Rapport / attestation", icon: "📄", badge: "b-sky" },
+  { value: "autre", label: "Autre", icon: "📎", badge: "" }
+];
+var DOC_MAX_FILE = 1500000;   /* octets, ~1,5 Mo par fichier */
+var DOC_MAX_TOTAL = 3000000;  /* octets, ~3 Mo de documents au total */
 
 var SOURCES_FIN = [
   "Fonds région",
@@ -476,6 +544,128 @@ function interactionInfo(t) { return TYPES_INTERACTION.find(function (x) { retur
 function orgTypeInfo(t) { return TYPES_ORG.find(function (x) { return x.value === t; }) || TYPES_ORG[0]; }
 function mecInfo(t) { return TYPES_MECENAT.find(function (x) { return x.value === t; }) || TYPES_MECENAT[0]; }
 function mecTotal(list, type) { return (list || []).filter(function (m) { return m.type === type; }).reduce(function (s, m) { return s + num(m.montant); }, 0); }
+function mecCash(list) { return mecTotal(list, "financier"); }
+function mecValorise(list) { return mecTotal(list, "nature") + mecTotal(list, "competence"); }
+function mecTypes(list) { return TYPES_MECENAT.filter(function (t) { return (list || []).some(function (m) { return m.type === t.value; }); }); }
+function mecAll(type) { return state.orgs.reduce(function (s, o) { return s + mecTotal(o.mecenats, type); }, 0); }
+function addMonths(dateStr, n) {
+  var base = dateStr || today();
+  var p = base.split("-"); var y = num(p[0]); var mo = num(p[1] || "1"); var d = num(p[2] || "1");
+  var tot = (mo - 1) + n; y = y + Math.floor(tot / 12); mo = ((tot % 12) + 12) % 12 + 1;
+  var last = new Date(y, mo, 0).getDate();
+  if (d > last) d = last;
+  return y + "-" + String(mo).padStart(2, "0") + "-" + String(d).padStart(2, "0");
+}
+
+function docInfo(c) { return TYPES_DOC.find(function (x) { return x.value === c; }) || TYPES_DOC[4]; }
+function fmtTaille(b) {
+  if (b >= 1000000) { return (Math.round(b / 100000) / 10).toString().replace(".", ",") + " Mo"; }
+  if (b >= 1000) { return Math.round(b / 1000) + " Ko"; }
+  return b + " o";
+}
+function dataUrlBytes(dataUrl) {
+  if (!dataUrl || dataUrl.indexOf("base64,") < 0) return 0;
+  var b64 = dataUrl.split("base64,")[1] || "";
+  var pad = 0; if (b64.endsWith("==")) pad = 2; else if (b64.endsWith("=")) pad = 1;
+  return Math.max(0, Math.floor(b64.length * 3 / 4) - pad);
+}
+function docBytes(doc) { return num(doc.taille) || dataUrlBytes(doc.data); }
+function allDocsSize() {
+  var tot = 0;
+  state.orgs.forEach(function (o) {
+    (o.docs || []).forEach(function (d) { tot += docBytes(d); });
+    (o.projets || []).forEach(function (p) { (p.docs || []).forEach(function (d2) { tot += docBytes(d2); }); });
+  });
+  return tot;
+}
+function docTarget(orgId, projetId) {
+  var o = findOrg(orgId);
+  if (!o) return null;
+  if (projetId) { var p = findProjet(o, projetId); return p ? { cont: p, org: o } : null; }
+  return { cont: o, org: o };
+}
+function addDocData(orgId, projetId, doc) {
+  var tgt = docTarget(orgId, projetId);
+  if (!tgt) return false;
+  var octets = docBytes(doc);
+  if (octets > DOC_MAX_FILE) { alert("Fichier trop volumineux (" + fmtTaille(octets) + ") : maximum " + fmtTaille(DOC_MAX_FILE) + " par document. Conservez l&#39;original ailleurs et déposez une version allégée."); return false; }
+  if (allDocsSize() + octets > DOC_MAX_TOTAL) { alert("Espace documents plein (" + fmtTaille(allDocsSize()) + " utilisés sur " + fmtTaille(DOC_MAX_TOTAL) + "). Supprimez des documents ou exportez-les pour libérer de la place."); return false; }
+  tgt.cont.docs = tgt.cont.docs || [];
+  tgt.cont.docs = tgt.cont.docs.concat([Object.assign({ id: uid() }, doc)]);
+  updateOrg(orgId, function (o) { return o; });
+  return true;
+}
+function readFilesAsDocs(files, orgId, projetId, cat) {
+  var list = files && files.length ? Array.prototype.slice.call(files) : [];
+  if (list.length === 0) return;
+  var traites = 0;
+  list.forEach(function (f) {
+    var reader = new FileReader();
+    reader.onload = function () {
+      var ok = addDocData(orgId, projetId, { nom: f.name, cat: cat || "autre", date: today(), mime: f.type || "application/octet-stream", taille: f.size, data: String(reader.result) });
+      if (ok) traites++;
+      if (ok) render();
+    };
+    reader.onerror = function () { alert("Impossible de lire « " + f.name + " »."); };
+    reader.readAsDataURL(f);
+  });
+}
+function openDoc(doc, mode) {
+  if (!doc || !doc.data) { alert("Contenu du document indisponible."); return; }
+  var b64 = doc.data.split("base64,")[1] || "";
+  try {
+    var bin = atob(b64);
+    var bytes = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    var blob = new Blob([bytes], { type: doc.mime || "application/octet-stream" });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url;
+    if (mode === "dl") a.download = doc.nom || "document";
+    else a.target = "_blank";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 60000);
+  } catch (e) { alert("Impossible d&#39;ouvrir ce document."); }
+}
+function docsCardHtml(orgId, projetId, cont) {
+  var docs = (cont.docs || []);
+  var pjLabel = projetId ? " du projet" : " de l&#39;établissement";
+  var rows = docs.map(function (d) {
+    var di = docInfo(d.cat);
+    return '<div class="doc-row">'
+      + '<span class="badge ' + di.badge + '">' + di.icon + " " + di.label + '</span>'
+      + '<div style="flex:1;min-width:0"><p class="d-nom" style="margin:0">' + esc(d.nom) + '</p><p class="d-sub" style="margin:1px 0 0">' + fmtTaille(docBytes(d)) + " · ajouté le " + esc(formatDate(d.date)) + '</p></div>'
+      + '<select data-docsel="1" data-org="' + orgId + '"' + (projetId ? ' data-projet="' + projetId + '"' : "") + ' data-id="' + d.id + '" title="Changer la catégorie">' + TYPES_DOC.map(function (t) { return '<option value="' + t.value + '"' + (d.cat === t.value ? " selected" : "") + '>' + t.icon + " " + t.label + '</option>'; }).join("") + '</select>'
+      + '<button class="btn sm" data-act="open-doc" data-org="' + orgId + '"' + (projetId ? ' data-projet="' + projetId + '"' : "") + ' data-id="' + d.id + '" title="Ouvrir dans un onglet (PDF, images…)">👁</button>'
+      + '<button class="btn sm" data-act="dl-doc" data-org="' + orgId + '"' + (projetId ? ' data-projet="' + projetId + '"' : "") + ' data-id="' + d.id + '" title="Télécharger une copie">⬇</button>'
+      + '<button class="btn sm danger" data-act="del-doc" data-org="' + orgId + '"' + (projetId ? ' data-projet="' + projetId + '"' : "") + ' data-id="' + d.id + '">Suppr.</button>'
+      + '</div>';
+  }).join("");
+  return '<div class="card pad" style="margin-top:20px"><div class="section-head"><h3>📄 Documents' + pjLabel + ' (' + docs.length + ')</h3>'
+    + '<span class="badge" title="Documents stockés dans ce navigateur — maximum ' + fmtTaille(DOC_MAX_TOTAL) + ' au total">' + fmtTaille(allDocsSize()) + " / " + fmtTaille(DOC_MAX_TOTAL) + '</span></div>'
+    + '<div class="dropzone" data-dropzone="1" data-org="' + orgId + '"' + (projetId ? ' data-projet="' + projetId + '"' : "") + '>'
+    + '<p style="margin:0 0 8px"><b>Glissez ici</b> vos fichiers' + pjLabel + ' — convention, devis, facture, rapport…</p>'
+    + '<div style="display:flex;gap:8px;justify-content:center;align-items:center;flex-wrap:wrap">'
+    + '<label style="font-size:12.5px;color:#64748b">Catégorie :</label>'
+    + '<select id="doc-cat">' + TYPES_DOC.map(function (t) { return '<option value="' + t.value + '">' + t.icon + " " + t.label + '</option>'; }).join("") + '</select>'
+    + '<button class="btn sm" data-act="doc-pick" data-org="' + orgId + '"' + (projetId ? ' data-projet="' + projetId + '"' : "") + ' style="position:relative;z-index:2">📁 Parcourir…</button>'
+    + '</div>'
+    + '<input type="file" multiple id="doc-file-input" data-org="' + orgId + '"' + (projetId ? ' data-projet="' + projetId + '"' : "") + ' style="display:none"/>'
+    + '</div>'
+    + (rows ? rows : '<p style="font-size:13px;color:#94a3b8;margin:8px 0 0">Aucun document pour le moment. Les fichiers restent dans ce navigateur (max ' + fmtTaille(DOC_MAX_FILE) + ' par fichier) — ils partent dans la sauvegarde JSON/HTML et suivent la fiche. Conservez vos originaux ailleurs.</p>')
+    + '</div>';
+}
+function mecMethodNote() {
+  return '<details class="mc-note-box"><summary>ℹ️ Comment sont calculés les montants ?</summary><ul>'
+    + '<li>💶 <b>Financier</b> : don en argent — le montant saisi est de l&#39;argent réel (« cash »), à sommer dans le budget.</li>'
+    + '<li>🎁 <b>En nature</b> : don de biens (matériel, locaux…) — détaillez le tableau <b>produit / qté / unité / valorisation unitaire</b> : le total se reporte dans le montant. C&#39;est une <b>estimation</b>, pas de l&#39;argent encaissé.</li>'
+    + '<li>🧠 <b>De compétence</b> : mise à disposition de personnel — chaque poste se valorise en <b>nb de personnes × heures/pers. × coût horaire</b> (tableau dédié, total automatique).</li>'
+    + '<li>Le badge <b>💶 Cash</b> ne compte que le mécénat financier ; <b>📦🧠 Valorisé non-cash</b> agrège nature + compétence. Ces estimations <b>ne doivent pas être additionnées au budget réel</b> (elles ne sont pas de l&#39;argent encaissé).</li>'
+    + '<li>📉 <b>Défiscalisation</b> : un don d&#39;entreprise à une cause d&#39;intérêt général ouvre droit à une réduction d&#39;impôt de <b>60 %</b> du don (plafond : 20 000 € ou 0,5 % du chiffre d&#39;affaires si inférieur, selon la loi française) — le badge <b>📉 Défisc. 60 %</b> estime l&#39;économie d&#39;impôt, le coût réel restant étant d&#39;environ 40 %.</li>'
+    + '</ul></details>';
+}
 
 function embeddedData() {
   try { return (typeof window !== "undefined" && window.__CRM_EMBEDDED_DATA__) || null; } catch (e) { return null; }
@@ -598,9 +788,11 @@ function projetActif(p) { return p && (p.statut === "en-cours" || p.statut === "
 /* Migration : convertit une fiche de l'ancien modèle (financement + aap au niveau de
    la fiche) vers le nouveau modèle (projets rattachés à l'établissement). */
 function migrateOrg(o) {
+  if (!o.docs) o.docs = [];
   if (o.projets) {
     o.projets.forEach(function (p) {
       if (!p.contributeurs) p.contributeurs = [];
+      if (!p.docs) p.docs = [];
       ((p.financement || {}).lignes || []).forEach(function (l) { if (!l.orgId) l.orgId = ""; });
     });
     return o;
@@ -780,6 +972,7 @@ function viewDashboard() {
     + stat("Projets", nbProjets, nbProjetsActifs + " actif(s)", "#0f766e")
     + stat("Partenaires", partenaires, "relations actives", "#047857")
     + stat("Déjà mécènes", mecenats, "financements passés", "#5b21b6")
+    + stat("Mécénat (3 types)", fmtE(mecAll("financier") + mecAll("nature") + mecAll("competence")), "💶 cash " + fmtE(mecAll("financier")) + " · 📦🧠 valorisé " + fmtE(mecAll("nature") + mecAll("competence")), "#065f46")
     + stat("AAP identifiés", aapActifs, "appels à projets en cours", "#0284c7")
     + stat("Reste à financer", fmtE(resteTotal), "projets actifs", resteTotal > 0 ? "#be123c" : "#1e293b")
     + stat("Alertes en attente", pending.length, overdue + " en retard", overdue > 0 ? "#e11d48" : "#1e293b")
@@ -825,7 +1018,11 @@ function viewOrgs() {
         if (pjDeadlines.length > 0) tags += '<span class="badge b-sky">📢 AAP · ' + esc(formatDate(pjDeadlines[0])) + '</span>';
         if (pjDeadlines.length > 0 && daysUntil(pjDeadlines[0]) < 0) tags += '<span class="badge b-rose">⏰ deadline dépassée</span>';
         var ti = orgTypeInfo(o.type);
-        if ((o.mecenats || []).length > 0) tags += '<span class="badge b-emerald">🤝 Mécénat × ' + (o.mecenats || []).length + '</span>';
+        if ((o.mecenats || []).length > 0) {
+          var mcTy = mecTypes(o.mecenats);
+          tags += '<span class="badge b-emerald">🤝 ' + mcTy.map(function (t) { return t.icon; }).join(" ") + ' × ' + (o.mecenats || []).length + '</span>';
+          if (mcTy.length > 1) tags += ' <span class="badge b-teal">🌟 multi-mécénat</span>';
+        }
         return '<button class="card org-card" data-act="open-org" data-id="' + o.id + '">'
           + '<div class="row between"><div style="min-width:0"><p class="nom">' + esc(o.nom) + '</p>'
           + '<p class="sub">' + ti.icon + " " + ti.label + (o.secteur ? " · " + esc(o.secteur) : "") + (o.region ? " · " + esc(o.region) : "") + '</p></div>'
@@ -1038,7 +1235,7 @@ function viewStats() {
       + '<td class="num">' + pjList.length + (pjActifs > 0 ? ' <span style="color:#b45309">(' + pjActifs + ' actif)</span>' : "") + '</td>'
       + '<td class="num">' + (o.historique || []).length + '</td>'
       + '<td class="num">' + (o.contacts || []).length + '</td>'
-      + '<td class="num">' + ((o.mecenats || []).length > 0 ? ((o.mecenats.length) + ' · ' + fmtE(o.mecenats.reduce(function (s, mc) { return s + num(mc.montant); }, 0))) : "—") + '</td>'
+      + '<td class="num">' + ((o.mecenats || []).length > 0 ? (mecTypes(o.mecenats).map(function (t) { return t.icon; }).join(" ") + " " + o.mecenats.length + ' · ' + fmtE(o.mecenats.reduce(function (s, mc) { return s + num(mc.montant); }, 0))) : "—") + '</td>'
       + '</tr>';
   }).join("");
 
@@ -1069,6 +1266,7 @@ function viewStats() {
     + stat("Financement acquis", fmtE(totalFin), "sur " + fmtE(coutTotal) + " de projets", "#047857")
     + stat("Reste à financer", fmtE(totalReste), "projets actifs", totalReste > 0 ? "#be123c" : "#1e293b")
     + stat("Mécénat valorisé", fmtE(totalMec), nbMec + " mécénat(s) : financier, nature, compétence", "#065f46")
+    + stat("Cash vs valorisé", fmtE(mecAll("financier")) + " / " + fmtE(mecAll("nature") + mecAll("competence")), "💶 argent réel / 📦🧠 estimation non-cash", "#b45309")
     + '</div>'
     + '<div class="card pad" style="margin-bottom:20px"><div class="section-head"><h3>Répartition par statut</h3><button class="btn sm" data-act="edit-statuts">✎ Éditer les statuts</button></div>'
     + '<table class="stats-table"><thead><tr><th>Statut</th><th class="num">Fiches</th><th></th><th class="num">Part</th></tr></thead><tbody>' + statutRows + '</tbody></table></div>'
@@ -1080,7 +1278,8 @@ function viewStats() {
           + '<td class="num">' + fmtE(mecParType[t.value].total) + '</td></tr>';
       }).join("")
     + '<tr class="total"><td>Total</td><td class="num">' + nbMec + '</td><td class="num">' + fmtE(totalMec) + '</td></tr>'
-    + '</tbody></table></div>'
+    + '<tr><td colspan="3" style="font-size:12.5px;color:#64748b;padding-top:4px">💶 Cash (financier) : <b>' + fmtE(mecParType["financier"].total) + '</b> · 📦🧠 Valorisé non-cash (nature + compétence) : <b>' + fmtE(mecParType["nature"].total + mecParType["competence"].total) + '</b> — le « cash » est de l&#39;argent réel encaissé, le « valorisé » mesure l&#39;ampleur du soutien non monétaire (à ne pas additionner au budget réel).</td></tr>'
+    + '</tbody></table>' + mecMethodNote() + '</div>'
     + '<div class="card pad" style="margin-bottom:20px"><div class="section-head"><h3>Vue détaillée par projet</h3></div>'
     + '<table class="stats-table"><thead><tr><th>Projet</th><th>Établissement</th><th>Statut</th><th class="num">Coût</th><th class="num">Financé</th><th class="num">Reste</th><th>AAP</th></tr></thead><tbody>'
     + projetRows
@@ -1188,12 +1387,23 @@ function viewDetail() {
       var mi = mecInfo(m2.type);
       var det = [];
       if (m2.description) det.push(esc(m2.description));
-      if (m2.poste) det.push("Poste : " + esc(m2.poste));
+      if ((m2.lignesNat || []).length > 0) {
+        m2.lignesNat.forEach(function (l) { det.push(esc(l.libelle || "don") + " : " + num(l.qte) + (l.unite ? " " + esc(l.unite) : "") + " × " + fmtE(num(l.valU)) + " = " + fmtE(num(l.qte) * num(l.valU))); });
+      } else if (m2.quantite) det.push("Quantité : " + esc(m2.quantite));
+      if ((m2.postes || []).length > 0) {
+        m2.postes.forEach(function (pp) { det.push(esc(pp.libelle || "poste") + " : " + num(pp.nb) + " pers × " + num(pp.heures) + " h × " + fmtE(num(pp.taux)) + "/h = " + fmtE(num(pp.nb) * num(pp.heures) * num(pp.taux))); });
+      } else if (num(m2.heures) > 0) det.push("Heures : " + m2.heures + (num(m2.taux) > 0 ? " × " + fmtE(m2.taux) + "/h → " + fmtE(num(m2.heures) * num(m2.taux)) : ""));
+      if (m2.poste && !(m2.postes || []).length) det.push("Poste : " + esc(m2.poste));
       if (m2.personnel) det.push("Personnel : " + esc(m2.personnel));
       if (m2.mission) det.push("Mission : " + esc(m2.mission));
-      return '<div class="list-row"><div style="min-width:0">'
+      var pjChip = "";
+      if (m2.projetId) {
+        var mcGp = findProjetGlobal(m2.projetId);
+        if (mcGp) pjChip = ' <button class="org-link" style="background:none;border:0;padding:0;color:#047857;font-weight:600;text-decoration:underline;font-size:11.5px" data-act="open-projet" data-org="' + mcGp.orgId + '" data-id="' + mcGp.projet.id + '" title="Ouvrir le projet lié">📁 ' + esc(mcGp.projet.nom || "Projet") + '</button>';
+      }
+      return '<div class="list-row" style="border-left:3px solid ' + mi.accent + '"><div style="min-width:0">'
         + '<p class="t"><span class="badge ' + mi.badge + '">' + mi.icon + " " + mi.label + '</span>'
-        + (num(m2.montant) > 0 ? ' <b>' + fmtE(num(m2.montant)) + '</b>' : "") + '</p>'
+        + (num(m2.montant) > 0 ? ' <b>' + fmtE(num(m2.montant)) + '</b>' : "") + pjChip + '</p>'
         + (det.length ? '<p class="s">' + det.join(" · ") + '</p>' : "")
         + '</div>'
         + '<div style="display:flex;gap:6px">'
@@ -1207,13 +1417,23 @@ function viewDetail() {
       if (n === 0) return "";
       return '<span class="badge ' + t.badge + '">' + t.icon + " " + t.label + " : " + n + " · " + fmtE(mecTotal(mecList, t.value)) + '</span>';
     }).filter(Boolean).join(" ");
-    mecenatsHtml += '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:12px;align-items:center">' + mecTotBadges
-      + '<span class="badge" style="margin-left:auto">Total valorisé : <b>' + fmtE(mecSum) + '</b></span></div>';
+    mecenatsHtml += '<p style="font-size:12px;font-weight:700;color:#64748b;margin:12px 0 0">📊 Soutien déjà enregistré avec nous (par type) :</p>'
+      + '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;align-items:center">' + mecTotBadges
+      + '<span class="badge b-emerald" style="margin-left:auto">💶 Cash : <b>' + fmtE(mecCash(mecList)) + '</b></span>'
+      + '<span class="badge b-amber">📦🧠 Valorisé non-cash : <b>' + fmtE(mecValorise(mecList)) + '</b></span>'
+      + '<span class="badge">Total : <b>' + fmtE(mecSum) + '</b></span>'
+      + '<span class="badge b-sky">📉 Défisc. 60 % : <b>' + fmtE(Math.round(mecSum * 0.6)) + '</b></span></div>';
   }
 
   return '<div>'
     + '<div class="row between" style="margin-bottom:16px">'
     + '<button class="btn" data-act="goto" data-page="orgs">← Retour aux établissements</button>'
+    + (true
+      ? '<span style="display:flex;gap:8px;flex-wrap:wrap">'
+        + '<button class="btn" data-act="me-task" data-id="' + org.id + '" title="Créer une tâche de relance dans Mon Espace">➕ Tâche Mon Espace</button>'
+        + '<button class="btn" data-act="me-dossier" data-id="' + org.id + '" title="Ouvrir / créer le dossier de cet établissement dans Mon Espace">📁 Dossier Mon Espace</button>'
+      + '</span>'
+      : "")
     + '<button class="btn danger" data-act="delete-org" data-id="' + org.id + '">Supprimer l&#39;établissement</button>'
     + '</div>'
     + '<div class="card pad" style="padding:22px">'
@@ -1237,7 +1457,8 @@ function viewDetail() {
     + '<button class="btn sm" data-act="new-projet" data-org="' + org.id + '">＋ Nouveau projet</button></div>' + projetsHtml + '</div>'
     + '<div class="card pad" style="margin-top:20px"><div class="section-head"><h3>Co-financé chez d&#39;autres établissements (' + coList.length + ')</h3></div>' + coHtml + '</div>'
     + '<div class="card pad" style="margin-top:20px"><div class="section-head"><h3>Mécénats (' + (org.mecenats || []).length + ')</h3>'
-    + '<button class="btn sm" data-act="new-mecenat" data-org="' + org.id + '">＋ Ajouter un mécénat</button></div>' + mecenatsHtml + '</div>'
+    + '<button class="btn sm" data-act="new-mecenat" data-org="' + org.id + '">＋ Ajouter un mécénat</button></div>' + mecenatsHtml + mecMethodNote() + '</div>'
+    + docsCardHtml(org.id, null, org)
     + '<div class="card pad" style="margin-top:20px"><div class="section-head"><h3>Contacts (' + (org.contacts || []).length + ')</h3>'
     + '<button class="btn sm" data-act="new-contact" data-org="' + org.id + '">＋ Ajouter un contact</button></div>' + contactsHtml + '</div>'
     + '<div class="card pad" style="margin-top:20px"><div class="section-head"><h3>Historique des échanges (' + (org.historique || []).length + ')</h3>'
@@ -1299,6 +1520,37 @@ function viewProjet() {
     });
   });
   pjHisto.sort(function (a, b) { return a.date < b.date ? 1 : -1; });
+  /* --- Mécénats rattachés au projet (tous établissements) --- */
+  var pjMecs = [];
+  state.orgs.forEach(function (o2) {
+    (o2.mecenats || []).forEach(function (mc) { if (mc.projetId === p.id) pjMecs.push({ mc: mc, orgId: o2.id, orgNom: o2.nom }); });
+  });
+  var pjMecsHtml = pjMecs.length === 0
+    ? '<p style="font-size:13px;color:#94a3b8;margin:8px 0">Aucun mécénat rattaché à ce projet. « ＋ Ajouter un mécénat » crée un mécénat typé (financier, nature, compétence) chez l&#39;établissement de votre choix, rattaché à ce projet.</p>'
+    : pjMecs.map(function (it) {
+        var mi2 = mecInfo(it.mc.type);
+        var detM = [];
+        if (it.mc.description) detM.push(esc(it.mc.description));
+        if ((it.mc.lignesNat || []).length) detM.push(it.mc.lignesNat.map(function (l) { return esc(l.libelle || "don") + " (" + fmtE(num(l.qte) * num(l.valU)) + ")"; }).join(" + "));
+        if ((it.mc.postes || []).length) detM.push(it.mc.postes.map(function (pp) { return esc(pp.libelle || "poste") + " (" + fmtE(num(pp.nb) * num(pp.heures) * num(pp.taux)) + ")"; }).join(" + "));
+        return '<div class="list-row" style="border-left:3px solid ' + mi2.accent + '"><div style="min-width:0">'
+          + '<p class="t"><span class="badge ' + mi2.badge + '">' + mi2.icon + " " + mi2.label + '</span>'
+          + (num(it.mc.montant) > 0 ? ' <b>' + fmtE(num(it.mc.montant)) + '</b>' : "")
+          + ' <button class="org-link" style="background:none;border:0;padding:0;color:#047857;font-weight:600;text-decoration:underline;font-size:11.5px" data-act="open-org" data-id="' + it.orgId + '">' + esc(it.orgNom) + '</button></p>'
+          + (detM.length ? '<p class="s">' + detM.join(" · ") + '</p>' : "")
+          + '</div>'
+          + '<div style="display:flex;gap:6px">'
+          + '<button class="btn sm" data-act="edit-mecenat" data-org="' + it.orgId + '" data-id="' + it.mc.id + '" data-projet="' + p.id + '" title="Modifier ce mécénat">✎</button>'
+          + '</div></div>';
+      }).join("");
+  /* --- bouton contact éditable pour les établissements impliqués --- */
+  var pjContactBtn = function (o2) {
+    var cs2 = (o2.contacts || []);
+    var cp2 = cs2.filter(function (c) { return c.principal; })[0] || cs2[0];
+    return cp2
+      ? '<button class="btn sm" data-act="edit-contact" data-org="' + o2.id + '" data-id="' + cp2.id + '" title="Modifier le contact principal de ' + esc(o2.nom) + '">✎ Contact</button>'
+      : '<button class="btn sm" data-act="new-contact" data-org="' + o2.id + '" title="Ajouter un contact pour ' + esc(o2.nom) + '">＋ Contact</button>';
+  };
   var pjHistoHtml = pjHisto.length === 0
     ? '<p style="font-size:13px;color:#94a3b8;margin:8px 0">Aucun échange lié à ce projet pour le moment. Utilisez « ＋ Échange » pour tracer un rendez-vous, un mail, un appel…</p>'
     : pjHisto.map(function (h) {
@@ -1339,7 +1591,8 @@ function viewProjet() {
     + '<div class="list-row"><div style="min-width:0"><p class="t"><span class="badge b-emerald">🏢 Porteur</span> <button class="org-link" style="background:none;border:0;padding:0;color:#047857;font-weight:600;text-decoration:underline" data-act="open-org" data-id="' + org.id + '">' + esc(org.nom) + '</button></p>'
     + '<p class="s">' + statutBadge(org.statut, org.id) + ' ' + esc(orgTypeInfo(org.type).label) + (org.region ? " · " + esc(org.region) : "") + '</p>'
     + contactSummaryHtml(org)
-    + '</div></div>'
+    + '</div>'
+    + '<div style="display:flex;gap:6px;align-items:flex-start">' + pjContactBtn(org) + '</div></div>'
     + ((p.contributeurs || []).length === 0
         ? '<p style="font-size:13px;color:#94a3b8;margin:8px 0">Aucun co-financeur pour le moment. Ajoutez un établissement partenaire avec « ＋ Établissement ».</p>'
         : (p.contributeurs || []).map(function (cid) {
@@ -1349,7 +1602,8 @@ function viewProjet() {
               + '<p class="s">' + statutBadge(co.statut, co.id) + ' ' + esc(orgTypeInfo(co.type).label) + (co.region ? " · " + esc(co.region) : "") + '</p>'
               + contactSummaryHtml(co)
               + '</div>'
-              + '<div style="display:flex;gap:6px">'
+              + '<div style="display:flex;gap:6px;align-items:flex-start">'
+              + pjContactBtn(co)
               + '<button class="btn sm" data-act="open-org" data-id="' + co.id + '">Fiche</button>'
               + '<button class="btn sm danger" data-act="remove-contrib" data-org="' + org.id + '" data-id="' + p.id + '" data-cid="' + co.id + '" title="Retirer cet établissement du projet">Retirer</button>'
               + '</div></div>';
@@ -1365,13 +1619,294 @@ function viewProjet() {
     + '</div>'
     + (num(p.cout) > 0 ? '<div class="bar-track" style="margin-top:12px"><div class="bar-fill" style="width:' + pct + '%;background:' + (reste > 0 ? "#fbbf24" : "#10b981") + '"></div></div><p style="font-size:11px;color:#94a3b8;margin:4px 0 0">' + pct + ' % financé</p>' : "")
     + '</div>'
+    + '<div class="card pad" style="margin-top:20px"><div class="section-head"><h3>🤝 Mécénats du projet (' + pjMecs.length + ')</h3>'
+    + '<button class="btn sm" data-act="new-proj-mecenat" data-org="' + org.id + '" data-id="' + p.id + '">＋ Ajouter un mécénat</button></div>' + pjMecsHtml
+    + '<p style="font-size:11.5px;color:#94a3b8;margin:10px 0 0">Le tableau de bord du projet compte le financement (lignes ci-dessus) ; les mécénats ci-contre tracent le soutien typé (cash / valorisé) de chaque établissement.</p>'
+    + '</div>'
     + '<div class="card pad" style="margin-top:20px"><div class="section-head"><h3>Échanges liés au projet (' + pjHisto.length + ')</h3>'
     + '<button class="btn sm" data-act="new-histo" data-org="' + org.id + '" data-projet="' + p.id + '">＋ Échange</button></div>' + pjHistoHtml + '</div>'
+    + docsCardHtml(org.id, p.id, p)
     + '<div class="card pad" style="margin-top:20px"><h3>Appel à projets (AAP)</h3>' + aapHtml + '</div>'
     + '</div>';
 }
 
 /* ===================== Modales ===================== */
+
+function mcMethodHtml(t) {
+  if (t === "nature") return '🎁 <b>Mécénat en nature</b> — don de biens (matériel, locaux, véhicules…). Détaillez chaque produit/service dans le tableau (produit, quantité, unité, valorisation unitaire) : le total se reporte automatiquement dans le champ montant. C&#39;est une estimation de la valeur du don, <b>pas de l&#39;argent encaissé</b> (badge « 📦🧠 Valorisé non-cash », jamais dans le budget réel).';
+  if (t === "competence") return '🧠 <b>Mécénat de compétence</b> — mise à disposition de personnel (salariés, retraités, bénévoles qualifiés). Chaque ligne du tableau valorise un poste : <b>nb de personnes × heures/personne × coût horaire</b>. Le montant est <b>valorisé, pas encaissé</b> (badge « 📦🧠 Valorisé non-cash »).';
+  return '💶 <b>Mécénat financier</b> — don en argent (virement, chèque, abonnement). Le montant saisi est de l&#39;argent réel : il se cumule dans le badge « 💶 Cash » et peut être additionné au budget de votre structure.';
+}
+function mcMontantLabel(t) {
+  if (t === "nature") return "Valeur estimée du don (€) — total du tableau ci-dessus";
+  if (t === "competence") return "Montant valorisé (€) — total des postes ci-dessous";
+  return "Montant du don (€) *";
+}
+function mcPreviewText(t, montant, totPostes, totNat) {
+  if (t === "financier") return montant > 0 ? "💰 Montant qui sera enregistré : <b>" + fmtE(montant) + "</b> — argent réel (cash)." : "💰 Aucun montant saisi — le don financier sera enregistré sans montant.";
+  if (t === "nature") {
+    if (totNat > 0) return "🧮 Total du tableau : <b>" + fmtE(totNat) + "</b> (somme des lignes, reporté dans le champ montant) — estimation non-cash, pas d&#39;argent encaissé.";
+    if (montant > 0) return "💰 Valeur estimée qui sera enregistrée : <b>" + fmtE(montant) + "</b> — estimation non-cash (pas d&#39;argent encaissé).";
+    return "📦 Aucune valeur estimée — détaillez les lignes du tableau (ou saisissez un montant global). C&#39;est acceptable si la valeur est inconnue.";
+  }
+  if (totPostes > 0) return "🧮 Total des postes : <b>" + fmtE(totPostes) + "</b> (nb pers × heures × coût horaire, reporté dans le champ montant) — valorisation non-cash.";
+  if (montant > 0) return "💰 Montant retenu : <b>" + fmtE(montant) + "</b> (saisi directement) — valorisation non-cash.";
+  return "🧮 Renseignez les postes du tableau (nb de personnes × heures/pers. × coût horaire) ou saisissez directement un montant pour valoriser ce mécénat.";
+}
+function mcPreviewHtml(t, mc0) {
+  return mcPreviewText(t, mc0 ? num(mc0.montant) : 0,
+    mc0 && mc0.postes ? mc0.postes.reduce(function (s, r) { return s + num(r.nb) * num(r.heures) * num(r.taux); }, 0) : 0,
+    mc0 && mc0.lignesNat ? mc0.lignesNat.reduce(function (s, r) { return s + num(r.qte) * num(r.valU); }, 0) : 0);
+}
+function syncMcPreview() {
+  var tEl = document.getElementById("m_mctype");
+  var t = tEl ? tEl.value : "financier";
+  var mEl = document.getElementById("m_mcmontant");
+  var mont = mEl ? num(mEl.value) : 0;
+  var totP = 0, totN = 0;
+  if (t === "competence") { mcDraftSync("postes"); totP = mcLignesTotal("postes"); }
+  if (t === "nature") { mcDraftSync("nat"); totN = mcLignesTotal("nat"); }
+  var pv = document.getElementById("mc-preview");
+  if (pv) pv.innerHTML = mcPreviewText(t, mont, totP, totN);
+}
+
+function mcRecapHtml(orgId) {
+  var o = findOrg(orgId);
+  if (!o) return "";
+  var list = o.mecenats || [];
+  var parts = TYPES_MECENAT.map(function (t) {
+    var tot = mecTotal(list, t.value);
+    return '<span title="' + t.label + '">' + t.icon + " " + fmtE(tot) + "</span>";
+  });
+  var suTotAll = mecCash(list) + mecValorise(list);
+  return "📊 <b>Soutien déjà enregistré avec cet établissement :</b> " + parts.join(" · ")
+    + " — soit <b>" + fmtE(mecCash(list)) + "</b> en cash (argent réel) et <b>" + fmtE(mecValorise(list)) + "</b> valorisé non-cash, pour un total de <b>" + fmtE(suTotAll) + "</b>."
+    + " Défiscalisation estimée pour l&#39;entreprise (60 %) : <b>" + fmtE(Math.round(suTotAll * 0.6)) + "</b> (coût réel restant ≈ <b>" + fmtE(suTotAll - Math.round(suTotAll * 0.6)) + "</b>).";
+}
+function mcRowHasData(r) {
+  if (!r) return false;
+  if (num(r.nb) > 0 || num(r.heures) > 0 || num(r.taux) > 0) return true;
+  if (num(r.qte) > 0 || num(r.valU) > 0) return true;
+  return false;
+}
+function mcSeedDrafts(m, mc0) {
+  if (!m.dPostesSeeded) {
+    m.dPostesSeeded = true;
+    m.dPostes = (mc0 && mc0.postes && mc0.postes.length) ? JSON.parse(JSON.stringify(mc0.postes)) : (mc0 && num(mc0.heures) > 0 ? [{ id: uid(), libelle: mc0.poste || "", nb: 1, heures: num(mc0.heures), taux: num(mc0.taux) }] : [{ id: uid(), libelle: "", nb: "", heures: "", taux: "" }]);
+  }
+  if (!m.dNatSeeded) {
+    m.dNatSeeded = true;
+    m.dNat = (mc0 && mc0.lignesNat && mc0.lignesNat.length) ? JSON.parse(JSON.stringify(mc0.lignesNat)) : (mc0 && mc0.quantite ? [{ id: uid(), libelle: mc0.quantite, qte: "", unite: "", valU: "" }] : [{ id: uid(), libelle: "", qte: "", unite: "", valU: "" }]);
+  }
+}
+function mcDraftSync(kind) {
+  var m = state.modal;
+  if (!m) return;
+  mcSeedDrafts(m, null);
+  var arr = kind === "postes" ? m.dPostes : m.dNat;
+  arr.forEach(function (r, i) {
+    if (kind === "postes") {
+      var gp = function (f) { var el = document.getElementById("mcp-" + i + "-" + f); return el ? el.value : ""; };
+      r.libelle = gp("lib"); r.nb = num(gp("nb")); r.heures = num(gp("h")); r.taux = num(gp("taux"));
+    } else {
+      var gn = function (f) { var el = document.getElementById("mcn-" + i + "-" + f); return el ? el.value : ""; };
+      r.libelle = gn("lib"); r.qte = num(gn("qte")); r.unite = gn("unite"); r.valU = num(gn("valu"));
+    }
+  });
+}
+function mcLigneTot(kind, r) {
+  if (kind === "postes") return num(r.nb) * num(r.heures) * num(r.taux);
+  return num(r.qte) * num(r.valU);
+}
+function mcLignesTotal(kind) {
+  var m = state.modal;
+  if (!m) return 0;
+  mcSeedDrafts(m, null);
+  var arr = (kind === "postes" ? m.dPostes : m.dNat).filter(mcRowHasData);
+  return arr.reduce(function (s, r) { return s + mcLigneTot(kind, r); }, 0);
+}
+function mcPostesHeuresTot() {
+  var m = state.modal;
+  if (!m) return 0;
+  mcSeedDrafts(m, null);
+  return m.dPostes.filter(mcRowHasData).reduce(function (s, r) { return s + num(r.nb) * num(r.heures); }, 0);
+}
+function mcLignesRowsHtml(kind) {
+  var m = state.modal;
+  mcSeedDrafts(m, null);
+  var arr = kind === "postes" ? m.dPostes : m.dNat;
+  var mkIn = function (id, ph, val, isNum) {
+    return '<input id="' + id + '" data-mcl="' + kind + '" placeholder="' + ph + '"' + (isNum ? ' type="number" step="0.5" min="0"' : "") + ' value="' + esc(val === undefined ? "" : val) + '"/>';
+  };
+  return arr.map(function (r, i) {
+    if (kind === "postes") {
+      return '<tr>'
+        + '<td>' + mkIn("mcp-" + i + "-lib", "Ex. Juriste, menuisier…", r.libelle) + '</td>'
+        + '<td style="width:70px">' + mkIn("mcp-" + i + "-nb", "Ex. 2", r.nb, true) + '</td>'
+        + '<td style="width:80px">' + mkIn("mcp-" + i + "-h", "Ex. 12", r.heures, true) + '</td>'
+        + '<td style="width:90px">' + mkIn("mcp-" + i + "-taux", "Ex. 65", r.taux, true) + '</td>'
+        + '<td class="mc-tot-cell" id="mct-postes-' + i + '" style="width:90px">' + fmtE(mcLigneTot("postes", r)) + '</td>'
+        + '<td style="width:30px"><button type="button" class="mc-del" data-act="mc-poste-del" data-i="' + i + '" title="Retirer cette ligne">✕</button></td>'
+        + '</tr>';
+    }
+    return '<tr>'
+      + '<td>' + mkIn("mcn-" + i + "-lib", "Ex. Nichoirs, salle de réunion…", r.libelle) + '</td>'
+      + '<td style="width:70px">' + mkIn("mcn-" + i + "-qte", "Ex. 20", r.qte, true) + '</td>'
+      + '<td style="width:80px">' + mkIn("mcn-" + i + "-unite", "u, m², jour…", r.unite) + '</td>'
+      + '<td style="width:90px">' + mkIn("mcn-" + i + "-valu", "Ex. 30", r.valU, true) + '</td>'
+      + '<td class="mc-tot-cell" id="mct-nat-' + i + '" style="width:90px">' + fmtE(mcLigneTot("nat", r)) + '</td>'
+      + '<td style="width:30px"><button type="button" class="mc-del" data-act="mc-nat-del" data-i="' + i + '" title="Retirer cette ligne">✕</button></td>'
+      + '</tr>';
+  }).join("");
+}
+function mcLignesRebuild(kind) {
+  var tb = document.getElementById(kind === "postes" ? "mc-postes-t" : "mc-nat-t");
+  if (tb) tb.innerHTML = mcLignesRowsHtml(kind);
+  var tot = mcLignesTotal(kind);
+  var tc = document.getElementById(kind === "postes" ? "mc-postes-tot" : "mc-nat-tot");
+  if (tc) tc.innerHTML = fmtE(tot);
+  var mont = document.getElementById("m_mcmontant");
+  if (tot > 0 && mont) mont.value = tot;
+  syncMcPreview();
+}
+function mcLigneAdd(kind) {
+  var m = state.modal;
+  if (!m) return;
+  mcDraftSync(kind);
+  var arr = kind === "postes" ? m.dPostes : m.dNat;
+  arr.push(kind === "postes" ? { id: uid(), libelle: "", nb: "", heures: "", taux: "" } : { id: uid(), libelle: "", qte: "", unite: "", valU: "" });
+  mcLignesRebuild(kind);
+}
+function mcLigneDel(kind, i) {
+  var m = state.modal;
+  if (!m) return;
+  mcDraftSync(kind);
+  var arr = kind === "postes" ? m.dPostes : m.dNat;
+  arr.splice(num(i), 1);
+  if (arr.length === 0) arr.push(kind === "postes" ? { id: uid(), libelle: "", nb: "", heures: "", taux: "" } : { id: uid(), libelle: "", qte: "", unite: "", valU: "" });
+  mcLignesRebuild(kind);
+}
+function mcLigneInput(el) {
+  var k = el.getAttribute("data-mcl") === "postes" ? "postes" : "nat";
+  mcDraftSync(k);
+  var tot = mcLignesTotal(k);
+  var tc = document.getElementById(k === "postes" ? "mc-postes-tot" : "mc-nat-tot");
+  if (tc) tc.innerHTML = fmtE(tot);
+  if (tot > 0) { var mont = document.getElementById("m_mcmontant"); if (mont) mont.value = tot; }
+  var parts = String(el.id || "").split("-");
+  var ri = num(parts[1]);
+  var rc = document.getElementById("mct-" + k + "-" + ri);
+  if (rc && state.modal) { var row = (k === "postes" ? state.modal.dPostes : state.modal.dNat)[ri]; if (row) rc.innerHTML = fmtE(mcLigneTot(k, row)); }
+  syncMcPreview();
+}
+function mcNatSummary(rows) {
+  return rows.map(function (r) { return (r.qte ? r.qte + (r.unite ? " " + r.unite : "") + " " : "") + (r.libelle || "don") + (num(r.valU) > 0 ? " (" + fmtE(r.qte * r.valU) + ")" : ""); }).join(" + ");
+}
+
+/* ===== v4.3 : autocomplétion (remplace les selects longs — modèle Mon Espace) ===== */
+var AC_DATA = {};
+var AC_LAST = {};
+function normAc(s) { return String(s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""); }
+function acSelHtml(id, items, selId, ph) {
+  AC_DATA[id] = items || [];
+  var sel = items.filter(function (it) { return it.id === selId; })[0];
+  var lbl = sel ? sel.label : "";
+  return '<div class="ac-box" data-acbox="' + id + '">'
+    + '<input type="hidden" id="' + id + '" value="' + esc(selId || "") + '"/>'
+    + '<input class="ac-inp" id="' + id + '-inp" data-ac="' + id + '" autocomplete="off" placeholder="' + esc(ph || "Tapez pour rechercher…") + '" value="' + esc(lbl) + '" style="width:100%"/>'
+    + '<button type="button" class="ac-x" data-acx="' + id + '" title="Vider la sélection">✕</button>'
+    + '<div class="ac-list" id="' + id + '-list" style="display:none"></div>'
+    + '</div>';
+}
+function acListRender(id, q) {
+  var el = document.getElementById(id + "-list");
+  if (!el) return;
+  var nq = normAc(q);
+  var items = AC_DATA[id] || [];
+  var res = items.filter(function (it) { return !nq || normAc(it.label).indexOf(nq) >= 0 || normAc(it.id).indexOf(nq) >= 0; }).slice(0, 8);
+  AC_LAST[id] = res;
+  el.innerHTML = res.length
+    ? res.map(function (it) { return '<div class="ac-opt" data-acp="' + id + '" data-acidv="' + esc(it.id) + '" data-aclbl="' + esc(it.label) + '">' + esc(it.label) + '</div>'; }).join("")
+    : '<div class="ac-empty">Aucun résultat</div>';
+  el.style.display = res.length || nq ? "block" : "none";
+}
+function acPick(id, val, lbl) {
+  var h = document.getElementById(id);
+  if (h) h.value = val;
+  var inp = document.getElementById(id + "-inp");
+  if (inp) inp.value = lbl;
+  var list = document.getElementById(id + "-list");
+  if (list) { list.innerHTML = ""; list.style.display = "none"; }
+  AC_LAST[id] = [];
+  if (id === "m_mcorg") { var rec = document.getElementById("mc-recap"); if (rec) rec.innerHTML = mcRecapHtml(val); }
+}
+function acCloseAll() { for (var k in AC_DATA) { var l = document.getElementById(k + "-list"); if (l) l.style.display = "none"; } }
+
+/* ===== v4.3 : pont Mon Espace (iframe même origine) ===== */
+function meBridge() {
+  try { return !!(window.parent && window.parent !== window && window.parent.__espaceCrmBridge); } catch (e) { return false; }
+}
+function meBridgeCall(data) {
+  try { if (meBridge()) return window.parent.__espaceCrmBridge(data); } catch (e) {}
+  return null;
+}
+
+/* ===== v4.4 : passerelles Mon Espace en mode autonome (CRM ouvert seul, hors iframe) ===== */
+function meQaItems() {
+  var st = null;
+  try { st = JSON.parse(localStorage.getItem("gestion-dnt-v1") || "null"); } catch (e) { st = null; }
+  if (!st || !st.dossiers || !st.taches || !st.notes) return null;
+  return st;
+}
+function meQaWrap(content) {
+  var col = meQaHtml();
+  if (!col) return content;
+  return '<div class="meqa-row">' + col + '<div style="flex:1;min-width:0">' + content + '</div></div>';
+}
+function meQaHtml() {
+  if (meBridge()) return "";
+  var off = "";
+  try { off = localStorage.getItem("crm-mecenat-lpo-meqa") || ""; } catch (e) {}
+  if (off === "1") return '<aside class="meqa offq"><button class="btn sm" data-act="meqa-toggle" title="Ouvrir la colonne ⭐ Mon Espace">⭐</button></aside>';
+  var st = meQaItems();
+  if (!st) return '<aside class="meqa"><div class="meqa-box"><h4>⭐ Mon Espace</h4><p class="meqa-empty">Aucune donnée Mon Espace détectée dans ce navigateur. Ouvrez Mon Espace au moins une fois, épinglez des dossiers, tâches ou notes (📍 / 📌) : ils apparaîtront ici, cliquables.</p></div></aside>';
+  var h = '<aside class="meqa"><div class="meqa-box"><h4>⭐ Mon Espace <button class="btn sm" data-act="meqa-toggle" title="Masquer la colonne (le bouton ⭐ la rouvre)">–</button></h4>'
+    + '<a class="meqa-link" href="../" target="_blank" rel="noreferrer" title="Ouvrir Mon Espace dans un nouvel onglet">↗ Ouvrir Mon Espace</a>';
+  var d = [], t = [], n = [], i;
+  for (i = 0; i < st.dossiers.length; i++) { if (st.dossiers[i] && st.dossiers[i].epingle) d.push(st.dossiers[i]); }
+  for (i = 0; i < st.taches.length; i++) { if (st.taches[i] && st.taches[i].epingle) t.push(st.taches[i]); }
+  for (i = 0; i < st.notes.length; i++) { var nn = st.notes[i]; if (nn && nn.epinglee && !nn.archivee && !nn.capture) n.push(nn); }
+  if (d.length) { h += '<div class="meqa-sec">📌 Dossiers épinglés</div>'; for (i = 0; i < Math.min(d.length, 6); i++) h += '<div class="meqa-it" data-act="meqa-open" data-k="dos" data-id="' + esc(d[i].id) + '" title="Ouvrir ce dossier dans Mon Espace">📁 ' + esc(String(d[i].nom || "Dossier")) + '</div>'; }
+  if (t.length) { h += '<div class="meqa-sec">📌 Tâches épinglées</div>'; for (i = 0; i < Math.min(t.length, 8); i++) h += '<div class="meqa-it" data-act="meqa-open" data-k="tac" data-id="' + esc(t[i].id) + '" title="Ouvrir cette tâche dans Mon Espace">✅ ' + esc(String(t[i].titre || "Tâche")) + '</div>'; }
+  if (n.length) { h += '<div class="meqa-sec">📌 Notes épinglées</div>'; for (i = 0; i < Math.min(n.length, 6); i++) h += '<div class="meqa-it" data-act="meqa-open" data-k="not" data-id="' + esc(n[i].id) + '" title="Ouvrir cette note dans Mon Espace">📝 ' + esc(String(n[i].titre || "Note")) + '</div>'; }
+  if (!d.length && !t.length && !n.length) h += '<p class="meqa-empty">Épinglez des dossiers, tâches ou notes dans Mon Espace (📍 / 📌) : ils apparaîtront ici.</p>';
+  h += '</div></aside>';
+  return h;
+}
+function meStandaloneWrite(st) {
+  try { localStorage.setItem("gestion-dnt-v1", JSON.stringify(st)); return true; } catch (e) { alert("⚠️ Impossible d'enregistrer dans Mon Espace (stockage du navigateur plein ?). Faites de la place puis réessayez."); return false; }
+}
+function meStandaloneNoData() {
+  alert("Aucune donnée Mon Espace détectée dans ce navigateur. Ouvrez Mon Espace au moins une fois (https://josselin-pradier.github.io/mon-espace/) avant d'utiliser ce bouton.");
+}
+function meStandaloneTask(o) {
+  var st = meQaItems();
+  if (!st) { meStandaloneNoData(); return; }
+  var t = { id: uid(), titre: "Relancer — " + o.nom, statut: "a-faire", priorite: "normale", contexte: "pro", echeance: "", heure: "", dossierId: "", description: "Fiche CRM : " + o.nom + " — ouverte via le bouton 🤝 Fiche CRM (#org=" + o.id + ")", cree: today(), maj: today() };
+  st.taches.push(t);
+  if (meStandaloneWrite(st)) alert("✅ Tâche « " + t.titre + " » créée dans Mon Espace (onglet Tâches) — modifiable là-bas comme toute tâche.");
+}
+function meStandaloneDossier(o) {
+  var st = meQaItems();
+  if (!st) { meStandaloneNoData(); return; }
+  var rac = null, sub = null, i;
+  for (i = 0; i < st.dossiers.length; i++) { var x = st.dossiers[i]; if (x && x.nom === "Mécénat & partenariats" && (x.parentId || "") === "") { rac = x; break; } }
+  if (!rac) { rac = { id: uid(), parentId: "", nom: "Mécénat & partenariats", statut: "ouvert", contexte: "pro", categorie: "Financement", echeance: "", description: "Dossier de travail mécénat : fondations, entreprises partenaires, conventions à renouveler et contreparties.", epingle: true, cree: today(), maj: today() }; st.dossiers.push(rac); }
+  for (i = 0; i < st.dossiers.length; i++) { var y = st.dossiers[i]; if (y && y.nom === o.nom && (y.parentId || "") === rac.id) { sub = y; break; } }
+  if (!sub) { sub = { id: uid(), parentId: rac.id, nom: o.nom, statut: "ouvert", contexte: "pro", categorie: "", echeance: "", description: "Établissement du CRM Mécénat LPO (#org=" + o.id + ")", cree: today(), maj: today() }; st.dossiers.push(sub); }
+  if (!meStandaloneWrite(st)) return;
+  try { window.open("../#dos=" + encodeURIComponent(sub.id), "_blank"); } catch (e) {}
+}
 
 function fld(label, inner) {
   return '<label class="fld"><span>' + label + '</span>' + inner + '</label>';
@@ -1412,6 +1947,27 @@ function viewModal() {
       + '</div><p style="font-size:11.5px;color:#64748b;margin:10px 0 0">Changement immédiat après « Enregistrer » — le badge est cliquable partout dans le CRM.</p>'
       + '<div class="modal-foot"><button type="button" class="btn" data-act="close-modal">Annuler</button>'
       + '<button type="submit" class="btn primary">Enregistrer</button></div></form>';
+  }
+
+  if (m.type === "suiviInvite") {
+    title = "🤝 Programmer un suivi de relation ?";
+    var suOrg0 = org || null;
+    var suEx = (suOrg0 && suOrg0.alertes ? suOrg0.alertes : []).filter(function (a) { return a && a.date; });
+    var suExHtml = suEx.length
+      ? '<div class="full"><div class="su-exist"><b>📋 Rappels déjà programmés pour ' + esc(suOrg0.nom) + ' (' + suEx.length + ') :</b><br/>'
+        + suEx.map(function (a) { return '<span class="badge" style="background:#fef3c7;color:#92400e;margin:2px 3px 2px 0">' + formatDate(a.date) + ' — ' + esc(a.libelle || "rappel") + '</span>'; }).join("")
+        + '<br/><span style="font-size:11.5px;color:#b45309">Choisissez une date libre pour éviter les doublons — la date saisie ci-dessous vous signalera si un rappel existe déjà.</span></div></div>'
+      : "";
+    body = '<form id="modal-form"><div class="form-grid">'
+      + fld("Établissement", '<span style="font-weight:600">' + esc(org ? org.nom : "—") + '</span>')
+      + '<div class="full">' + fld("Libellé du rappel *", '<input id="m_sulib" required value="' + esc(m.libelle || "") + '"/>') + '</div>'
+      + fld("Échéance (mois)", '<select id="m_sumois">' + [1, 3, 6, 12].map(function (mm) { return '<option value="' + mm + '"' + (m.mois === mm ? " selected" : "") + '>dans ' + mm + ' mois — ' + formatDate(addMonths(today(), mm)) + '</option>'; }).join("") + '</select>')
+      + fld("Ou date libre", '<input id="m_sudate" type="date"/>')
+      + suExHtml
+      + '<div class="full">' + fld("Notes / contexte", '<textarea id="m_sunotes" rows="3">' + esc(m.notes || "") + '</textarea>') + '</div>'
+      + '</div><p style="font-size:11.5px;color:#64748b;margin:10px 0 0">La <b>date libre prime</b> sur l&#39;échéance en mois. Ce rappel ira dans les Alertes &amp; l&#39;Agenda du CRM (type « Suivi de relation »). Modifiable ou supprimable comme toute alerte — rien n&#39;est envoyé automatiquement.</p>'
+      + '<div class="modal-foot"><button type="button" class="btn" data-act="close-modal">Non merci</button>'
+      + '<button type="submit" class="btn primary">＋ Programmer le suivi</button></div></form>';
   }
 
   if (m.type === "org") {
@@ -1526,7 +2082,7 @@ function viewModal() {
   if (m.type === "alert") {
     var a0 = m.alertId && org ? (org.alertes || []).find(function (x) { return x.id === m.alertId; }) : null;
     title = a0 ? "Modifier l'alerte" : "Ajouter une alerte / un rappel";
-    var alOrgPick = org ? "" : fld("Établissement concerné *", '<select id="m_alorg" required><option value="">— Choisir un établissement —</option>' + state.orgs.map(function (o) { return '<option value="' + o.id + '">' + esc(o.nom) + '</option>'; }).join("") + '</select>');
+    var alOrgPick = org ? "" : fld("Établissement concerné *", acSelHtml("m_alorg", [{ id: "", label: "— Choisir un établissement —" }].concat(state.orgs.map(function (o) { return { id: o.id, label: o.nom }; })), "", "Tapez le nom de l&#39;établissement…"));
     body = '<form id="modal-form"><div class="form-grid">'
       + (alOrgPick ? '<div class="full">' + alOrgPick + '</div>' : "")
       + fld("Libellé de l'alerte *", '<input id="m_alib" required value="' + esc(a0 ? a0.libelle : m.presetLibelle || "") + '" placeholder="Ex. Relancer sur le dossier, appeler pour…"/>')
@@ -1541,7 +2097,7 @@ function viewModal() {
     var pjA = m.projetId && org ? findProjet(org, m.projetId) : null;
     var aap0 = (pjA && pjA.aap) || {};
     title = pjA ? "AAP — " + org.nom + " · " + (pjA.nom || "projet") : "Ajouter un AAP";
-    var pjSelect = pjA ? "" : fld("Projet concerné *", '<select id="m_aapPj" required><option value="">— Choisir un projet —</option>' + allProjets().map(function (it) { return '<option value="' + it.orgId + "|" + it.projet.id + '">' + esc(it.orgNom + " — " + (it.projet.nom || "projet")) + '</option>'; }).join("") + '</select>');
+    var pjSelect = pjA ? "" : fld("Projet concerné *", acSelHtml("m_aapPj", [{ id: "", label: "— Choisir un projet —" }].concat(allProjets().map(function (it) { return { id: it.orgId + "|" + it.projet.id, label: it.orgNom + " — " + (it.projet.nom || "projet") }; })), "", "Tapez le nom du projet…"));
     body = '<form id="modal-form"><div class="form-grid">'
       + (pjSelect ? '<div class="full">' + pjSelect + '</div>' : "")
       + fld("Nom de l'AAP", '<input id="m_aapNom" value="' + esc(aap0.nom || "") + '"/>')
@@ -1584,29 +2140,90 @@ function viewModal() {
     var srcOpts = SOURCES_FIN.map(function (s) {
       return '<option value="' + esc(s) + '"' + (curSrc === s ? " selected" : "") + '>' + esc(s) + '</option>';
     }).join("");
+    var curOrg = l0 ? l0.orgId || "" : "";
+    var contribIds = pjL ? (pjL.contributeurs || []) : [];
+    var lorgItems = [{ id: "", label: "— (aucun)" }];
+    [org ? org.id : ""].concat(contribIds).filter(Boolean).forEach(function (cid) {
+      var co = findOrg(cid);
+      if (co) lorgItems.push({ id: co.id, label: co.nom + (org && cid === org.id ? " (porteur)" : " (co-financeur)") });
+    });
+    state.orgs.forEach(function (o2) {
+      if (org && o2.id === org.id) return;
+      if (contribIds.indexOf(o2.id) >= 0) return;
+      lorgItems.push({ id: o2.id, label: o2.nom });
+    });
     body = '<form id="modal-form"><div class="form-grid">'
       + fld("Intitulé de la source *", '<select id="m_lsrcsel">' + srcOpts + '<option value="__custom"' + (SOURCES_FIN.indexOf(curSrc) < 0 ? " selected" : "") + '>Autre (à préciser)…</option></select>')
       + fld("Précision / nom exact *", '<input id="m_lsrc" required value="' + esc(curSrc) + '" placeholder="Ex. Fonds région, Fonds propres LPO, Fonds mécène…"/>')
-      + fld("Établissement mécène (optionnel)", '<select id="m_lorg"><option value="">—</option>' + [org ? org.id : ""].concat(pjL ? (pjL.contributeurs || []) : []).filter(Boolean).map(function (cid) { var co = findOrg(cid); return co ? '<option value="' + co.id + '"' + (l0 && l0.orgId === co.id ? " selected" : "") + '>' + esc(co.nom) + '</option>' : ""; }).join("") + '</select>')
+      + fld("Établissement mécène (tous les établissements)", acSelHtml("m_lorg", lorgItems, curOrg, "Tapez le nom de l&#39;établissement…"))
       + fld("Montant (€) *", '<input id="m_lmnt" type="number" step="0.01" min="0" required value="' + esc(l0 ? num(l0.montant) : "") + '"/>')
-      + '</div><p style="font-size:11.5px;color:#64748b;margin:10px 0 0">Choisissez un intitulé prédéfini (il remplit le champ) puis ajustez si besoin, ou sélectionnez « Autre » pour un intitulé libre.</p>'
+      + '</div><p style="font-size:11.5px;color:#64748b;margin:10px 0 0">Un établissement mécène choisi hors porteur et co-financeurs est <b>ajouté automatiquement</b> comme co-financeur du projet (carte « Établissements impliqués »). Un intitulé prédéfini remplit le champ « Précision », ajustez si besoin.</p>'
       + '<div class="modal-foot"><button type="button" class="btn" data-act="close-modal">Annuler</button>'
       + '<button type="submit" class="btn primary">Enregistrer</button></div></form>';
   }
 
   if (m.type === "mecenat") {
     var mc0 = m.mecId && org ? (org.mecenats || []).find(function (x) { return x.id === m.mecId; }) : null;
+    var mcTy = mc0 ? (mc0.type || "financier") : "financier";
+    mcSeedDrafts(m, mc0);
     title = mc0 ? "Modifier le mécénat" : "Ajouter un mécénat";
-    body = '<form id="modal-form"><div class="form-grid">'
-      + fld("Type de mécénat *", '<select id="m_mctype">' + TYPES_MECENAT.map(function (t) { return '<option value="' + t.value + '"' + (mc0 && mc0.type === t.value ? " selected" : "") + '>' + t.icon + " " + t.label + '</option>'; }).join("") + '</select>')
-      + fld("Montant / valorisation (€)", '<input id="m_mcmontant" type="number" step="0.01" min="0" value="' + esc(mc0 ? num(mc0.montant) : "") + '" placeholder="Ex. 8 000"/>')
-      + '<div class="full">' + fld("De quoi s'agit-il ? (objet du don, prestation, projet financé…)", '<input id="m_mcdesc" value="' + esc(mc0 ? mc0.description || "" : "") + '" placeholder="Ex. Don de matériel, aménagement d&#39;une mare…"/>') + '</div>'
+    var mcPjTag = "";
+    if (m.fromProjet) {
+      var pjF0 = org ? findProjet(org, m.projetId) : null;
+      mcPjTag = '<p style="margin:0 0 10px;font-size:12.5px;color:#475569">📁 Projet concerné : <b>' + esc(pjF0 ? (pjF0.nom || "Projet") : "—") + '</b></p>';
+    }
+    var mcOrgSel = "";
+    if (m.fromProjet) {
+      var pjM0 = org ? findProjet(org, m.projetId) : null;
+      var seenO = {};
+      var mcOrgList = [];
+      [org ? org.id : ""].concat(pjM0 ? (pjM0.contributeurs || []) : []).forEach(function (cid) {
+        if (cid && !seenO[cid]) { seenO[cid] = 1; mcOrgList.push({ id: cid, tag: (org && cid === org.id) ? " (porteur)" : " (co-financeur)" }); }
+      });
+      state.orgs.forEach(function (o2) { if (!seenO[o2.id]) { seenO[o2.id] = 1; mcOrgList.push({ id: o2.id, tag: "" }); } });
+      var mcOrgItems = mcOrgList.map(function (oo) { var co2 = findOrg(oo.id); return co2 ? { id: co2.id, label: co2.nom + oo.tag } : null; }).filter(Boolean);
+      mcOrgSel = fld("Établissement mécène *", acSelHtml("m_mcorg", mcOrgItems, org ? org.id : "", "Tapez le nom de l&#39;établissement mécène…"));
+    }
+    var mcPjSel = "";
+    if (!m.fromProjet && org && (org.projets || []).length > 0) {
+      var pjIds = org.projets.map(function (pp) { return pp.id; });
+      var mcPjItems = [{ id: "", label: "— aucun / non lié à un projet" }].concat(org.projets.map(function (pp) { return { id: pp.id, label: pp.nom || "Projet" }; }));
+      if (mc0 && mc0.projetId && pjIds.indexOf(mc0.projetId) < 0) { var gp0 = findProjetGlobal(mc0.projetId); if (gp0) mcPjItems.push({ id: gp0.projet.id, label: (gp0.projet.nom || "Projet") + " (" + gp0.orgNom + ")" }); }
+      mcPjSel = fld("Projet concerné (optionnel)", acSelHtml("m_mcproj", mcPjItems, mc0 ? mc0.projetId || "" : "", "Tapez le nom du projet…"));
+    }
+    body = '<form id="modal-form">'
+      + '<input type="hidden" id="m_mctype" value="' + mcTy + '"/>'
+      + mcPjTag
+      + mcOrgSel
+      + mcPjSel
+      + '<p style="margin:0 0 8px;font-size:12px;font-weight:700;color:#475569">1. Quel type de mécénat ?</p>'
+      + '<div class="mectype-cards">'
+      + TYPES_MECENAT.map(function (t) {
+          return '<button type="button" class="mectype-card ' + (t.value === "financier" ? "mtc-fin" : t.value === "nature" ? "mtc-nat" : "mtc-comp") + (t.value === mcTy ? " active" : "") + '" id="mc-card-' + t.value + '" data-act="mc-type" data-type="' + t.value + '">'
+            + '<span class="mtc-ico">' + t.icon + '</span><span class="mtc-lbl">' + t.label + '</span><span class="mtc-desc">' + t.desc + '</span></button>';
+        }).join("")
       + '</div>'
-      + '<div class="fieldset-tint fs-blue" style="margin-top:12px"><h4>Si mécénat de compétence — le cas échéant</h4><div class="form-grid">'
-      + fld("Poste", '<input id="m_mcposte" value="' + esc(mc0 ? mc0.poste || "" : "") + '" placeholder="Ex. Ingénieur études, menuisier…"/>')
-      + fld("Personnel mobilisé", '<input id="m_mcperso" value="' + esc(mc0 ? mc0.personnel || "" : "") + '" placeholder="Ex. 1 salarié (2 jours), équipe de volontaires…"/>')
+      + '<div class="mc-method" id="mc-method">' + mcMethodHtml(mcTy) + '</div>'
+      + '<div class="mc-recap" id="mc-recap">' + mcRecapHtml(org ? org.id : "") + '</div>'
+      + '<p style="margin:14px 0 8px;font-size:12px;font-weight:700;color:#475569">2. Détails</p>'
+      + '<div class="form-grid">'
+      + '<div class="full">' + fld("De quoi s&#39;agit-il ? (objet du don, prestation, projet financé…)", '<input id="m_mcdesc" value="' + esc(mc0 ? mc0.description || "" : "") + '" placeholder="Ex. Don de matériel, aménagement d&#39;une mare…"/>') + '</div>'
+      + '<div id="mcg-nat" class="full"' + (mcTy === "nature" ? "" : ' style="display:none"') + '>'
+        + '<table class="mc-table"><thead><tr><th>Produit / service</th><th>Qté</th><th>Unité</th><th>Valorisation / u (€)</th><th class="mc-tot-cell">Total</th><th></th></tr></thead><tbody id="mc-nat-t">' + mcLignesRowsHtml("nat") + '</tbody></table>'
+        + '<div class="mc-tot-bar"><span>Total valorisé :</span><b id="mc-nat-tot">' + fmtE(mcLignesTotal("nat")) + '</b><span style="color:#64748b">→ reporté automatiquement dans le champ montant</span>'
+        + '<button type="button" class="btn sm mc-add-line" data-act="mc-nat-add" style="margin-left:auto">＋ Ajouter une ligne</button></div>'
+      + '</div>'
+      + '<div class="full">' + fld('<span id="mcmontant-lbl">' + mcMontantLabel(mcTy) + '</span>', '<input id="m_mcmontant" type="number" step="0.01" min="0" value="' + esc(mc0 ? num(mc0.montant) : "") + '" placeholder="Ex. 8 000"/>') + '</div>'
+      + '</div>'
+      + '<div class="fieldset-tint fs-blue" id="mcg-comp" style="margin-top:12px' + (mcTy === "competence" ? "" : ';display:none') + '"><h4>🧠 Personnel mobilisé (mécénat de compétence)</h4><p style="font-size:11.5px;color:#64748b;margin:4px 0 2px">Chaque ligne valorise un poste : <b>nb de personnes × heures/personne × coût horaire</b>. Le total se reporte automatiquement dans le champ montant.</p>'
+      + '<table class="mc-table"><thead><tr><th>Poste / profil</th><th>Nb pers.</th><th>Heures / pers.</th><th>Coût horaire (€)</th><th class="mc-tot-cell">Total</th><th></th></tr></thead><tbody id="mc-postes-t">' + mcLignesRowsHtml("postes") + '</tbody></table>'
+      + '<div class="mc-tot-bar"><span>Total valorisé :</span><b id="mc-postes-tot">' + fmtE(mcLignesTotal("postes")) + '</b><span style="color:#64748b">→ reporté automatiquement dans le champ montant</span>'
+      + '<button type="button" class="btn sm mc-add-line" data-act="mc-poste-add" style="margin-left:auto">＋ Ajouter un poste</button></div>'
+      + '<div class="form-grid" style="margin-top:10px">'
+      + fld("Personnel mobilisé (contexte)", '<input id="m_mcperso" value="' + esc(mc0 ? mc0.personnel || "" : "") + '" placeholder="Ex. équipe de volontaires, service RSE…"/>')
       + fld("Mission", '<input id="m_mcmission" value="' + esc(mc0 ? mc0.mission || "" : "") + '" placeholder="Ex. Étude du refuge, atelier pédagogique…"/>')
       + '</div></div>'
+      + '<div class="mc-preview" id="mc-preview">' + mcPreviewHtml(mcTy, mc0) + '</div>'
       + '<div class="modal-foot"><button type="button" class="btn" data-act="close-modal">Annuler</button>'
       + '<button type="submit" class="btn primary">' + (mc0 ? "Enregistrer" : "Ajouter") + '</button></div></form>';
   }
@@ -1617,11 +2234,11 @@ function viewModal() {
     var cOpts = state.orgs.filter(function (o2) {
       return o2.id !== (org ? org.id : "") && !(pjC && (pjC.contributeurs || []).indexOf(o2.id) >= 0);
     }).map(function (o2) {
-      return '<option value="' + o2.id + '">' + esc(o2.nom) + '</option>';
-    }).join("");
-    body = pjC && cOpts
+      return { id: o2.id, label: o2.nom };
+    });
+    body = pjC && cOpts.length
       ? '<form id="modal-form"><div class="form-grid">'
-        + '<div class="full">' + fld("Établissement *", '<select id="m_corg" required>' + cOpts + '</select>') + '</div>'
+        + '<div class="full">' + fld("Établissement *", acSelHtml("m_corg", cOpts, "", "Tapez le nom de l&#39;établissement…")) + '</div>'
         + '</div><p style="font-size:11.5px;color:#64748b;margin:10px 0 0">L&#39;établissement sélectionné apparaîtra comme co-financeur du projet « ' + esc(pjC.nom || "Projet") + ' ». Son apport se précise ligne par ligne dans la carte Financement (champ « Établissement mécène »).</p>'
         + '<div class="modal-foot"><button type="button" class="btn" data-act="close-modal">Annuler</button>'
         + '<button type="submit" class="btn primary">Ajouter</button></div></form>'
@@ -1640,6 +2257,7 @@ function viewModal() {
       + '<button class="btn" data-act="export-csv-projets">📁 CSV — Projets</button>'
       + '<button class="btn" data-act="export-csv-contacts">👤 CSV — Contacts</button>'
       + '<button class="btn" data-act="export-csv-alertes">🔔 CSV — Alertes</button>'
+      + '<button class="btn" data-act="export-csv-docs">📄 CSV — Documents (liste)</button>'
       + '</div>'
       + '<p style="font-size:11.5px;color:#94a3b8;margin:12px 0 0">CSV : séparateur « ; » et encodage UTF-8 (BOM), s&#39;ouvre directement dans Excel. HTML tout-en-un : copiez le fichier sur une clé USB ou envoyez-le par mail, il rouvre vos fiches à l&#39;identique sur n&#39;importe quel PC.</p>'
       + '<div class="modal-foot"><button type="button" class="btn" data-act="close-modal">Fermer</button></div>'
@@ -1720,9 +2338,9 @@ function render() {
     + '<input type="file" id="file-import" accept="application/json" style="display:none"/>'
     + '</div>'
     + '</div></header>'
-    + '<main class="wrap">' + content + '</main>'
+    + '<main class="wrap">' + meQaWrap(content) + '</main>'
     + viewModal()
-    + '<footer class="foot wrap">CRM Mécénat LPO · <b>v3</b> — les données sont enregistrées dans ce navigateur. Pensez à exporter régulièrement : bouton Export (sauvegarde JSON, CSV ou HTML tout-en-un) · bouton 🖨 Imprimer pour une version papier / PDF pour les réunions.</footer>';
+    + '<footer class="foot wrap">CRM Mécénat LPO · <b>v4</b> — les données sont enregistrées dans ce navigateur. Pensez à exporter régulièrement : bouton Export (sauvegarde JSON, CSV ou HTML tout-en-un) · bouton 🖨 Imprimer pour une version papier / PDF pour les réunions.</footer>';
 
   if (state.focusSearch) {
     var s = document.getElementById("search");
@@ -1742,6 +2360,20 @@ function readStatutsDraft() {
   });
 }
 
+/* ===== v4.3 : interactions autocomplétion ===== */
+document.addEventListener("click", function (e) {
+  var t = e.target;
+  if (!t || !t.getAttribute) return;
+  var acp = t.getAttribute("data-acp");
+  if (acp) { acPick(acp, t.getAttribute("data-acidv") || "", t.getAttribute("data-aclbl") || ""); return; }
+  var acx = t.getAttribute("data-acx");
+  if (acx) { acPick(acx, "", ""); return; }
+  var acIn = t.getAttribute("data-ac");
+  if (acIn) { acListRender(acIn, t.value || ""); return; }
+  var box = t.closest ? t.closest("[data-acbox]") : null;
+  if (!box) acCloseAll();
+});
+
 document.addEventListener("click", function (e) {
   var el = e.target.closest ? e.target.closest("[data-act]") : null;
   if (!el) return;
@@ -1754,6 +2386,61 @@ document.addEventListener("click", function (e) {
   else if (act === "open-org") setState({ page: "detail", detailId: id, projetId: null });
   else if (act === "open-projet") setState({ page: "projet", detailId: orgId, projetId: id });
   else if (act === "close-modal") closeModal();
+  else if (act === "me-task") { var meO = findOrg(id); if (meO) { if (meBridge()) meBridgeCall({ type: "task", orgId: meO.id, nom: meO.nom }); else meStandaloneTask(meO); } }
+  else if (act === "me-dossier") { var meO2 = findOrg(id); if (meO2) { if (meBridge()) meBridgeCall({ type: "dossier", orgId: meO2.id, nom: meO2.nom }); else meStandaloneDossier(meO2); } }
+  else if (act === "meqa-toggle") {
+    var qaCur = "";
+    try { qaCur = localStorage.getItem("crm-mecenat-lpo-meqa") || ""; } catch (e) {}
+    try { localStorage.setItem("crm-mecenat-lpo-meqa", qaCur === "1" ? "0" : "1"); } catch (e) {}
+    render();
+  }
+  else if (act === "meqa-open") {
+    var qaK = el.getAttribute("data-k"), qaId = el.getAttribute("data-id");
+    try { window.open("../#" + qaK + "=" + encodeURIComponent(qaId || ""), "_blank"); } catch (e) {}
+  }
+  else if (act === "mc-type") {
+    var mt = el.getAttribute("data-type");
+    var hin = document.getElementById("m_mctype");
+    if (hin) hin.value = mt;
+    TYPES_MECENAT.forEach(function (tt) {
+      var card = document.getElementById("mc-card-" + tt.value);
+      if (!card) return;
+      if (tt.value === mt) { if ((" " + card.className + " ").indexOf(" active ") < 0) card.className = card.className + " active"; }
+      else card.className = card.className.replace(/\s*active/g, "");
+    });
+    var gNat = document.getElementById("mcg-nat"); if (gNat) gNat.style.display = mt === "nature" ? "" : "none";
+    var gComp = document.getElementById("mcg-comp"); if (gComp) gComp.style.display = mt === "competence" ? "" : "none";
+    var meth = document.getElementById("mc-method"); if (meth) meth.innerHTML = mcMethodHtml(mt);
+    var lbl = document.getElementById("mcmontant-lbl"); if (lbl) lbl.innerHTML = mcMontantLabel(mt);
+    syncMcPreview();
+  }
+  else if (act === "mc-poste-add") mcLigneAdd("postes");
+  else if (act === "mc-poste-del") mcLigneDel("postes", el.getAttribute("data-i"));
+  else if (act === "mc-nat-add") mcLigneAdd("nat");
+  else if (act === "mc-nat-del") mcLigneDel("nat", el.getAttribute("data-i"));
+  else if (act === "new-proj-mecenat") setState({ modal: { type: "mecenat", orgId: orgId, projetId: id, fromProjet: true } });
+  else if (act === "doc-pick") {
+    var fi = document.getElementById("doc-file-input");
+    if (fi && fi.click) fi.click();
+  }
+  else if (act === "open-doc" || act === "dl-doc") {
+    var doPj = el.getAttribute("data-projet");
+    var doOrg = findOrg(orgId);
+    var doCont = doOrg ? (doPj ? findProjet(doOrg, doPj) : doOrg) : null;
+    var doDoc = doCont && doCont.docs ? doCont.docs.find(function (d) { return d.id === id; }) : null;
+    if (doDoc) openDoc(doDoc, act === "dl-doc" ? "dl" : "view");
+  }
+  else if (act === "del-doc") {
+    var ddPj = el.getAttribute("data-projet");
+    if (confirm("Supprimer ce document du CRM ? (votre fichier original sur le PC n&#39;est pas touché)")) {
+      updateOrg(orgId, function (o) {
+        var c = ddPj ? findProjet(o, ddPj) : o;
+        if (c && c.docs) c.docs = c.docs.filter(function (d) { return d.id !== id; });
+        return o;
+      });
+      render();
+    }
+  }
   else if (act === "nav-back") {
     if (nav.index > 0) { nav.index--; var nb = nav.stack[nav.index]; setState({ page: nb.page, detailId: nb.detailId, projetId: nb.projetId }); }
   }
@@ -1828,7 +2515,7 @@ document.addEventListener("click", function (e) {
     }); render(); }
   }
   else if (act === "new-mecenat") setState({ modal: { type: "mecenat", orgId: orgId } });
-  else if (act === "edit-mecenat") setState({ modal: { type: "mecenat", orgId: orgId, mecId: id } });
+  else if (act === "edit-mecenat") setState({ modal: { type: "mecenat", orgId: orgId, mecId: id, fromProjet: !!el.getAttribute("data-projet"), projetId: el.getAttribute("data-projet") } });
   else if (act === "delete-mecenat") {
     if (confirm("Supprimer ce mécénat ?")) { updateOrg(orgId, function (o) { o.mecenats = (o.mecenats || []).filter(function (mc) { return mc.id !== id; }); return o; }); render(); }
   }
@@ -1856,7 +2543,7 @@ document.addEventListener("click", function (e) {
   }
   else if (act === "export") setState({ modal: { type: "export" } });
   else if (act === "export-json") {
-    var payload = { version: 3, orgs: state.orgs, statuts: state.statuts };
+    var payload = { version: 4, orgs: state.orgs, statuts: state.statuts };
     downloadText("crm-mecenat-lpo-" + today() + ".json", JSON.stringify(payload, null, 2), "application/json", false);
     closeModal();
   }
@@ -1865,7 +2552,7 @@ document.addEventListener("click", function (e) {
     var appC = clone.querySelector("#app"); if (appC) appC.innerHTML = "";
     var paC = clone.querySelector("#print-area"); if (paC) paC.innerHTML = "";
     var htmlOut = "<!doctype html>\n" + clone.outerHTML;
-    var inject = '<scr' + 'ipt>window.__CRM_EMBEDDED_DATA__ = ' + JSON.stringify({ version: 3, orgs: state.orgs, statuts: state.statuts }).replace(/<\//g, "<\\/") + ';</scr' + 'ipt>';
+    var inject = '<scr' + 'ipt>window.__CRM_EMBEDDED_DATA__ = ' + JSON.stringify({ version: 4, orgs: state.orgs, statuts: state.statuts }).replace(/<\//g, "<\\/") + ';</scr' + 'ipt>';
     var openTag = "<scr" + "ipt>";
     htmlOut = htmlOut.replace(openTag, function () { return inject + openTag; });
     downloadText("crm-mecenat-lpo-" + today() + ".html", htmlOut, "text/html", false);
@@ -1906,6 +2593,15 @@ document.addEventListener("click", function (e) {
       rowsA.push([a.libelle, alerteTypeInfo(a.type).label, a.date, a.notes || "", a.faite ? "Oui" : "Non", a.orgNom]);
     });
     downloadText("alertes-" + today() + ".csv", toCSV(rowsA), "text/csv", true);
+    closeModal();
+  }
+  else if (act === "export-csv-docs") {
+    var rowsD = [["Nom du fichier", "Catégorie", "Établissement", "Projet", "Date d'ajout", "Taille (octets)", "Taille", "Type MIME"]];
+    state.orgs.forEach(function (o) {
+      (o.docs || []).forEach(function (d) { rowsD.push([d.nom, docInfo(d.cat).label, o.nom, "", d.date, docBytes(d), fmtTaille(docBytes(d)), d.mime || ""]); });
+      (o.projets || []).forEach(function (p) { (p.docs || []).forEach(function (d) { rowsD.push([d.nom, docInfo(d.cat).label, o.nom, p.nom || "Projet", d.date, docBytes(d), fmtTaille(docBytes(d)), d.mime || ""]); }); });
+    });
+    downloadText("documents-" + today() + ".csv", toCSV(rowsD), "text/csv", true);
     closeModal();
   }
   else if (act === "print") {
@@ -1955,11 +2651,21 @@ document.addEventListener("click", function (e) {
 });
 
 document.addEventListener("input", function (e) {
+  if (e.target.getAttribute) {
+    var acIn = e.target.getAttribute("data-ac");
+    if (acIn) {
+      var acH = document.getElementById(acIn);
+      if (acH) acH.value = "";
+      acListRender(acIn, e.target.value || "");
+    }
+  }
   if (e.target.id === "search") {
     state.query = e.target.value;
     state.focusSearch = true;
     render();
   }
+  if (e.target.id === "m_mcmontant") syncMcPreview();
+  if (e.target.getAttribute && e.target.getAttribute("data-mcl")) mcLigneInput(e.target);
 });
 
 document.addEventListener("change", function (e) {
@@ -1970,6 +2676,11 @@ document.addEventListener("change", function (e) {
       if (t.value === "__custom") { srcInp.focus(); srcInp.select(); }
       else srcInp.value = t.value;
     }
+    return;
+  }
+  if (t.id === "m_mcorg") {
+    var rec = document.getElementById("mc-recap");
+    if (rec) rec.innerHTML = mcRecapHtml(t.value);
     return;
   }
   var toggle = t.getAttribute && t.getAttribute("data-toggle");
@@ -2014,6 +2725,47 @@ document.addEventListener("change", function (e) {
   }
 });
 
+document.addEventListener("change", function (e) {
+  if (e.target.id === "doc-file-input") {
+    var dOrg = e.target.getAttribute("data-org");
+    var dPj = e.target.getAttribute("data-projet");
+    var catSel = document.getElementById("doc-cat");
+    readFilesAsDocs(e.target.files, dOrg, dPj, catSel ? catSel.value : "autre");
+    e.target.value = "";
+    return;
+  }
+  if (e.target.getAttribute && e.target.getAttribute("data-docsel")) {
+    var sOrg = e.target.getAttribute("data-org");
+    var sPj = e.target.getAttribute("data-projet");
+    var sId = e.target.getAttribute("data-id");
+    updateOrg(sOrg, function (o) {
+      var c = sPj ? findProjet(o, sPj) : o;
+      if (c && c.docs) c.docs = c.docs.map(function (d) { return d.id === sId ? Object.assign({}, d, { cat: e.target.value }) : d; });
+      return o;
+    });
+    render();
+  }
+});
+
+document.addEventListener("dragover", function (e) {
+  var z = e.target && e.target.closest ? e.target.closest("[data-dropzone]") : null;
+  if (!z) return;
+  e.preventDefault();
+  if ((" " + z.className + " ").indexOf(" drag-over ") < 0) z.className = z.className + " drag-over";
+});
+document.addEventListener("dragleave", function (e) {
+  var z = e.target && e.target.closest ? e.target.closest("[data-dropzone]") : null;
+  if (z) z.className = z.className.replace(/\s*drag-over/g, "");
+});
+document.addEventListener("drop", function (e) {
+  var z = e.target && e.target.closest ? e.target.closest("[data-dropzone]") : null;
+  if (!z) return;
+  e.preventDefault();
+  z.className = z.className.replace(/\s*drag-over/g, "");
+  var catSel = document.getElementById("doc-cat");
+  readFilesAsDocs(e.dataTransfer.files, z.getAttribute("data-org"), z.getAttribute("data-projet"), catSel ? catSel.value : "autre");
+});
+
 document.addEventListener("submit", function (e) {
   if (e.target.id !== "modal-form") return;
   e.preventDefault();
@@ -2027,7 +2779,35 @@ document.addEventListener("submit", function (e) {
     setState({ modal: null });
   }
   else if (m.type === "qprojstatut") {
-    updateOrg(m.orgId, function (o) { var pp = findProjet(o, m.projetId); if (pp) pp.statut = v("m_qpstatut") || pp.statut; return o; });
+    var qpOrg = findOrg(m.orgId);
+    var qpOld = qpOrg ? (findProjet(qpOrg, m.projetId) || {}).statut : "";
+    var qpNew = v("m_qpstatut");
+    updateOrg(m.orgId, function (o) { var pp = findProjet(o, m.projetId); if (pp) pp.statut = qpNew || pp.statut; return o; });
+    var qpPj = qpOrg ? findProjet(qpOrg, m.projetId) : null;
+    var qpNom = qpPj ? (qpPj.nom || "Projet") : "Projet";
+    if (qpOld !== "termine" && qpNew === "termine" && qpOrg) {
+      setState({ modal: { type: "suiviInvite", orgId: m.orgId, libelle: "Appel de suivi — projet « " + qpNom + " » terminé", notes: "Projet « " + qpNom + " » passé en Terminé le " + formatDate(today()) + ". Pour entretenir la relation : passer un appel, faire un bilan, évoquer une prochaine collaboration.", mois: 3 } });
+    } else if (qpOld !== "abandonne" && qpNew === "abandonne" && qpOrg) {
+      setState({ modal: { type: "suiviInvite", orgId: m.orgId, libelle: "Reprendre contact plus tard — projet « " + qpNom + " »", notes: "Projet « " + qpNom + " » passé en Abandonné le " + formatDate(today()) + ". Revenir vers l&#39;établissement plus tard pour prendre la température.", mois: 6 } });
+    } else {
+      setState({ modal: null });
+    }
+  }
+
+  else if (m.type === "suiviInvite") {
+    var suLib = v("m_sulib");
+    var suOrgId = m.orgId || "";
+    var suDateLibre = v("m_sudate");
+    var suDate = (suDateLibre && /^\d{4}-\d{2}-\d{2}$/.test(suDateLibre)) ? suDateLibre : addMonths(today(), num(v("m_sumois")) || 3);
+    if (suLib && suOrgId && findOrg(suOrgId)) {
+      var suOrgExist = findOrg(suOrgId);
+      var suDup = (suOrgExist.alertes || []).some(function (a) { return a && a.date === suDate; });
+      if (suDup) alert("⚠️ Un rappel existe déjà à la date du " + formatDate(suDate) + " pour cet établissement. Il sera quand même créé — pensez à vérifier les Alertes pour éviter le doublon.");
+      updateOrg(suOrgId, function (o) {
+        o.alertes = (o.alertes || []).concat([{ id: uid(), libelle: suLib, type: "suivi", date: suDate, notes: v("m_sunotes"), faite: false }]);
+        return o;
+      });
+    }
     setState({ modal: null });
   }
   else if (m.type === "org") {
@@ -2048,7 +2828,7 @@ document.addEventListener("submit", function (e) {
     if (!existing) {
       state.orgs = [o].concat(state.orgs);
       persist();
-      setState({ modal: null, page: "detail", detailId: o.id });
+      setState({ modal: { type: "suiviInvite", orgId: o.id, libelle: "Premier contact / relance — " + o.nom, notes: "Fiche créée le " + formatDate(today()) + ". Ex. reprendre contact après un événement ou un projet hors mécénat (refuge, partenariat…) pour prendre la température et proposer une rencontre.", mois: 1 }, page: "detail", detailId: o.id });
     } else {
       persist();
       setState({ modal: null });
@@ -2097,17 +2877,57 @@ document.addEventListener("submit", function (e) {
   }
 
   else if (m.type === "mecenat") {
-    var mcData = { type: v("m_mctype"), montant: num(v("m_mcmontant")), description: v("m_mcdesc"), poste: v("m_mcposte"), personnel: v("m_mcperso"), mission: v("m_mcmission") };
-    updateOrg(m.orgId, function (o) {
-      o.mecenats = o.mecenats || [];
-      if (m.mecId) {
+    mcDraftSync("postes");
+    mcDraftSync("nat");
+    var mcPostes = (m.dPostes || []).filter(mcRowHasData);
+    var mcNat = (m.dNat || []).filter(mcRowHasData);
+    var mcType = v("m_mctype");
+    var mcMontant = num(v("m_mcmontant"));
+    if (mcPostes.length > 0 && mcType === "competence") mcMontant = Math.round(mcPostes.reduce(function (s, r) { return s + num(r.nb) * num(r.heures) * num(r.taux); }, 0) * 100) / 100;
+    if (mcNat.length > 0 && mcType === "nature") mcMontant = Math.round(mcNat.reduce(function (s, r) { return s + num(r.qte) * num(r.valU); }, 0) * 100) / 100;
+    var mcPjVal = m.fromProjet ? m.projetId : (document.getElementById("m_mcproj") ? v("m_mcproj") : ((m.mecId && findOrg(m.orgId) ? ((findOrg(m.orgId).mecenats || []).find(function (x) { return x.id === m.mecId; }) || {}).projetId : "") || ""));
+    var mcOrgVal = (m.fromProjet && document.getElementById("m_mcorg")) ? v("m_mcorg") : m.orgId;
+    var mcData = { type: mcType, montant: mcMontant, quantite: mcNat.length > 0 ? mcNatSummary(mcNat) : "", heures: mcPostes.length > 0 ? mcPostesHeuresTot() : 0, taux: 0, description: v("m_mcdesc"), personnel: v("m_mcperso"), mission: v("m_mcmission"), projetId: mcPjVal, postes: mcPostes, lignesNat: mcNat };
+    var mcEdited = !!m.mecId;
+    if (m.mecId && mcOrgVal === m.orgId) {
+      updateOrg(mcOrgVal, function (o) {
+        o.mecenats = o.mecenats || [];
         o.mecenats = o.mecenats.map(function (mc) { return mc.id === m.mecId ? Object.assign({}, mc, mcData) : mc; });
-      } else {
-        o.mecenats = o.mecenats.concat([Object.assign({ id: uid() }, mcData)]);
+        return o;
+      });
+    } else {
+      if (m.mecId) {
+        updateOrg(m.orgId, function (o) {
+          o.mecenats = (o.mecenats || []).filter(function (mc) { return mc.id !== m.mecId; });
+          return o;
+        });
       }
-      return o;
-    });
-    setState({ modal: null });
+      updateOrg(mcOrgVal, function (o) {
+        o.mecenats = (o.mecenats || []).concat([Object.assign({ id: m.mecId || uid() }, mcData)]);
+        return o;
+      });
+    }
+    /* lien automatique au projet : si le mécène n'est pas contributeur, l'ajouter */
+    if (mcPjVal && m.fromProjet) {
+      var mcGp = findProjetGlobal(mcPjVal);
+      if (mcGp) {
+        updateOrg(mcGp.orgId, function (o) {
+          var p = findProjet(o, mcPjVal);
+          if (p) {
+            p.contributeurs = p.contributeurs || [];
+            if (p.contributeurs.indexOf(mcOrgVal) < 0 && mcOrgVal !== o.id) p.contributeurs.push(mcOrgVal);
+          }
+          return o;
+        });
+      }
+    }
+    if (!mcEdited && findOrg(mcOrgVal)) {
+      var mcOrg = findOrg(mcOrgVal);
+      var mcTi = mecInfo(mcData.type);
+      setState({ modal: { type: "suiviInvite", orgId: mcOrgVal, libelle: "Suivi relation mécénat — " + mcOrg.nom, notes: "Mécénat " + mcTi.label.toLowerCase() + " enregistré le " + formatDate(today()) + (mcData.description ? " : " + mcData.description : "") + ". Prendre des nouvelles, remercier, envisager la suite de la relation.", mois: 6 } });
+    } else {
+      setState({ modal: null });
+    }
   }
 
   else if (m.type === "aap") {
@@ -2139,6 +2959,9 @@ document.addEventListener("submit", function (e) {
       financement: { lignes: [] },
       aap: { existant: aapEx, nom: aapEx ? v("m_aapNom") : "", deadline: aapEx ? v("m_aapDeadline") : "", montant: aapEx ? v("m_aapMontant") : "", lien: aapEx ? v("m_aapLien") : "" }
     };
+    var pjOldOrg = m.projetId ? findOrg(pjOrgId) : null;
+    var pjOldP = pjOldOrg ? findProjet(pjOldOrg, m.projetId) : null;
+    var pjOldStatut = pjOldP ? pjOldP.statut : "";
     updateOrg(pjOrgId, function (o) {
       o.projets = o.projets || [];
       if (m.projetId) {
@@ -2150,21 +2973,29 @@ document.addEventListener("submit", function (e) {
       }
       return o;
     });
-    setState({ modal: null });
+    if (m.projetId && pjOldStatut !== "termine" && pjData.statut === "termine" && findOrg(pjOrgId)) {
+      setState({ modal: { type: "suiviInvite", orgId: pjOrgId, libelle: "Appel de suivi — projet « " + (pjData.nom || "Projet") + " » terminé", notes: "Projet « " + (pjData.nom || "Projet") + " » passé en Terminé le " + formatDate(today()) + ". Pour entretenir la relation : passer un appel, faire un bilan, évoquer une prochaine collaboration.", mois: 3 } });
+    } else {
+      setState({ modal: null });
+    }
   }
 
   else if (m.type === "ligne") {
     var src = v("m_lsrc"), mnt = num(v("m_lmnt"));
+    var lorgVal = v("m_lorg");
     updateOrg(m.orgId, function (o) {
       var p = findProjet(o, m.projetId);
       if (!p) return o;
       p.financement = p.financement || { lignes: [] };
       p.financement.lignes = p.financement.lignes || [];
       if (m.ligneId) {
-        p.financement.lignes = p.financement.lignes.map(function (l) { return l.id === m.ligneId ? { id: l.id, source: src, montant: mnt, orgId: v("m_lorg") } : l; });
+        p.financement.lignes = p.financement.lignes.map(function (l) { return l.id === m.ligneId ? { id: l.id, source: src, montant: mnt, orgId: lorgVal } : l; });
       } else {
-        p.financement.lignes = p.financement.lignes.concat([{ id: uid(), source: src, montant: mnt, orgId: v("m_lorg") }]);
+        p.financement.lignes = p.financement.lignes.concat([{ id: uid(), source: src, montant: mnt, orgId: lorgVal }]);
       }
+      /* établissement mécène hors porteur/co-financeurs -> ajouté automatiquement */
+      p.contributeurs = p.contributeurs || [];
+      if (lorgVal && lorgVal !== o.id && p.contributeurs.indexOf(lorgVal) < 0) p.contributeurs.push(lorgVal);
       return o;
     });
     setState({ modal: null });
@@ -2192,6 +3023,23 @@ document.addEventListener("submit", function (e) {
 });
 
 /* ===================== Édition en direct (notes / description) ===================== */
+document.addEventListener("focus", function (e) {
+  if (e.target.getAttribute) {
+    var acIn = e.target.getAttribute("data-ac");
+    if (acIn) acListRender(acIn, e.target.value || "");
+  }
+}, true);
+document.addEventListener("keydown", function (e) {
+  if (!e.target || !e.target.getAttribute) return;
+  var acIn = e.target.getAttribute("data-ac");
+  if (!acIn) return;
+  if (e.key === "Enter") {
+    var last = AC_LAST[acIn] || [];
+    if (last.length) { acPick(acIn, last[0].id, last[0].label); e.preventDefault(); }
+  } else if (e.key === "Escape") {
+    acCloseAll();
+  }
+});
 document.addEventListener("focus", function (e) {
   var el = e.target.closest ? e.target.closest("[data-live]") : null;
   if (!el || el.getAttribute("data-ph") !== "1") return;
