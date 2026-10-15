@@ -189,6 +189,18 @@
   .mc-note-box summary { cursor: pointer; font-weight: 700; color: #334155; font-size: 12.5px; }
   .mc-note-box ul { margin: 8px 0 0; padding-left: 18px; }
   .mc-note-box li { margin-bottom: 5px; }
+  /* Tableaux de valorisation (postes compétence / lignes nature) v4.2 */
+  .mc-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 8px; }
+  .mc-table th { text-align: left; font-size: 10.5px; text-transform: uppercase; color: #64748b; border-bottom: 1px solid #e2e8f0; padding: 4px 5px; }
+  .mc-table td { border-bottom: 1px solid #f1f5f9; padding: 4px 5px; vertical-align: middle; }
+  .mc-table input, .mc-table select { width: 100%; min-width: 0; font-size: 12px; padding: 5px 7px; border: 1px solid #cbd5e1; border-radius: 7px; box-sizing: border-box; }
+  .mc-table .mc-tot-cell { font-weight: 700; white-space: nowrap; text-align: right; }
+  .mc-table .mc-del { border: 0; background: none; color: #be123c; cursor: pointer; font-size: 14px; padding: 2px 6px; }
+  .mc-tot-bar { display: flex; align-items: center; gap: 8px; margin-top: 8px; font-size: 12.5px; color: #334155; }
+  .mc-tot-bar b { font-size: 14px; }
+  .mc-add-line { margin-top: 8px; }
+  .mc-recap { border-radius: 10px; padding: 9px 12px; font-size: 12px; line-height: 1.5; background: #f8fafc; border: 1px dashed #cbd5e1; color: #475569; margin-top: 10px; }
+  .mc-recap b { color: #1e293b; }
 
   @media (max-width: 640px) { .form-grid { grid-template-columns: 1fr; } .stats-table { display: block; overflow-x: auto; } .mectype-card { min-width: 100%; } }
 </style>
@@ -627,8 +639,8 @@ function docsCardHtml(orgId, projetId, cont) {
 function mecMethodNote() {
   return '<details class="mc-note-box"><summary>ℹ️ Comment sont calculés les montants ?</summary><ul>'
     + '<li>💶 <b>Financier</b> : don en argent — le montant saisi est de l&#39;argent réel (« cash »), à sommer dans le budget.</li>'
-    + '<li>🎁 <b>En nature</b> : don de biens (matériel, locaux…) — saisissez la <b>quantité</b> (ex. « 20 nichoirs ») et une <b>valeur estimée</b> en € si vous la connaissez (valeur marchande du don).</li>'
-    + '<li>🧠 <b>De compétence</b> : mise à disposition de personnel — montant <b>valorisé = heures × taux horaire</b>, calculé automatiquement si le champ montant est laissé vide.</li>'
+    + '<li>🎁 <b>En nature</b> : don de biens (matériel, locaux…) — détaillez le tableau <b>produit / qté / unité / valorisation unitaire</b> : le total se reporte dans le montant. C&#39;est une <b>estimation</b>, pas de l&#39;argent encaissé.</li>'
+    + '<li>🧠 <b>De compétence</b> : mise à disposition de personnel — chaque poste se valorise en <b>nb de personnes × heures/pers. × coût horaire</b> (tableau dédié, total automatique).</li>'
     + '<li>Le badge <b>💶 Cash</b> ne compte que le mécénat financier ; <b>📦🧠 Valorisé non-cash</b> agrège nature + compétence. Ces estimations <b>ne doivent pas être additionnées au budget réel</b> (elles ne sont pas de l&#39;argent encaissé).</li>'
     + '</ul></details>';
 }
@@ -1353,14 +1365,23 @@ function viewDetail() {
       var mi = mecInfo(m2.type);
       var det = [];
       if (m2.description) det.push(esc(m2.description));
-      if (m2.quantite) det.push("Quantité : " + esc(m2.quantite));
-      if (num(m2.heures) > 0) det.push("Heures : " + m2.heures + (num(m2.taux) > 0 ? " × " + fmtE(m2.taux) + "/h → " + fmtE(num(m2.heures) * num(m2.taux)) : ""));
-      if (m2.poste) det.push("Poste : " + esc(m2.poste));
+      if ((m2.lignesNat || []).length > 0) {
+        m2.lignesNat.forEach(function (l) { det.push(esc(l.libelle || "don") + " : " + num(l.qte) + (l.unite ? " " + esc(l.unite) : "") + " × " + fmtE(num(l.valU)) + " = " + fmtE(num(l.qte) * num(l.valU))); });
+      } else if (m2.quantite) det.push("Quantité : " + esc(m2.quantite));
+      if ((m2.postes || []).length > 0) {
+        m2.postes.forEach(function (pp) { det.push(esc(pp.libelle || "poste") + " : " + num(pp.nb) + " pers × " + num(pp.heures) + " h × " + fmtE(num(pp.taux)) + "/h = " + fmtE(num(pp.nb) * num(pp.heures) * num(pp.taux))); });
+      } else if (num(m2.heures) > 0) det.push("Heures : " + m2.heures + (num(m2.taux) > 0 ? " × " + fmtE(m2.taux) + "/h → " + fmtE(num(m2.heures) * num(m2.taux)) : ""));
+      if (m2.poste && !(m2.postes || []).length) det.push("Poste : " + esc(m2.poste));
       if (m2.personnel) det.push("Personnel : " + esc(m2.personnel));
       if (m2.mission) det.push("Mission : " + esc(m2.mission));
+      var pjChip = "";
+      if (m2.projetId) {
+        var mcGp = findProjetGlobal(m2.projetId);
+        if (mcGp) pjChip = ' <button class="org-link" style="background:none;border:0;padding:0;color:#047857;font-weight:600;text-decoration:underline;font-size:11.5px" data-act="open-projet" data-org="' + mcGp.orgId + '" data-id="' + mcGp.projet.id + '" title="Ouvrir le projet lié">📁 ' + esc(mcGp.projet.nom || "Projet") + '</button>';
+      }
       return '<div class="list-row" style="border-left:3px solid ' + mi.accent + '"><div style="min-width:0">'
         + '<p class="t"><span class="badge ' + mi.badge + '">' + mi.icon + " " + mi.label + '</span>'
-        + (num(m2.montant) > 0 ? ' <b>' + fmtE(num(m2.montant)) + '</b>' : "") + '</p>'
+        + (num(m2.montant) > 0 ? ' <b>' + fmtE(num(m2.montant)) + '</b>' : "") + pjChip + '</p>'
         + (det.length ? '<p class="s">' + det.join(" · ") + '</p>' : "")
         + '</div>'
         + '<div style="display:flex;gap:6px">'
@@ -1374,7 +1395,8 @@ function viewDetail() {
       if (n === 0) return "";
       return '<span class="badge ' + t.badge + '">' + t.icon + " " + t.label + " : " + n + " · " + fmtE(mecTotal(mecList, t.value)) + '</span>';
     }).filter(Boolean).join(" ");
-    mecenatsHtml += '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:12px;align-items:center">' + mecTotBadges
+    mecenatsHtml += '<p style="font-size:12px;font-weight:700;color:#64748b;margin:12px 0 0">📊 Soutien déjà enregistré avec nous (par type) :</p>'
+      + '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;align-items:center">' + mecTotBadges
       + '<span class="badge b-emerald" style="margin-left:auto">💶 Cash : <b>' + fmtE(mecCash(mecList)) + '</b></span>'
       + '<span class="badge b-amber">📦🧠 Valorisé non-cash : <b>' + fmtE(mecValorise(mecList)) + '</b></span>'
       + '<span class="badge">Total : <b>' + fmtE(mecSum) + '</b></span></div>';
@@ -1469,6 +1491,37 @@ function viewProjet() {
     });
   });
   pjHisto.sort(function (a, b) { return a.date < b.date ? 1 : -1; });
+  /* --- Mécénats rattachés au projet (tous établissements) --- */
+  var pjMecs = [];
+  state.orgs.forEach(function (o2) {
+    (o2.mecenats || []).forEach(function (mc) { if (mc.projetId === p.id) pjMecs.push({ mc: mc, orgId: o2.id, orgNom: o2.nom }); });
+  });
+  var pjMecsHtml = pjMecs.length === 0
+    ? '<p style="font-size:13px;color:#94a3b8;margin:8px 0">Aucun mécénat rattaché à ce projet. « ＋ Ajouter un mécénat » crée un mécénat typé (financier, nature, compétence) chez l&#39;établissement de votre choix, rattaché à ce projet.</p>'
+    : pjMecs.map(function (it) {
+        var mi2 = mecInfo(it.mc.type);
+        var detM = [];
+        if (it.mc.description) detM.push(esc(it.mc.description));
+        if ((it.mc.lignesNat || []).length) detM.push(it.mc.lignesNat.map(function (l) { return esc(l.libelle || "don") + " (" + fmtE(num(l.qte) * num(l.valU)) + ")"; }).join(" + "));
+        if ((it.mc.postes || []).length) detM.push(it.mc.postes.map(function (pp) { return esc(pp.libelle || "poste") + " (" + fmtE(num(pp.nb) * num(pp.heures) * num(pp.taux)) + ")"; }).join(" + "));
+        return '<div class="list-row" style="border-left:3px solid ' + mi2.accent + '"><div style="min-width:0">'
+          + '<p class="t"><span class="badge ' + mi2.badge + '">' + mi2.icon + " " + mi2.label + '</span>'
+          + (num(it.mc.montant) > 0 ? ' <b>' + fmtE(num(it.mc.montant)) + '</b>' : "")
+          + ' <button class="org-link" style="background:none;border:0;padding:0;color:#047857;font-weight:600;text-decoration:underline;font-size:11.5px" data-act="open-org" data-id="' + it.orgId + '">' + esc(it.orgNom) + '</button></p>'
+          + (detM.length ? '<p class="s">' + detM.join(" · ") + '</p>' : "")
+          + '</div>'
+          + '<div style="display:flex;gap:6px">'
+          + '<button class="btn sm" data-act="edit-mecenat" data-org="' + it.orgId + '" data-id="' + it.mc.id + '" data-projet="' + p.id + '" title="Modifier ce mécénat">✎</button>'
+          + '</div></div>';
+      }).join("");
+  /* --- bouton contact éditable pour les établissements impliqués --- */
+  var pjContactBtn = function (o2) {
+    var cs2 = (o2.contacts || []);
+    var cp2 = cs2.filter(function (c) { return c.principal; })[0] || cs2[0];
+    return cp2
+      ? '<button class="btn sm" data-act="edit-contact" data-org="' + o2.id + '" data-id="' + cp2.id + '" title="Modifier le contact principal de ' + esc(o2.nom) + '">✎ Contact</button>'
+      : '<button class="btn sm" data-act="new-contact" data-org="' + o2.id + '" title="Ajouter un contact pour ' + esc(o2.nom) + '">＋ Contact</button>';
+  };
   var pjHistoHtml = pjHisto.length === 0
     ? '<p style="font-size:13px;color:#94a3b8;margin:8px 0">Aucun échange lié à ce projet pour le moment. Utilisez « ＋ Échange » pour tracer un rendez-vous, un mail, un appel…</p>'
     : pjHisto.map(function (h) {
@@ -1509,7 +1562,8 @@ function viewProjet() {
     + '<div class="list-row"><div style="min-width:0"><p class="t"><span class="badge b-emerald">🏢 Porteur</span> <button class="org-link" style="background:none;border:0;padding:0;color:#047857;font-weight:600;text-decoration:underline" data-act="open-org" data-id="' + org.id + '">' + esc(org.nom) + '</button></p>'
     + '<p class="s">' + statutBadge(org.statut, org.id) + ' ' + esc(orgTypeInfo(org.type).label) + (org.region ? " · " + esc(org.region) : "") + '</p>'
     + contactSummaryHtml(org)
-    + '</div></div>'
+    + '</div>'
+    + '<div style="display:flex;gap:6px;align-items:flex-start">' + pjContactBtn(org) + '</div></div>'
     + ((p.contributeurs || []).length === 0
         ? '<p style="font-size:13px;color:#94a3b8;margin:8px 0">Aucun co-financeur pour le moment. Ajoutez un établissement partenaire avec « ＋ Établissement ».</p>'
         : (p.contributeurs || []).map(function (cid) {
@@ -1519,7 +1573,8 @@ function viewProjet() {
               + '<p class="s">' + statutBadge(co.statut, co.id) + ' ' + esc(orgTypeInfo(co.type).label) + (co.region ? " · " + esc(co.region) : "") + '</p>'
               + contactSummaryHtml(co)
               + '</div>'
-              + '<div style="display:flex;gap:6px">'
+              + '<div style="display:flex;gap:6px;align-items:flex-start">'
+              + pjContactBtn(co)
               + '<button class="btn sm" data-act="open-org" data-id="' + co.id + '">Fiche</button>'
               + '<button class="btn sm danger" data-act="remove-contrib" data-org="' + org.id + '" data-id="' + p.id + '" data-cid="' + co.id + '" title="Retirer cet établissement du projet">Retirer</button>'
               + '</div></div>';
@@ -1535,6 +1590,10 @@ function viewProjet() {
     + '</div>'
     + (num(p.cout) > 0 ? '<div class="bar-track" style="margin-top:12px"><div class="bar-fill" style="width:' + pct + '%;background:' + (reste > 0 ? "#fbbf24" : "#10b981") + '"></div></div><p style="font-size:11px;color:#94a3b8;margin:4px 0 0">' + pct + ' % financé</p>' : "")
     + '</div>'
+    + '<div class="card pad" style="margin-top:20px"><div class="section-head"><h3>🤝 Mécénats du projet (' + pjMecs.length + ')</h3>'
+    + '<button class="btn sm" data-act="new-proj-mecenat" data-org="' + org.id + '" data-id="' + p.id + '">＋ Ajouter un mécénat</button></div>' + pjMecsHtml
+    + '<p style="font-size:11.5px;color:#94a3b8;margin:10px 0 0">Le tableau de bord du projet compte le financement (lignes ci-dessus) ; les mécénats ci-contre tracent le soutien typé (cash / valorisé) de chaque établissement.</p>'
+    + '</div>'
     + '<div class="card pad" style="margin-top:20px"><div class="section-head"><h3>Échanges liés au projet (' + pjHisto.length + ')</h3>'
     + '<button class="btn sm" data-act="new-histo" data-org="' + org.id + '" data-projet="' + p.id + '">＋ Échange</button></div>' + pjHistoHtml + '</div>'
     + docsCardHtml(org.id, p.id, p)
@@ -1545,29 +1604,172 @@ function viewProjet() {
 /* ===================== Modales ===================== */
 
 function mcMethodHtml(t) {
-  if (t === "nature") return '🎁 <b>Mécénat en nature</b> — don de biens (matériel, locaux, véhicules…). Renseignez la <b>quantité</b> (ex. « 20 nichoirs ») et, si vous la connaissez, la <b>valeur estimée</b> en € : c&#39;est la valeur marchande du don, une estimation qui n&#39;est <b>pas de l&#39;argent encaissé</b> (elle se cumule dans le badge « 📦🧠 Valorisé non-cash », jamais dans le budget réel).';
-  if (t === "competence") return '🧠 <b>Mécénat de compétence</b> — mise à disposition de personnel (salariés, retraités, bénévoles qualifiés). Le montant est <b>valorisé, pas encaissé</b> : si le champ montant est vide, il est calculé automatiquement en <b>heures × taux horaire</b>. Ce montant se cumule dans le badge « 📦🧠 Valorisé non-cash ».';
+  if (t === "nature") return '🎁 <b>Mécénat en nature</b> — don de biens (matériel, locaux, véhicules…). Détaillez chaque produit/service dans le tableau (produit, quantité, unité, valorisation unitaire) : le total se reporte automatiquement dans le champ montant. C&#39;est une estimation de la valeur du don, <b>pas de l&#39;argent encaissé</b> (badge « 📦🧠 Valorisé non-cash », jamais dans le budget réel).';
+  if (t === "competence") return '🧠 <b>Mécénat de compétence</b> — mise à disposition de personnel (salariés, retraités, bénévoles qualifiés). Chaque ligne du tableau valorise un poste : <b>nb de personnes × heures/personne × coût horaire</b>. Le montant est <b>valorisé, pas encaissé</b> (badge « 📦🧠 Valorisé non-cash »).';
   return '💶 <b>Mécénat financier</b> — don en argent (virement, chèque, abonnement). Le montant saisi est de l&#39;argent réel : il se cumule dans le badge « 💶 Cash » et peut être additionné au budget de votre structure.';
 }
 function mcMontantLabel(t) {
-  if (t === "nature") return "Valeur estimée du don (€) — si connue";
-  if (t === "competence") return "Montant valorisé (€) — auto : heures × taux si vide";
+  if (t === "nature") return "Valeur estimée du don (€) — total du tableau ci-dessus";
+  if (t === "competence") return "Montant valorisé (€) — total des postes ci-dessous";
   return "Montant du don (€) *";
 }
-function mcPreviewText(t, montant, heures, taux) {
+function mcPreviewText(t, montant, totPostes, totNat) {
   if (t === "financier") return montant > 0 ? "💰 Montant qui sera enregistré : <b>" + fmtE(montant) + "</b> — argent réel (cash)." : "💰 Aucun montant saisi — le don financier sera enregistré sans montant.";
-  if (t === "nature") return montant > 0 ? "💰 Valeur estimée qui sera enregistrée : <b>" + fmtE(montant) + "</b> — estimation non-cash (pas d&#39;argent encaissé)." : "📦 Aucune valeur estimée — seul le descriptif (quantité, objet) sera enregistré. C&#39;est acceptable si la valeur est inconnue.";
+  if (t === "nature") {
+    if (totNat > 0) return "🧮 Total du tableau : <b>" + fmtE(totNat) + "</b> (somme des lignes, reporté dans le champ montant) — estimation non-cash, pas d&#39;argent encaissé.";
+    if (montant > 0) return "💰 Valeur estimée qui sera enregistrée : <b>" + fmtE(montant) + "</b> — estimation non-cash (pas d&#39;argent encaissé).";
+    return "📦 Aucune valeur estimée — détaillez les lignes du tableau (ou saisissez un montant global). C&#39;est acceptable si la valeur est inconnue.";
+  }
+  if (totPostes > 0) return "🧮 Total des postes : <b>" + fmtE(totPostes) + "</b> (nb pers × heures × coût horaire, reporté dans le champ montant) — valorisation non-cash.";
   if (montant > 0) return "💰 Montant retenu : <b>" + fmtE(montant) + "</b> (saisi directement) — valorisation non-cash.";
-  if (heures > 0 && taux > 0) return "🧮 Montant qui sera calculé : <b>" + fmtE(Math.round(heures * taux * 100) / 100) + "</b> = " + heures + " h × " + fmtE(taux) + " €/h — valorisation non-cash.";
-  return "🧮 Renseignez les heures et le taux horaire (ou saisissez directement un montant) pour valoriser ce mécénat.";
+  return "🧮 Renseignez les postes du tableau (nb de personnes × heures/pers. × coût horaire) ou saisissez directement un montant pour valoriser ce mécénat.";
 }
-function mcPreviewHtml(t, mc0) { return mcPreviewText(t, mc0 ? num(mc0.montant) : 0, mc0 ? num(mc0.heures) : 0, mc0 ? num(mc0.taux) : 0); }
+function mcPreviewHtml(t, mc0) {
+  return mcPreviewText(t, mc0 ? num(mc0.montant) : 0,
+    mc0 && mc0.postes ? mc0.postes.reduce(function (s, r) { return s + num(r.nb) * num(r.heures) * num(r.taux); }, 0) : 0,
+    mc0 && mc0.lignesNat ? mc0.lignesNat.reduce(function (s, r) { return s + num(r.qte) * num(r.valU); }, 0) : 0);
+}
 function syncMcPreview() {
   var tEl = document.getElementById("m_mctype");
   var t = tEl ? tEl.value : "financier";
-  var g = function (id) { var el = document.getElementById(id); return el ? el.value : ""; };
+  var mEl = document.getElementById("m_mcmontant");
+  var mont = mEl ? num(mEl.value) : 0;
+  var totP = 0, totN = 0;
+  if (t === "competence") { mcDraftSync("postes"); totP = mcLignesTotal("postes"); }
+  if (t === "nature") { mcDraftSync("nat"); totN = mcLignesTotal("nat"); }
   var pv = document.getElementById("mc-preview");
-  if (pv) pv.innerHTML = mcPreviewText(t, num(g("m_mcmontant")), num(g("m_mcheures")), num(g("m_mctaux")));
+  if (pv) pv.innerHTML = mcPreviewText(t, mont, totP, totN);
+}
+
+function mcRecapHtml(orgId) {
+  var o = findOrg(orgId);
+  if (!o) return "";
+  var list = o.mecenats || [];
+  var parts = TYPES_MECENAT.map(function (t) {
+    var tot = mecTotal(list, t.value);
+    return '<span title="' + t.label + '">' + t.icon + " " + fmtE(tot) + "</span>";
+  });
+  return "📊 <b>Soutien déjà enregistré avec cet établissement :</b> " + parts.join(" · ")
+    + " — soit <b>" + fmtE(mecCash(list)) + "</b> en cash (argent réel) et <b>" + fmtE(mecValorise(list)) + "</b> valorisé non-cash, pour un total de <b>" + fmtE(mecCash(list) + mecValorise(list)) + "</b>.";
+}
+function mcRowHasData(r) {
+  if (!r) return false;
+  if (num(r.nb) > 0 || num(r.heures) > 0 || num(r.taux) > 0) return true;
+  if (num(r.qte) > 0 || num(r.valU) > 0) return true;
+  return false;
+}
+function mcSeedDrafts(m, mc0) {
+  if (!m.dPostesSeeded) {
+    m.dPostesSeeded = true;
+    m.dPostes = (mc0 && mc0.postes && mc0.postes.length) ? JSON.parse(JSON.stringify(mc0.postes)) : (mc0 && num(mc0.heures) > 0 ? [{ id: uid(), libelle: mc0.poste || "", nb: 1, heures: num(mc0.heures), taux: num(mc0.taux) }] : [{ id: uid(), libelle: "", nb: "", heures: "", taux: "" }]);
+  }
+  if (!m.dNatSeeded) {
+    m.dNatSeeded = true;
+    m.dNat = (mc0 && mc0.lignesNat && mc0.lignesNat.length) ? JSON.parse(JSON.stringify(mc0.lignesNat)) : (mc0 && mc0.quantite ? [{ id: uid(), libelle: mc0.quantite, qte: "", unite: "", valU: "" }] : [{ id: uid(), libelle: "", qte: "", unite: "", valU: "" }]);
+  }
+}
+function mcDraftSync(kind) {
+  var m = state.modal;
+  if (!m) return;
+  mcSeedDrafts(m, null);
+  var arr = kind === "postes" ? m.dPostes : m.dNat;
+  arr.forEach(function (r, i) {
+    if (kind === "postes") {
+      var gp = function (f) { var el = document.getElementById("mcp-" + i + "-" + f); return el ? el.value : ""; };
+      r.libelle = gp("lib"); r.nb = num(gp("nb")); r.heures = num(gp("h")); r.taux = num(gp("taux"));
+    } else {
+      var gn = function (f) { var el = document.getElementById("mcn-" + i + "-" + f); return el ? el.value : ""; };
+      r.libelle = gn("lib"); r.qte = num(gn("qte")); r.unite = gn("unite"); r.valU = num(gn("valu"));
+    }
+  });
+}
+function mcLigneTot(kind, r) {
+  if (kind === "postes") return num(r.nb) * num(r.heures) * num(r.taux);
+  return num(r.qte) * num(r.valU);
+}
+function mcLignesTotal(kind) {
+  var m = state.modal;
+  if (!m) return 0;
+  mcSeedDrafts(m, null);
+  var arr = (kind === "postes" ? m.dPostes : m.dNat).filter(mcRowHasData);
+  return arr.reduce(function (s, r) { return s + mcLigneTot(kind, r); }, 0);
+}
+function mcPostesHeuresTot() {
+  var m = state.modal;
+  if (!m) return 0;
+  mcSeedDrafts(m, null);
+  return m.dPostes.filter(mcRowHasData).reduce(function (s, r) { return s + num(r.nb) * num(r.heures); }, 0);
+}
+function mcLignesRowsHtml(kind) {
+  var m = state.modal;
+  mcSeedDrafts(m, null);
+  var arr = kind === "postes" ? m.dPostes : m.dNat;
+  var mkIn = function (id, ph, val, isNum) {
+    return '<input id="' + id + '" data-mcl="' + kind + '" placeholder="' + ph + '"' + (isNum ? ' type="number" step="0.5" min="0"' : "") + ' value="' + esc(val === undefined ? "" : val) + '"/>';
+  };
+  return arr.map(function (r, i) {
+    if (kind === "postes") {
+      return '<tr>'
+        + '<td>' + mkIn("mcp-" + i + "-lib", "Ex. Juriste, menuisier…", r.libelle) + '</td>'
+        + '<td style="width:70px">' + mkIn("mcp-" + i + "-nb", "Ex. 2", r.nb, true) + '</td>'
+        + '<td style="width:80px">' + mkIn("mcp-" + i + "-h", "Ex. 12", r.heures, true) + '</td>'
+        + '<td style="width:90px">' + mkIn("mcp-" + i + "-taux", "Ex. 65", r.taux, true) + '</td>'
+        + '<td class="mc-tot-cell" id="mct-postes-' + i + '" style="width:90px">' + fmtE(mcLigneTot("postes", r)) + '</td>'
+        + '<td style="width:30px"><button type="button" class="mc-del" data-act="mc-poste-del" data-i="' + i + '" title="Retirer cette ligne">✕</button></td>'
+        + '</tr>';
+    }
+    return '<tr>'
+      + '<td>' + mkIn("mcn-" + i + "-lib", "Ex. Nichoirs, salle de réunion…", r.libelle) + '</td>'
+      + '<td style="width:70px">' + mkIn("mcn-" + i + "-qte", "Ex. 20", r.qte, true) + '</td>'
+      + '<td style="width:80px">' + mkIn("mcn-" + i + "-unite", "u, m², jour…", r.unite) + '</td>'
+      + '<td style="width:90px">' + mkIn("mcn-" + i + "-valu", "Ex. 30", r.valU, true) + '</td>'
+      + '<td class="mc-tot-cell" id="mct-nat-' + i + '" style="width:90px">' + fmtE(mcLigneTot("nat", r)) + '</td>'
+      + '<td style="width:30px"><button type="button" class="mc-del" data-act="mc-nat-del" data-i="' + i + '" title="Retirer cette ligne">✕</button></td>'
+      + '</tr>';
+  }).join("");
+}
+function mcLignesRebuild(kind) {
+  var tb = document.getElementById(kind === "postes" ? "mc-postes-t" : "mc-nat-t");
+  if (tb) tb.innerHTML = mcLignesRowsHtml(kind);
+  var tot = mcLignesTotal(kind);
+  var tc = document.getElementById(kind === "postes" ? "mc-postes-tot" : "mc-nat-tot");
+  if (tc) tc.innerHTML = fmtE(tot);
+  var mont = document.getElementById("m_mcmontant");
+  if (tot > 0 && mont) mont.value = tot;
+  syncMcPreview();
+}
+function mcLigneAdd(kind) {
+  var m = state.modal;
+  if (!m) return;
+  mcDraftSync(kind);
+  var arr = kind === "postes" ? m.dPostes : m.dNat;
+  arr.push(kind === "postes" ? { id: uid(), libelle: "", nb: "", heures: "", taux: "" } : { id: uid(), libelle: "", qte: "", unite: "", valU: "" });
+  mcLignesRebuild(kind);
+}
+function mcLigneDel(kind, i) {
+  var m = state.modal;
+  if (!m) return;
+  mcDraftSync(kind);
+  var arr = kind === "postes" ? m.dPostes : m.dNat;
+  arr.splice(num(i), 1);
+  if (arr.length === 0) arr.push(kind === "postes" ? { id: uid(), libelle: "", nb: "", heures: "", taux: "" } : { id: uid(), libelle: "", qte: "", unite: "", valU: "" });
+  mcLignesRebuild(kind);
+}
+function mcLigneInput(el) {
+  var k = el.getAttribute("data-mcl") === "postes" ? "postes" : "nat";
+  mcDraftSync(k);
+  var tot = mcLignesTotal(k);
+  var tc = document.getElementById(k === "postes" ? "mc-postes-tot" : "mc-nat-tot");
+  if (tc) tc.innerHTML = fmtE(tot);
+  if (tot > 0) { var mont = document.getElementById("m_mcmontant"); if (mont) mont.value = tot; }
+  var parts = String(el.id || "").split("-");
+  var ri = num(parts[1]);
+  var rc = document.getElementById("mct-" + k + "-" + ri);
+  if (rc && state.modal) { var row = (k === "postes" ? state.modal.dPostes : state.modal.dNat)[ri]; if (row) rc.innerHTML = fmtE(mcLigneTot(k, row)); }
+  syncMcPreview();
+}
+function mcNatSummary(rows) {
+  return rows.map(function (r) { return (r.qte ? r.qte + (r.unite ? " " + r.unite : "") + " " : "") + (r.libelle || "don") + (num(r.valU) > 0 ? " (" + fmtE(r.qte * r.valU) + ")" : ""); }).join(" + ");
 }
 
 function fld(label, inner) {
@@ -1793,12 +1995,24 @@ function viewModal() {
     var srcOpts = SOURCES_FIN.map(function (s) {
       return '<option value="' + esc(s) + '"' + (curSrc === s ? " selected" : "") + '>' + esc(s) + '</option>';
     }).join("");
+    var curOrg = l0 ? l0.orgId || "" : "";
+    var contribIds = pjL ? (pjL.contributeurs || []) : [];
+    var orgOpts = '<option value="">—</option>';
+    [org ? org.id : ""].concat(contribIds).filter(Boolean).forEach(function (cid) {
+      var co = findOrg(cid);
+      if (co) orgOpts += '<option value="' + co.id + '"' + (curOrg === co.id ? " selected" : "") + '>' + esc(co.nom) + (org && cid === org.id ? " (porteur)" : " (co-financeur)") + '</option>';
+    });
+    state.orgs.forEach(function (o2) {
+      if (org && o2.id === org.id) return;
+      if (contribIds.indexOf(o2.id) >= 0) return;
+      orgOpts += '<option value="' + o2.id + '"' + (curOrg === o2.id ? " selected" : "") + '>' + esc(o2.nom) + '</option>';
+    });
     body = '<form id="modal-form"><div class="form-grid">'
       + fld("Intitulé de la source *", '<select id="m_lsrcsel">' + srcOpts + '<option value="__custom"' + (SOURCES_FIN.indexOf(curSrc) < 0 ? " selected" : "") + '>Autre (à préciser)…</option></select>')
       + fld("Précision / nom exact *", '<input id="m_lsrc" required value="' + esc(curSrc) + '" placeholder="Ex. Fonds région, Fonds propres LPO, Fonds mécène…"/>')
-      + fld("Établissement mécène (optionnel)", '<select id="m_lorg"><option value="">—</option>' + [org ? org.id : ""].concat(pjL ? (pjL.contributeurs || []) : []).filter(Boolean).map(function (cid) { var co = findOrg(cid); return co ? '<option value="' + co.id + '"' + (l0 && l0.orgId === co.id ? " selected" : "") + '>' + esc(co.nom) + '</option>' : ""; }).join("") + '</select>')
+      + fld("Établissement mécène (tous les établissements)", '<select id="m_lorg">' + orgOpts + '</select>')
       + fld("Montant (€) *", '<input id="m_lmnt" type="number" step="0.01" min="0" required value="' + esc(l0 ? num(l0.montant) : "") + '"/>')
-      + '</div><p style="font-size:11.5px;color:#64748b;margin:10px 0 0">Choisissez un intitulé prédéfini (il remplit le champ) puis ajustez si besoin, ou sélectionnez « Autre » pour un intitulé libre.</p>'
+      + '</div><p style="font-size:11.5px;color:#64748b;margin:10px 0 0">Un établissement mécène choisi hors porteur et co-financeurs est <b>ajouté automatiquement</b> comme co-financeur du projet (carte « Établissements impliqués »). Un intitulé prédéfini remplit le champ « Précision », ajustez si besoin.</p>'
       + '<div class="modal-foot"><button type="button" class="btn" data-act="close-modal">Annuler</button>'
       + '<button type="submit" class="btn primary">Enregistrer</button></div></form>';
   }
@@ -1806,9 +2020,36 @@ function viewModal() {
   if (m.type === "mecenat") {
     var mc0 = m.mecId && org ? (org.mecenats || []).find(function (x) { return x.id === m.mecId; }) : null;
     var mcTy = mc0 ? (mc0.type || "financier") : "financier";
+    mcSeedDrafts(m, mc0);
     title = mc0 ? "Modifier le mécénat" : "Ajouter un mécénat";
+    var mcPjTag = "";
+    if (m.fromProjet) {
+      var pjF0 = org ? findProjet(org, m.projetId) : null;
+      mcPjTag = '<p style="margin:0 0 10px;font-size:12.5px;color:#475569">📁 Projet concerné : <b>' + esc(pjF0 ? (pjF0.nom || "Projet") : "—") + '</b></p>';
+    }
+    var mcOrgSel = "";
+    if (m.fromProjet) {
+      var pjM0 = org ? findProjet(org, m.projetId) : null;
+      var seenO = {};
+      var mcOrgList = [];
+      [org ? org.id : ""].concat(pjM0 ? (pjM0.contributeurs || []) : []).forEach(function (cid) {
+        if (cid && !seenO[cid]) { seenO[cid] = 1; mcOrgList.push({ id: cid, tag: (org && cid === org.id) ? " (porteur)" : " (co-financeur)" }); }
+      });
+      state.orgs.forEach(function (o2) { if (!seenO[o2.id]) { seenO[o2.id] = 1; mcOrgList.push({ id: o2.id, tag: "" }); } });
+      mcOrgSel = fld("Établissement mécène *", '<select id="m_mcorg">' + mcOrgList.map(function (oo) { var co2 = findOrg(oo.id); return co2 ? '<option value="' + co2.id + '"' + (co2.id === (org ? org.id : "") ? " selected" : "") + '>' + esc(co2.nom) + oo.tag + '</option>' : ""; }).join("") + '</select>');
+    }
+    var mcPjSel = "";
+    if (!m.fromProjet && org && (org.projets || []).length > 0) {
+      var pjIds = org.projets.map(function (pp) { return pp.id; });
+      var optsPj = '<option value="">— aucun / non lié à un projet</option>' + org.projets.map(function (pp) { return '<option value="' + pp.id + '"' + (mc0 && mc0.projetId === pp.id ? " selected" : "") + '>' + esc(pp.nom || "Projet") + '</option>'; }).join("");
+      if (mc0 && mc0.projetId && pjIds.indexOf(mc0.projetId) < 0) { var gp0 = findProjetGlobal(mc0.projetId); if (gp0) optsPj += '<option value="' + gp0.projet.id + '" selected>' + esc(gp0.projet.nom || "Projet") + ' (' + esc(gp0.orgNom) + ')</option>'; }
+      mcPjSel = fld("Projet concerné (optionnel)", '<select id="m_mcproj">' + optsPj + '</select>');
+    }
     body = '<form id="modal-form">'
       + '<input type="hidden" id="m_mctype" value="' + mcTy + '"/>'
+      + mcPjTag
+      + mcOrgSel
+      + mcPjSel
       + '<p style="margin:0 0 8px;font-size:12px;font-weight:700;color:#475569">1. Quel type de mécénat ?</p>'
       + '<div class="mectype-cards">'
       + TYPES_MECENAT.map(function (t) {
@@ -1817,17 +2058,23 @@ function viewModal() {
         }).join("")
       + '</div>'
       + '<div class="mc-method" id="mc-method">' + mcMethodHtml(mcTy) + '</div>'
+      + '<div class="mc-recap" id="mc-recap">' + mcRecapHtml(org ? org.id : "") + '</div>'
       + '<p style="margin:14px 0 8px;font-size:12px;font-weight:700;color:#475569">2. Détails</p>'
       + '<div class="form-grid">'
       + '<div class="full">' + fld("De quoi s&#39;agit-il ? (objet du don, prestation, projet financé…)", '<input id="m_mcdesc" value="' + esc(mc0 ? mc0.description || "" : "") + '" placeholder="Ex. Don de matériel, aménagement d&#39;une mare…"/>') + '</div>'
-      + '<div id="mcg-nat" class="full"' + (mcTy === "nature" ? "" : ' style="display:none"') + '>' + fld("Quantité / volume du don *", '<input id="m_mcqte" value="' + esc(mc0 ? mc0.quantite || "" : "") + '" placeholder="Ex. 20 nichoirs, 1 salle de réunion, 3 véhicules…"/>') + '</div>'
+      + '<div id="mcg-nat" class="full"' + (mcTy === "nature" ? "" : ' style="display:none"') + '>'
+        + '<table class="mc-table"><thead><tr><th>Produit / service</th><th>Qté</th><th>Unité</th><th>Valorisation / u (€)</th><th class="mc-tot-cell">Total</th><th></th></tr></thead><tbody id="mc-nat-t">' + mcLignesRowsHtml("nat") + '</tbody></table>'
+        + '<div class="mc-tot-bar"><span>Total valorisé :</span><b id="mc-nat-tot">' + fmtE(mcLignesTotal("nat")) + '</b><span style="color:#64748b">→ reporté automatiquement dans le champ montant</span>'
+        + '<button type="button" class="btn sm mc-add-line" data-act="mc-nat-add" style="margin-left:auto">＋ Ajouter une ligne</button></div>'
+      + '</div>'
       + '<div class="full">' + fld('<span id="mcmontant-lbl">' + mcMontantLabel(mcTy) + '</span>', '<input id="m_mcmontant" type="number" step="0.01" min="0" value="' + esc(mc0 ? num(mc0.montant) : "") + '" placeholder="Ex. 8 000"/>') + '</div>'
       + '</div>'
-      + '<div class="fieldset-tint fs-blue" id="mcg-comp" style="margin-top:12px' + (mcTy === "competence" ? "" : ';display:none') + '"><h4>🧠 Personnel mobilisé (mécénat de compétence)</h4><p style="font-size:11.5px;color:#64748b;margin:4px 0 8px">Montant valorisé = <b>heures × taux horaire</b> si le champ montant est laissé vide.</p><div class="form-grid">'
-      + fld("Heures mobilisées", '<input id="m_mcheures" type="number" step="0.5" min="0" value="' + esc(mc0 ? num(mc0.heures) : "") + '" placeholder="Ex. 24"/>')
-      + fld("Taux horaire (€)", '<input id="m_mctaux" type="number" step="0.5" min="0" value="' + esc(mc0 ? num(mc0.taux) : "") + '" placeholder="Ex. 65"/>')
-      + fld("Poste", '<input id="m_mcposte" value="' + esc(mc0 ? mc0.poste || "" : "") + '" placeholder="Ex. Ingénieur études, menuisier…"/>')
-      + fld("Personnel mobilisé", '<input id="m_mcperso" value="' + esc(mc0 ? mc0.personnel || "" : "") + '" placeholder="Ex. 1 salarié (2 jours), équipe de volontaires…"/>')
+      + '<div class="fieldset-tint fs-blue" id="mcg-comp" style="margin-top:12px' + (mcTy === "competence" ? "" : ';display:none') + '"><h4>🧠 Personnel mobilisé (mécénat de compétence)</h4><p style="font-size:11.5px;color:#64748b;margin:4px 0 2px">Chaque ligne valorise un poste : <b>nb de personnes × heures/personne × coût horaire</b>. Le total se reporte automatiquement dans le champ montant.</p>'
+      + '<table class="mc-table"><thead><tr><th>Poste / profil</th><th>Nb pers.</th><th>Heures / pers.</th><th>Coût horaire (€)</th><th class="mc-tot-cell">Total</th><th></th></tr></thead><tbody id="mc-postes-t">' + mcLignesRowsHtml("postes") + '</tbody></table>'
+      + '<div class="mc-tot-bar"><span>Total valorisé :</span><b id="mc-postes-tot">' + fmtE(mcLignesTotal("postes")) + '</b><span style="color:#64748b">→ reporté automatiquement dans le champ montant</span>'
+      + '<button type="button" class="btn sm mc-add-line" data-act="mc-poste-add" style="margin-left:auto">＋ Ajouter un poste</button></div>'
+      + '<div class="form-grid" style="margin-top:10px">'
+      + fld("Personnel mobilisé (contexte)", '<input id="m_mcperso" value="' + esc(mc0 ? mc0.personnel || "" : "") + '" placeholder="Ex. équipe de volontaires, service RSE…"/>')
       + fld("Mission", '<input id="m_mcmission" value="' + esc(mc0 ? mc0.mission || "" : "") + '" placeholder="Ex. Étude du refuge, atelier pédagogique…"/>')
       + '</div></div>'
       + '<div class="mc-preview" id="mc-preview">' + mcPreviewHtml(mcTy, mc0) + '</div>'
@@ -1947,7 +2194,7 @@ function render() {
     + '</div></header>'
     + '<main class="wrap">' + content + '</main>'
     + viewModal()
-    + '<footer class="foot wrap">CRM Mécénat LPO · <b>v4.1-test</b> — les données sont enregistrées dans ce navigateur. Pensez à exporter régulièrement : bouton Export (sauvegarde JSON, CSV ou HTML tout-en-un) · bouton 🖨 Imprimer pour une version papier / PDF pour les réunions.</footer>';
+    + '<footer class="foot wrap">CRM Mécénat LPO · <b>v4.2-test</b> — les données sont enregistrées dans ce navigateur. Pensez à exporter régulièrement : bouton Export (sauvegarde JSON, CSV ou HTML tout-en-un) · bouton 🖨 Imprimer pour une version papier / PDF pour les réunions.</footer>';
 
   if (state.focusSearch) {
     var s = document.getElementById("search");
@@ -1995,6 +2242,11 @@ document.addEventListener("click", function (e) {
     var lbl = document.getElementById("mcmontant-lbl"); if (lbl) lbl.innerHTML = mcMontantLabel(mt);
     syncMcPreview();
   }
+  else if (act === "mc-poste-add") mcLigneAdd("postes");
+  else if (act === "mc-poste-del") mcLigneDel("postes", el.getAttribute("data-i"));
+  else if (act === "mc-nat-add") mcLigneAdd("nat");
+  else if (act === "mc-nat-del") mcLigneDel("nat", el.getAttribute("data-i"));
+  else if (act === "new-proj-mecenat") setState({ modal: { type: "mecenat", orgId: orgId, projetId: id, fromProjet: true } });
   else if (act === "doc-pick") {
     var fi = document.getElementById("doc-file-input");
     if (fi && fi.click) fi.click();
@@ -2091,7 +2343,7 @@ document.addEventListener("click", function (e) {
     }); render(); }
   }
   else if (act === "new-mecenat") setState({ modal: { type: "mecenat", orgId: orgId } });
-  else if (act === "edit-mecenat") setState({ modal: { type: "mecenat", orgId: orgId, mecId: id } });
+  else if (act === "edit-mecenat") setState({ modal: { type: "mecenat", orgId: orgId, mecId: id, fromProjet: !!el.getAttribute("data-projet"), projetId: el.getAttribute("data-projet") } });
   else if (act === "delete-mecenat") {
     if (confirm("Supprimer ce mécénat ?")) { updateOrg(orgId, function (o) { o.mecenats = (o.mecenats || []).filter(function (mc) { return mc.id !== id; }); return o; }); render(); }
   }
@@ -2232,7 +2484,8 @@ document.addEventListener("input", function (e) {
     state.focusSearch = true;
     render();
   }
-  if (e.target.id === "m_mcmontant" || e.target.id === "m_mcheures" || e.target.id === "m_mctaux") syncMcPreview();
+  if (e.target.id === "m_mcmontant") syncMcPreview();
+  if (e.target.getAttribute && e.target.getAttribute("data-mcl")) mcLigneInput(e.target);
 });
 
 document.addEventListener("change", function (e) {
@@ -2243,6 +2496,11 @@ document.addEventListener("change", function (e) {
       if (t.value === "__custom") { srcInp.focus(); srcInp.select(); }
       else srcInp.value = t.value;
     }
+    return;
+  }
+  if (t.id === "m_mcorg") {
+    var rec = document.getElementById("mc-recap");
+    if (rec) rec.innerHTML = mcRecapHtml(t.value);
     return;
   }
   var toggle = t.getAttribute && t.getAttribute("data-toggle");
@@ -2434,22 +2692,54 @@ document.addEventListener("submit", function (e) {
   }
 
   else if (m.type === "mecenat") {
-    var mcData = { type: v("m_mctype"), montant: num(v("m_mcmontant")), quantite: v("m_mcqte"), heures: num(v("m_mcheures")), taux: num(v("m_mctaux")), description: v("m_mcdesc"), poste: v("m_mcposte"), personnel: v("m_mcperso"), mission: v("m_mcmission") };
-    if (!mcData.montant && mcData.heures > 0 && mcData.taux > 0) mcData.montant = Math.round(mcData.heures * mcData.taux * 100) / 100;
+    mcDraftSync("postes");
+    mcDraftSync("nat");
+    var mcPostes = (m.dPostes || []).filter(mcRowHasData);
+    var mcNat = (m.dNat || []).filter(mcRowHasData);
+    var mcType = v("m_mctype");
+    var mcMontant = num(v("m_mcmontant"));
+    if (mcPostes.length > 0 && mcType === "competence") mcMontant = Math.round(mcPostes.reduce(function (s, r) { return s + num(r.nb) * num(r.heures) * num(r.taux); }, 0) * 100) / 100;
+    if (mcNat.length > 0 && mcType === "nature") mcMontant = Math.round(mcNat.reduce(function (s, r) { return s + num(r.qte) * num(r.valU); }, 0) * 100) / 100;
+    var mcPjVal = m.fromProjet ? m.projetId : (document.getElementById("m_mcproj") ? v("m_mcproj") : ((m.mecId && findOrg(m.orgId) ? ((findOrg(m.orgId).mecenats || []).find(function (x) { return x.id === m.mecId; }) || {}).projetId : "") || ""));
+    var mcOrgVal = (m.fromProjet && document.getElementById("m_mcorg")) ? v("m_mcorg") : m.orgId;
+    var mcData = { type: mcType, montant: mcMontant, quantite: mcNat.length > 0 ? mcNatSummary(mcNat) : "", heures: mcPostes.length > 0 ? mcPostesHeuresTot() : 0, taux: 0, description: v("m_mcdesc"), personnel: v("m_mcperso"), mission: v("m_mcmission"), projetId: mcPjVal, postes: mcPostes, lignesNat: mcNat };
     var mcEdited = !!m.mecId;
-    updateOrg(m.orgId, function (o) {
-      o.mecenats = o.mecenats || [];
-      if (m.mecId) {
+    if (m.mecId && mcOrgVal === m.orgId) {
+      updateOrg(mcOrgVal, function (o) {
+        o.mecenats = o.mecenats || [];
         o.mecenats = o.mecenats.map(function (mc) { return mc.id === m.mecId ? Object.assign({}, mc, mcData) : mc; });
-      } else {
-        o.mecenats = o.mecenats.concat([Object.assign({ id: uid() }, mcData)]);
+        return o;
+      });
+    } else {
+      if (m.mecId) {
+        updateOrg(m.orgId, function (o) {
+          o.mecenats = (o.mecenats || []).filter(function (mc) { return mc.id !== m.mecId; });
+          return o;
+        });
       }
-      return o;
-    });
-    if (!mcEdited && findOrg(m.orgId)) {
-      var mcOrg = findOrg(m.orgId);
+      updateOrg(mcOrgVal, function (o) {
+        o.mecenats = (o.mecenats || []).concat([Object.assign({ id: m.mecId || uid() }, mcData)]);
+        return o;
+      });
+    }
+    /* lien automatique au projet : si le mécène n'est pas contributeur, l'ajouter */
+    if (mcPjVal && m.fromProjet) {
+      var mcGp = findProjetGlobal(mcPjVal);
+      if (mcGp) {
+        updateOrg(mcGp.orgId, function (o) {
+          var p = findProjet(o, mcPjVal);
+          if (p) {
+            p.contributeurs = p.contributeurs || [];
+            if (p.contributeurs.indexOf(mcOrgVal) < 0 && mcOrgVal !== o.id) p.contributeurs.push(mcOrgVal);
+          }
+          return o;
+        });
+      }
+    }
+    if (!mcEdited && findOrg(mcOrgVal)) {
+      var mcOrg = findOrg(mcOrgVal);
       var mcTi = mecInfo(mcData.type);
-      setState({ modal: { type: "suiviInvite", orgId: m.orgId, libelle: "Suivi relation mécénat — " + mcOrg.nom, notes: "Mécénat " + mcTi.label.toLowerCase() + " enregistré le " + formatDate(today()) + (mcData.description ? " : " + mcData.description : "") + ". Prendre des nouvelles, remercier, envisager la suite de la relation.", mois: 6 } });
+      setState({ modal: { type: "suiviInvite", orgId: mcOrgVal, libelle: "Suivi relation mécénat — " + mcOrg.nom, notes: "Mécénat " + mcTi.label.toLowerCase() + " enregistré le " + formatDate(today()) + (mcData.description ? " : " + mcData.description : "") + ". Prendre des nouvelles, remercier, envisager la suite de la relation.", mois: 6 } });
     } else {
       setState({ modal: null });
     }
@@ -2507,16 +2797,20 @@ document.addEventListener("submit", function (e) {
 
   else if (m.type === "ligne") {
     var src = v("m_lsrc"), mnt = num(v("m_lmnt"));
+    var lorgVal = v("m_lorg");
     updateOrg(m.orgId, function (o) {
       var p = findProjet(o, m.projetId);
       if (!p) return o;
       p.financement = p.financement || { lignes: [] };
       p.financement.lignes = p.financement.lignes || [];
       if (m.ligneId) {
-        p.financement.lignes = p.financement.lignes.map(function (l) { return l.id === m.ligneId ? { id: l.id, source: src, montant: mnt, orgId: v("m_lorg") } : l; });
+        p.financement.lignes = p.financement.lignes.map(function (l) { return l.id === m.ligneId ? { id: l.id, source: src, montant: mnt, orgId: lorgVal } : l; });
       } else {
-        p.financement.lignes = p.financement.lignes.concat([{ id: uid(), source: src, montant: mnt, orgId: v("m_lorg") }]);
+        p.financement.lignes = p.financement.lignes.concat([{ id: uid(), source: src, montant: mnt, orgId: lorgVal }]);
       }
+      /* établissement mécène hors porteur/co-financeurs -> ajouté automatiquement */
+      p.contributeurs = p.contributeurs || [];
+      if (lorgVal && lorgVal !== o.id && p.contributeurs.indexOf(lorgVal) < 0) p.contributeurs.push(lorgVal);
       return o;
     });
     setState({ modal: null });
