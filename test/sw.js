@@ -1,4 +1,4 @@
-var C="espace-cache-test-1";
+var C="espace-cache-test-2";
 self.addEventListener("install",function(e){self.skipWaiting();});
 self.addEventListener("activate",function(e){e.waitUntil(self.clients.claim());});
 self.addEventListener("fetch",function(e){
